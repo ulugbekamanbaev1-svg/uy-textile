@@ -5,7 +5,15 @@ from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    UploadFile,
+)
 from fastapi.responses import Response
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,6 +47,7 @@ from app.schemas.admin import (
 )
 from app.schemas.catalog import AdminSummary, CategoryIn, CategoryOut, ProductListItem
 from app.schemas.order import OrderOut, OrderStatusUpdate
+from app.services.notify import notify_customer_about_status
 from app.services.store_settings import get_store_settings
 from app.services.telegram_auth import require_admin
 
@@ -663,6 +672,7 @@ async def admin_orders(
 async def update_order_status(
     order_id: int,
     payload: OrderStatusUpdate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -675,9 +685,13 @@ async def update_order_status(
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
 
+    previous_status = order.status
     order.status = payload.status
     await db.commit()
     await db.refresh(order, ["items"])
+
+    if previous_status != order.status and order.telegram_id:
+        background_tasks.add_task(notify_customer_about_status, order)
 
     return order_to_out(order)
 

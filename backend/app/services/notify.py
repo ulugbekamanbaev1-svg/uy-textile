@@ -88,3 +88,55 @@ async def notify_admin_about_order(order: Order) -> bool:
     except Exception as error:  # заказ не должен падать из-за уведомления
         logger.warning("Telegram notification error: %s", error)
         return False
+
+
+STATUS_MESSAGES = {
+    "new": "Новый",
+    "confirmed": "Подтверждён",
+    "delivering": "В доставке",
+    "done": "Выполнен",
+    "cancelled": "Отменён",
+}
+
+
+async def notify_customer_about_status(order: Order) -> bool:
+    """Уведомляет покупателя в Telegram об изменении статуса заказа."""
+    if not settings.BOT_TOKEN or not order.telegram_id:
+        return False
+
+    try:
+        status_label = STATUS_MESSAGES.get(order.status, order.status)
+        text = (
+            f"📦 <b>Статус заказа {html.escape(order.number, quote=False)}</b>\n\n"
+            f"Новый статус: <b>{html.escape(status_label, quote=False)}</b>\n"
+            f"Сумма: {order.total:,} сум".replace(",", " ")
+        )
+
+        if order.status == "done":
+            text += "\n\nСпасибо за покупку!"
+        elif order.status == "cancelled":
+            text += "\n\nЕсли есть вопросы — свяжитесь с нами."
+
+        url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": order.telegram_id,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True,
+        }
+
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(url, json=payload)
+
+        if response.status_code != 200:
+            logger.warning(
+                "Customer Telegram notification failed: %s %s",
+                response.status_code,
+                response.text[:300],
+            )
+            return False
+
+        return True
+    except Exception as error:
+        logger.warning("Customer Telegram notification error: %s", error)
+        return False
