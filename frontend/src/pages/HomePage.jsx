@@ -1,7 +1,6 @@
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import ProductCard from "../components/ProductCard";
-import { localized } from "../utils/format";
 
 export default function HomePage({
   t,
@@ -49,41 +48,7 @@ export default function HomePage({
         </button>
       </section>
 
-      <section className="categories">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">{(hero?.store_name || "Farrux shop (Hozoosp)").toUpperCase()}</span>
-            <h2>{t("catalogTitle")}</h2>
-          </div>
-          <button
-            className="ghost-icon-button"
-            type="button"
-            onClick={() => onOpenCategory("")}
-            aria-label={t("searchPlaceholder")}
-          >
-            <Search size={20} />
-          </button>
-        </div>
 
-        <div className="category-grid">
-          {categories.map((category, index) => (
-            <button
-              className="category-card"
-              key={category.slug}
-              type="button"
-              onClick={() => onOpenCategory(category.slug)}
-            >
-              <span className="category-number">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <span>{localized(category, "name", lang)}</span>
-              <span className="category-count">
-                {category.product_count}
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
 
       {featured.length > 0 && (
         <section className="home-products">
