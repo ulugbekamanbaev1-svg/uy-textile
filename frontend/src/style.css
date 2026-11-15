@@ -1865,3 +1865,31 @@ a, button, input, textarea, select, .product-card, .category-card {
 .store-info-modal .primary-button {
   order: 3;
 }
+
+/* hero with cozy photo */
+.hero.hero-with-photo {
+  background:
+    linear-gradient(135deg, rgba(32, 28, 22, 0.62) 0%, rgba(48, 40, 30, 0.38) 55%, rgba(32, 28, 22, 0.55) 100%),
+    url("/hero-cozy.jpg") center/cover no-repeat;
+  color: #fff;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.hero.hero-with-photo::after {
+  display: none;
+}
+.hero.hero-with-photo .eyebrow { color: rgba(255,255,255,0.85); }
+.hero.hero-with-photo h2 { color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.25); max-width: 340px; }
+.hero.hero-with-photo p { color: rgba(255,255,255,0.92); text-shadow: 0 1px 8px rgba(0,0,0,0.2); }
+.hero.hero-with-photo .primary-button {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.95);
+  color: #2f2d28;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+}
+.hero.hero-with-photo .primary-button:hover {
+  background: #fff;
+  filter: none;
+}

@@ -35,7 +35,7 @@ export default function HomePage({
         </button>
       )}
 
-      <section className="hero">
+      <section className="hero hero-with-photo">
         <span className="eyebrow">{t("heroEyebrow")}</span>
         <h2>{heroTitle}</h2>
         <p>{heroText}</p>
