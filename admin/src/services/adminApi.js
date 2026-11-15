@@ -1,5 +1,4 @@
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -17,7 +16,6 @@ function telegramInitData() {
   }
 }
 
-// Надежная функция для кодирования в Base64 (поддерживает любые символы)
 function utf8ToBase64(str) {
   const bytes = new TextEncoder().encode(str);
   let binary = "";
@@ -33,9 +31,9 @@ export async function adminFetch(path, options = {}) {
     headers.set("X-Telegram-Init-Data", initData);
   }
 
-  // Формируем и кодируем учетные данные
-  const username = "admin";
-  const credentials = utf8ToBase64(`${username}:${ADMIN_PASSWORD}`);
+  // Берем пароль из localStorage (который мы сохранили на экране входа)
+  const password = localStorage.getItem("admin_password") || import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
+  const credentials = utf8ToBase64(`admin:${password}`);
   headers.set("Authorization", `Basic ${credentials}`);
 
   const isFormData = options.body instanceof FormData;
@@ -50,7 +48,6 @@ export async function adminFetch(path, options = {}) {
     try {
       const data = await response.json();
       if (typeof data.detail === "string") message = data.detail;
-      else if (Array.isArray(data.detail) && data.detail[0]?.msg) message = data.detail[0].msg;
     } catch {}
     throw new ApiError(message, response.status);
   }

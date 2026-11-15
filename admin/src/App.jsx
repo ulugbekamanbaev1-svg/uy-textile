@@ -22,9 +22,11 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from "lucide-react";
 
+import LoginScreen from "./components/LoginScreen";
 import DeliveryMap from "./components/DeliveryMap";
 import ProductForm from "./components/ProductForm";
 import AnalyticsPanel from "./components/AnalyticsPanel";
@@ -98,6 +100,16 @@ function toSettingsForm(settings) {
 }
 
 export default function App() {
+  // --- АВТОРИЗАЦИЯ ---
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem("admin_password")
+  );
+
+  const handleLogout = () => {
+    localStorage.removeItem("admin_password");
+    setIsAuthenticated(false);
+  };
+
   const [server, setServer] = useState("checking");
   const [lang, setLang] = useState(detectLanguage);
   const [section, setSection] = useState("home");
@@ -170,9 +182,11 @@ export default function App() {
         }
       )
       .catch((error) => {
-        setDataState(
-          error?.status === 401 || error?.status === 403 ? "denied" : "error"
-        );
+        if (error?.status === 401 || error?.status === 403) {
+          handleLogout(); // Если пароль неверный, выкидываем на экран входа
+        } else {
+          setDataState("error");
+        }
       });
   };
 
@@ -187,6 +201,8 @@ export default function App() {
   }, [lang]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     fetch(`${API}/api/health`)
       .then((response) => {
         if (!response.ok) throw new Error("Server error");
@@ -198,7 +214,7 @@ export default function App() {
       .catch(() => setServer("offline"));
 
     loadData();
-  }, []);
+  }, [isAuthenticated]);
 
   const visibleProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -247,9 +263,9 @@ export default function App() {
       const detail = await adminFetch(`/api/admin/products/${product.id}`);
       setFormProduct(detail);
     } catch (error) {
-      setDataState(
-        error?.status === 401 || error?.status === 403 ? "denied" : "error"
-      );
+      if (error?.status === 401 || error?.status === 403) {
+        handleLogout();
+      }
     }
   };
 
@@ -452,6 +468,11 @@ export default function App() {
     loadData();
   };
 
+  // --- ЭКРАН ВХОДА ---
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+  }
+
   return (
     <div className="admin">
       <aside className={`sidebar${sidebarCollapsed ? " collapsed" : ""}`}>
@@ -528,6 +549,16 @@ export default function App() {
                 </button>
               ))}
             </div>
+
+            {/* Кнопка выхода */}
+            <button 
+              type="button" 
+              onClick={handleLogout} 
+              title="Выйти"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', display: 'flex', alignItems: 'center', marginRight: '10px' }}
+            >
+              <LogOut size={20} />
+            </button>
 
             <div className="admin-avatar">U</div>
           </div>
