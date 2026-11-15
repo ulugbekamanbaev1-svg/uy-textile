@@ -322,7 +322,7 @@ function StoreLocationModal({ t, store, onClose }) {
       hasCoords);
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
+    <div className="modal-overlay top-aligned" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="location-modal store-info-modal" onClick={(e) => e.stopPropagation()}>
         <div className="location-modal-head">
           <div>
