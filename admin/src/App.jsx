@@ -20,7 +20,9 @@ import {
   Plus,
   Trash2,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 import DeliveryMap from "./components/DeliveryMap";
@@ -99,6 +101,7 @@ export default function App() {
   const [server, setServer] = useState("checking");
   const [lang, setLang] = useState(detectLanguage);
   const [section, setSection] = useState("home");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [summary, setSummary] = useState(null);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -451,10 +454,10 @@ export default function App() {
 
   return (
     <div className="admin">
-      <aside className="sidebar">
+      <aside className={`sidebar${sidebarCollapsed ? " collapsed" : ""}`}>
         <div className="admin-brand">
           <div className="admin-logo">U</div>
-          <div>
+          <div className="brand-copy">
             <h2>FARRUX SHOP</h2>
             <p>{t("controlPanel")}</p>
           </div>
@@ -466,23 +469,40 @@ export default function App() {
               className={section === value ? "selected" : ""}
               key={key}
               type="button"
+              title={sidebarCollapsed ? t(key) : undefined}
               onClick={() => setSection(value)}
             >
               <Icon size={19} />
-              {t(key)}
+              <span className="nav-label">{t(key)}</span>
             </button>
           ))}
         </nav>
 
         <div className="sidebar-footer">
-          <span className="online-dot" />
-          Farrux shop (Hozoosp) v1.0
+          <div className="sidebar-status">
+            <span className="online-dot" />
+            <span className="nav-label">Farrux shop (Hozoosp) v1.0</span>
+          </div>
+          <button
+            type="button"
+            className="sidebar-toggle"
+            onClick={() => setSidebarCollapsed((v) => !v)}
+            aria-label={sidebarCollapsed ? t("expandSidebar") || "Развернуть меню" : t("collapseSidebar") || "Свернуть меню"}
+            title={sidebarCollapsed ? t("expandSidebar") || "Развернуть меню" : t("collapseSidebar") || "Свернуть меню"}
+          >
+            {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
         </div>
       </aside>
 
       <main className="admin-content">
         <header className="admin-header">
-          <button className="menu-button" aria-label="Меню">
+          <button
+            className="menu-button"
+            aria-label={t("toggleSidebar") || "Меню"}
+            type="button"
+            onClick={() => setSidebarCollapsed((v) => !v)}
+          >
             <Menu />
           </button>
           <div>
