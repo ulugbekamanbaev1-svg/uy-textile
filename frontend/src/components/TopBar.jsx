@@ -1,6 +1,7 @@
 import { Heart, ShoppingBag } from "lucide-react";
 
 import { LANGUAGES } from "../i18n";
+import { assetUrl } from "../services/api";
 
 export default function TopBar({
   t,
@@ -8,14 +9,26 @@ export default function TopBar({
   setLang,
   cartCount,
   onCart,
-  onHome
+  onHome,
+  storeSettings,
+  onShowLocation
 }) {
+  const logoUrl = storeSettings?.logo_url ? assetUrl(storeSettings.logo_url) : "";
+  const storeName = storeSettings?.store_name || "Farrux shop (Hozoosp)";
+
   return (
     <header className="header top-bar">
-      <button className="brand brand-button" type="button" onClick={onHome}>
-        <span className="brand-icon">F</span>
+      <button
+        className="brand brand-button"
+        type="button"
+        onClick={onShowLocation || onHome}
+        aria-label={t("storeLocationTitle") || storeName}
+      >
+        <span className={`brand-icon${logoUrl ? " has-image" : ""}`}>
+          {logoUrl ? <img src={logoUrl} alt={storeName} /> : "F"}
+        </span>
         <span className="brand-text">
-          <span className="brand-title">FARRUX SHOP</span>
+          <span className="brand-title">{storeName.toUpperCase()}</span>
           <span className="brand-subtitle">{t("tagline")}</span>
         </span>
       </button>

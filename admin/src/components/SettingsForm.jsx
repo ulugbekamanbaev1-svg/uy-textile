@@ -1,4 +1,7 @@
-import { Save } from "lucide-react";
+import { useState } from "react";
+import { ImagePlus, Save } from "lucide-react";
+
+import { adminFetch, assetUrl } from "../services/adminApi";
 
 export default function SettingsForm({
   form,
@@ -9,6 +12,31 @@ export default function SettingsForm({
   onSubmit,
   categories = []
 }) {
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState("");
+
+  const uploadLogo = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    setLogoError("");
+
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const result = await adminFetch("/api/admin/uploads", {
+        method: "POST",
+        body
+      });
+      onChange("logo_url", result.url);
+    } catch (uploadError) {
+      setLogoError(uploadError.message || t("settingsError"));
+    } finally {
+      setUploadingLogo(false);
+      event.target.value = "";
+    }
+  };
   if (!form) {
     return <p className="admin-note">{t("loading")}</p>;
   }
@@ -44,6 +72,44 @@ export default function SettingsForm({
       <section className="form-section">
         <h3>{t("settingsMain")}</h3>
 
+        <div className="admin-field">
+          <span>{t("settingsLogo") || "Логотип магазина"}</span>
+          <div className="image-upload" style={{ marginTop: 8 }}>
+            <div className="image-preview" style={{ width: 96, height: 96, borderRadius: 16 }}>
+              {form.logo_url ? (
+                <img src={assetUrl(form.logo_url)} alt={form.store_name || "Logo"} />
+              ) : (
+                <ImagePlus size={24} />
+              )}
+            </div>
+            <div className="image-actions">
+              <label className="upload-button">
+                <ImagePlus size={16} />
+                {uploadingLogo ? t("uploading") : (t("uploadLogo") || "Загрузить логотип")}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  hidden
+                  disabled={uploadingLogo}
+                  onChange={uploadLogo}
+                />
+              </label>
+              <input
+                type="text"
+                value={form.logo_url || ""}
+                placeholder={t("imageUrlLabel")}
+                onChange={(event) => onChange("logo_url", event.target.value)}
+              />
+              {form.logo_url && (
+                <button type="button" className="ghost-button" onClick={() => onChange("logo_url", "")}>
+                  {t("remove") || "Удалить"}
+                </button>
+              )}
+              {logoError && <p className="form-error">{logoError}</p>}
+            </div>
+          </div>
+        </div>
+
         <div className="form-grid two">
           {field("store_name", t("settingsStoreName"))}
           {field("phone", t("settingsPhone"), {
@@ -57,6 +123,39 @@ export default function SettingsForm({
           {field("working_hours", t("settingsHours"), {
             placeholder: "09:00 – 20:00"
           })}
+        </div>
+      </section>
+
+      <section className="form-section">
+        <h3>{t("settingsLocation") || "Местоположение магазина"}</h3>
+        <p className="admin-note">{t("settingsLocationHint") || "Укажите координаты, чтобы покупатели могли открыть местоположение магазина на карте (нажав на логотип)."}</p>
+        <div className="form-grid two">
+          <label className="admin-field">
+            <span>{t("storeLatitude") || "Широта (latitude)"}</span>
+            <input
+              type="number"
+              step="any"
+              value={form.store_latitude ?? ""}
+              placeholder="41.5500"
+              onChange={(event) => {
+                const v = event.target.value;
+                onChange("store_latitude", v === "" ? null : Number(v));
+              }}
+            />
+          </label>
+          <label className="admin-field">
+            <span>{t("storeLongitude") || "Долгота (longitude)"}</span>
+            <input
+              type="number"
+              step="any"
+              value={form.store_longitude ?? ""}
+              placeholder="60.6333"
+              onChange={(event) => {
+                const v = event.target.value;
+                onChange("store_longitude", v === "" ? null : Number(v));
+              }}
+            />
+          </label>
         </div>
       </section>
 

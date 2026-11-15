@@ -951,7 +951,7 @@ async def save_store_settings(
         setattr(store, field, value.strip() if isinstance(value, str) else value)
 
     if not store.store_name:
-        store.store_name = "Uy Textile"
+        store.store_name = "Farrux shop (Hozoosp)"
 
     await db.commit()
     await db.refresh(store)

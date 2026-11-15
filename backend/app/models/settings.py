@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -38,6 +38,10 @@ class StoreSettings(Base):
     banner_text_uz: Mapped[str] = mapped_column(String(200), default="")
     banner_text_uzc: Mapped[str] = mapped_column(String(200), default="")
     banner_category: Mapped[str] = mapped_column(String(80), default="")
+
+    logo_url: Mapped[str] = mapped_column(String(255), default="")
+    store_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    store_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

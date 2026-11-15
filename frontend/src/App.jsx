@@ -32,6 +32,7 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [storeSettings, setStoreSettings] = useState(null);
   const [catalogState, setCatalogState] = useState("loading");
+  const [showStoreLocation, setShowStoreLocation] = useState(false);
 
   const cart = useCart();
   const favorites = useFavorites();
@@ -266,11 +267,57 @@ export default function App() {
         cartCount={cart.count}
         onCart={() => navigate("cart")}
         onHome={() => navigate("home")}
+        storeSettings={storeSettings}
+        onShowLocation={() => setShowStoreLocation(true)}
       />
 
       {content}
 
+      {showStoreLocation && (
+        <StoreLocationModal
+          t={t}
+          store={storeSettings}
+          onClose={() => setShowStoreLocation(false)}
+        />
+      )}
+
       <BottomNav t={t} page={navPage} onNavigate={(page) => navigate(page)} />
+    </div>
+  );
+}
+
+function StoreLocationModal({ t, store, onClose }) {
+  const lat = store?.store_latitude;
+  const lng = store?.store_longitude;
+  const hasCoords = typeof lat === "number" && typeof lng === "number" && Number.isFinite(lat) && Number.isFinite(lng);
+  const mapUrl = hasCoords
+    ? `https://www.google.com/maps?q=${lat},${lng}`
+    : store?.address
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`
+      : "";
+
+  return (
+    <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="location-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="location-modal-head">
+          <div>
+            <h3>{t("storeLocationTitle") || "Местоположение магазина"}</h3>
+            {store?.store_name && <p className="admin-note">{store.store_name}</p>}
+          </div>
+          <button type="button" className="icon-button" onClick={onClose} aria-label={t("close") || "Закрыть"}>×</button>
+        </div>
+        {store?.address && (
+          <p className="location-modal-address">{store.address}</p>
+        )}
+        {mapUrl && (
+          <a className="primary-button" href={mapUrl} target="_blank" rel="noreferrer">
+            {t("openInMaps") || "Открыть на карте"}
+          </a>
+        )}
+        {!store?.address && !mapUrl && (
+          <p className="admin-note">{t("storeLocationEmpty") || "Местоположение пока не указано."}</p>
+        )}
+      </div>
     </div>
   );
 }

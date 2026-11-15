@@ -154,7 +154,11 @@ export const translations = {
     contactDelivery: "Доставка",
     contactPayment: "Оплата",
     contactTelegram: "Telegram",
-    contactInstagram: "Instagram"
+    contactInstagram: "Instagram",
+    storeLocationTitle: "Местоположение магазина",
+    openInMaps: "Открыть на карте",
+    storeLocationEmpty: "Местоположение пока не указано",
+    close: "Закрыть"
   },
 
   uz: {
@@ -307,7 +311,11 @@ export const translations = {
     contactDelivery: "Yetkazib berish",
     contactPayment: "To'lov",
     contactTelegram: "Telegram",
-    contactInstagram: "Instagram"
+    contactInstagram: "Instagram",
+    storeLocationTitle: "Do'kon manzili",
+    openInMaps: "Xaritada ochish",
+    storeLocationEmpty: "Manzil hali ko'rsatilmagan",
+    close: "Yopish"
   },
 
   uzc: {
@@ -460,7 +468,11 @@ export const translations = {
     contactDelivery: "Етказиб бериш",
     contactPayment: "Тўлов",
     contactTelegram: "Telegram",
-    contactInstagram: "Instagram"
+    contactInstagram: "Instagram",
+    storeLocationTitle: "Дўкон манзили",
+    openInMaps: "Харитада очиш",
+    storeLocationEmpty: "Манзил ҳали кўрсатилмаган",
+    close: "Ёпиш"
   }
 };
 

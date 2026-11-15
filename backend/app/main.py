@@ -54,6 +54,14 @@ async def lifespan(app: FastAPI):
                 "ADD COLUMN IF NOT EXISTS banner_category VARCHAR(80) NOT NULL DEFAULT ''"
             )
         )
+        await connection.execute(
+            text(
+                "ALTER TABLE store_settings "
+                "ADD COLUMN IF NOT EXISTS logo_url VARCHAR(255) NOT NULL DEFAULT '', "
+                "ADD COLUMN IF NOT EXISTS store_latitude DOUBLE PRECISION, "
+                "ADD COLUMN IF NOT EXISTS store_longitude DOUBLE PRECISION"
+            )
+        )
 
     await seed_data()
 

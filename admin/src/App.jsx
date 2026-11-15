@@ -85,7 +85,10 @@ const EMPTY_SETTINGS = {
   banner_text_ru: "",
   banner_text_uz: "",
   banner_text_uzc: "",
-  banner_category: ""
+  banner_category: "",
+  logo_url: "",
+  store_latitude: null,
+  store_longitude: null
 };
 
 function toSettingsForm(settings) {
