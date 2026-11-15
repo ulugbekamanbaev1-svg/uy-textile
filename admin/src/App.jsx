@@ -103,6 +103,8 @@ export default function App() {
   const [deleteError, setDeleteError] = useState("");
   const [clients, setClients] = useState([]);
   const [clientSearch, setClientSearch] = useState("");
+
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const [analyticsDays, setAnalyticsDays] = useState(30);
   const [analytics, setAnalytics] = useState(null);
   const [settingsForm, setSettingsForm] = useState(null);
@@ -741,6 +743,15 @@ export default function App() {
                   </button>
                 );
               })}
+              <a
+                className="ghost-button"
+                href={`${API_BASE}/api/admin/orders/export`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ marginLeft: "auto" }}
+              >
+                CSV
+              </a>
             </div>
 
             {dataState === "loading" && (
@@ -799,6 +810,7 @@ export default function App() {
                 lang={lang}
                 search={clientSearch}
                 onSearchChange={setClientSearch}
+                apiBase={API_BASE}
               />
             )}
           </>

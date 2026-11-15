@@ -1,4 +1,4 @@
-import { Phone, Search } from "lucide-react";
+import { Download, Phone, Search } from "lucide-react";
 
 import { formatPrice } from "../utils/format";
 
@@ -11,7 +11,8 @@ export default function ClientsTable({
   t,
   lang,
   search,
-  onSearchChange
+  onSearchChange,
+  apiBase
 }) {
   const locale =
     lang === "uzc" ? "uz-Cyrl-UZ" : lang === "uz" ? "uz-UZ" : "ru-RU";
@@ -40,6 +41,17 @@ export default function ClientsTable({
         <span className="table-count">
           {t("clientsCount", { count: visible.length })}
         </span>
+        {apiBase && (
+          <a
+            className="ghost-button"
+            href={`${apiBase}/api/admin/clients/export`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Download size={15} />
+            CSV
+          </a>
+        )}
       </div>
 
       {visible.length === 0 ? (
