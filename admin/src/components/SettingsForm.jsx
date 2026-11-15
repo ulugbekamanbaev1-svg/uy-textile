@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ImagePlus, Save } from "lucide-react";
 
+import StoreLocationPicker from "./StoreLocationPicker";
 import { adminFetch, assetUrl } from "../services/adminApi";
 
 export default function SettingsForm({
@@ -128,35 +129,17 @@ export default function SettingsForm({
 
       <section className="form-section">
         <h3>{t("settingsLocation") || "Местоположение магазина"}</h3>
-        <p className="admin-note">{t("settingsLocationHint") || "Укажите координаты, чтобы покупатели могли открыть местоположение магазина на карте (нажав на логотип)."}</p>
-        <div className="form-grid two">
-          <label className="admin-field">
-            <span>{t("storeLatitude") || "Широта (latitude)"}</span>
-            <input
-              type="number"
-              step="any"
-              value={form.store_latitude ?? ""}
-              placeholder="41.5500"
-              onChange={(event) => {
-                const v = event.target.value;
-                onChange("store_latitude", v === "" ? null : Number(v));
-              }}
-            />
-          </label>
-          <label className="admin-field">
-            <span>{t("storeLongitude") || "Долгота (longitude)"}</span>
-            <input
-              type="number"
-              step="any"
-              value={form.store_longitude ?? ""}
-              placeholder="60.6333"
-              onChange={(event) => {
-                const v = event.target.value;
-                onChange("store_longitude", v === "" ? null : Number(v));
-              }}
-            />
-          </label>
-        </div>
+        <p className="admin-note">{t("settingsLocationHint") || "Отметьте магазин на карте — покупатели увидят местоположение, нажав на логотип."}</p>
+
+        <StoreLocationPicker
+          latitude={form.store_latitude}
+          longitude={form.store_longitude}
+          t={t}
+          onChange={(lat, lng) => {
+            onChange("store_latitude", lat);
+            onChange("store_longitude", lng);
+          }}
+        />
       </section>
 
       <section className="form-section">

@@ -156,8 +156,9 @@ export const translations = {
     contactTelegram: "Telegram",
     contactInstagram: "Instagram",
     storeLocationTitle: "Местоположение магазина",
+    storeInfoSubtitle: "Информация и местоположение магазина",
     openInMaps: "Открыть на карте",
-    storeLocationEmpty: "Местоположение пока не указано",
+    storeLocationEmpty: "Информация о магазине пока не указана",
     close: "Закрыть"
   },
 
@@ -313,8 +314,9 @@ export const translations = {
     contactTelegram: "Telegram",
     contactInstagram: "Instagram",
     storeLocationTitle: "Do'kon manzili",
+    storeInfoSubtitle: "Do'kon haqida ma'lumot va joylashuv",
     openInMaps: "Xaritada ochish",
-    storeLocationEmpty: "Manzil hali ko'rsatilmagan",
+    storeLocationEmpty: "Do'kon haqida ma'lumot hali kiritilmagan",
     close: "Yopish"
   },
 
@@ -470,8 +472,9 @@ export const translations = {
     contactTelegram: "Telegram",
     contactInstagram: "Instagram",
     storeLocationTitle: "Дўкон манзили",
+    storeInfoSubtitle: "Дўкон ҳақида маълумот ва жойлашув",
     openInMaps: "Харитада очиш",
-    storeLocationEmpty: "Манзил ҳали кўрсатилмаган",
+    storeLocationEmpty: "Дўкон ҳақида маълумот ҳали киритилмаган",
     close: "Ёпиш"
   }
 };

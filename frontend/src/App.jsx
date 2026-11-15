@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { Clock, CreditCard, Instagram, MapPin, Phone, Send, Truck, X } from "lucide-react";
 
 import BottomNav from "./components/BottomNav";
+import StoreMap from "./components/StoreMap";
 import TopBar from "./components/TopBar";
 import { useCart } from "./hooks/useCart";
 import { useFavorites } from "./hooks/useFavorites";
@@ -286,36 +288,133 @@ export default function App() {
   );
 }
 
+function socialHandle(value) {
+  return (value || "")
+    .replace(/^@/, "")
+    .replace(/^https?:\/\/(t\.me|instagram\.com)\//i, "")
+    .replace(/\/$/, "");
+}
+
 function StoreLocationModal({ t, store, onClose }) {
   const lat = store?.store_latitude;
   const lng = store?.store_longitude;
-  const hasCoords = typeof lat === "number" && typeof lng === "number" && Number.isFinite(lat) && Number.isFinite(lng);
+  const hasCoords =
+    typeof lat === "number" &&
+    typeof lng === "number" &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng);
+
   const mapUrl = hasCoords
     ? `https://www.google.com/maps?q=${lat},${lng}`
     : store?.address
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`
       : "";
 
+  const hasInfo =
+    store &&
+    (store.phone ||
+      store.address ||
+      store.working_hours ||
+      store.delivery_info ||
+      store.payment_info ||
+      store.instagram ||
+      store.telegram ||
+      hasCoords);
+
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="location-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="location-modal store-info-modal" onClick={(e) => e.stopPropagation()}>
         <div className="location-modal-head">
           <div>
-            <h3>{t("storeLocationTitle") || "Местоположение магазина"}</h3>
-            {store?.store_name && <p className="admin-note">{store.store_name}</p>}
+            <h3>{store?.store_name || t("storeLocationTitle") || "Местоположение магазина"}</h3>
+            <p className="admin-note">{t("storeInfoSubtitle") || "Информация и местоположение"}</p>
           </div>
-          <button type="button" className="icon-button" onClick={onClose} aria-label={t("close") || "Закрыть"}>×</button>
+          <button type="button" className="icon-button" onClick={onClose} aria-label={t("close") || "Закрыть"}>
+            <X size={18} />
+          </button>
         </div>
-        {store?.address && (
-          <p className="location-modal-address">{store.address}</p>
+
+        {hasInfo ? (
+          <div className="store-info-list">
+            {store.phone && (
+              <a className="contact-row" href={`tel:${store.phone}`}>
+                <Phone size={16} />
+                <span>{t("contactPhone")}</span>
+                <strong>{store.phone}</strong>
+              </a>
+            )}
+            {store.address && (
+              <div className="contact-row">
+                <MapPin size={16} />
+                <span>{t("contactAddress")}</span>
+                <strong>{store.address}</strong>
+              </div>
+            )}
+            {store.working_hours && (
+              <div className="contact-row">
+                <Clock size={16} />
+                <span>{t("contactHours")}</span>
+                <strong>{store.working_hours}</strong>
+              </div>
+            )}
+            {store.telegram && (
+              <a
+                className="contact-row"
+                href={`https://t.me/${socialHandle(store.telegram)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Send size={16} />
+                <span>{t("contactTelegram")}</span>
+                <strong>{store.telegram}</strong>
+              </a>
+            )}
+            {store.instagram && (
+              <a
+                className="contact-row"
+                href={`https://instagram.com/${socialHandle(store.instagram)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Instagram size={16} />
+                <span>{t("contactInstagram")}</span>
+                <strong>{store.instagram}</strong>
+              </a>
+            )}
+
+            {store.delivery_info && (
+              <div className="contact-note">
+                <Truck size={16} />
+                <div>
+                  <span>{t("contactDelivery")}</span>
+                  <p>{store.delivery_info}</p>
+                </div>
+              </div>
+            )}
+            {store.payment_info && (
+              <div className="contact-note">
+                <CreditCard size={16} />
+                <div>
+                  <span>{t("contactPayment")}</span>
+                  <p>{store.payment_info}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="admin-note">{t("storeLocationEmpty") || "Местоположение пока не указано"}</p>
         )}
+
+        {hasCoords && (
+          <div className="store-modal-map-wrap">
+            <StoreMap latitude={lat} longitude={lng} />
+          </div>
+        )}
+
         {mapUrl && (
           <a className="primary-button" href={mapUrl} target="_blank" rel="noreferrer">
             {t("openInMaps") || "Открыть на карте"}
           </a>
-        )}
-        {!store?.address && !mapUrl && (
-          <p className="admin-note">{t("storeLocationEmpty") || "Местоположение пока не указано."}</p>
         )}
       </div>
     </div>
