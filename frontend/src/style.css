@@ -1893,3 +1893,39 @@ a, button, input, textarea, select, .product-card, .category-card {
   background: #fff;
   filter: none;
 }
+
+/* animated cozy hero */
+.hero.hero-with-photo {
+  background: #2a241c;
+  isolation: isolate;
+}
+.hero.hero-with-photo::before {
+  content: "";
+  position: absolute;
+  inset: -6%;
+  background: url("/hero-cozy.jpg") center/cover no-repeat;
+  z-index: -2;
+  animation: heroKenBurns 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.hero.hero-with-photo::after {
+  content: "";
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(255, 214, 170, 0.18) 0%, transparent 45%),
+    radial-gradient(ellipse at 80% 70%, rgba(255, 235, 210, 0.12) 0%, transparent 40%),
+    linear-gradient(135deg, rgba(32, 28, 22, 0.62) 0%, rgba(48, 40, 30, 0.32) 55%, rgba(32, 28, 22, 0.58) 100%);
+  animation: heroGlow 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes heroKenBurns {
+  0% { transform: scale(1) translate(0%, 0%); }
+  100% { transform: scale(1.08) translate(-2%, -2%); }
+}
+@keyframes heroGlow {
+  0% { opacity: 0.92; }
+  100% { opacity: 1; filter: saturate(1.08); }
+}
