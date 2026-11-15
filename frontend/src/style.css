@@ -1349,3 +1349,56 @@ button {
   line-height: 1.55;
   color: #5c5a4f;
 }
+
+/* ---------- Checkout: location map picker ---------- */
+
+.location-picker {
+  margin-top: 12px;
+}
+
+.location-map {
+  width: 100%;
+  height: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e3e0d7;
+  background: #f2f0e8;
+}
+
+.location-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.location-actions .location-chip {
+  margin: 0;
+}
+
+.location-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #8a877a;
+  line-height: 1.45;
+}
+
+.location-pin-icon {
+  background: transparent;
+  border: none;
+}
+
+.location-pin-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3f6aa5;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* hide Leaflet Ukraine flag if present */
+.leaflet-attribution-flag {
+  display: none !important;
+}

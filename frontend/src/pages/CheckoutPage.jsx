@@ -3,10 +3,11 @@ import {
   ArrowLeft,
   CheckCircle2,
   MapPin,
-  Navigation,
   Send,
   ShoppingBag
 } from "lucide-react";
+
+import LocationPicker from "../components/LocationPicker";
 
 import { createOrder } from "../services/api";
 import { formatPrice, localized } from "../utils/format";
@@ -33,6 +34,7 @@ export default function CheckoutPage({
   const [comment, setComment] = useState("");
   const [coords, setCoords] = useState(null);
   const [locationError, setLocationError] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [errors, setErrors] = useState(emptyErrors);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -83,14 +85,20 @@ export default function CheckoutPage({
       return;
     }
 
+    setLocating(true);
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setCoords({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude
         });
+        setLocating(false);
       },
-      () => setLocationError(true),
+      () => {
+        setLocationError(true);
+        setLocating(false);
+      },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
     );
   };
@@ -215,28 +223,13 @@ export default function CheckoutPage({
             <MapPin size={19} color="#65715c" />
           </div>
 
-          {coords ? (
-            <div className="location-chip">
-              <Navigation size={15} />
-              <span>{t("locationAttached")}</span>
-              <a
-                href={`https://maps.google.com/?q=${coords.latitude},${coords.longitude}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t("openMap")}
-              </a>
-            </div>
-          ) : (
-            <button
-              className="location-button"
-              type="button"
-              onClick={requestLocation}
-            >
-              <Navigation size={16} />
-              {t("sendLocation")}
-            </button>
-          )}
+          <LocationPicker
+            coords={coords}
+            onChange={setCoords}
+            onUseMyLocation={requestLocation}
+            locating={locating}
+            t={t}
+          />
 
           {locationError && <p className="form-error">{t("locationError")}</p>}
         </section>
