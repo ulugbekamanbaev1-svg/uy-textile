@@ -1,6 +1,6 @@
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-// Берем пароль из настроек Render (или используем admin123 по умолчанию)
+// Пароль берется из настроек Render (VITE_ADMIN_PASSWORD)
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
 
 export class ApiError extends Error {
@@ -23,15 +23,17 @@ export async function adminFetch(path, options = {}) {
   const headers = new Headers(options.headers || {});
   const initData = telegramInitData();
 
+  // Если открыто в Telegram, передаем данные пользователя
   if (initData) {
     headers.set("X-Telegram-Init-Data", initData);
   }
 
-  // --- ДОБАВЛЕНО: Отправка логина и пароля (Basic Auth) ---
-  // Логин может быть любым (например, admin), сервер проверяет только пароль
-  const credentials = btoa(`admin:${ADMIN_PASSWORD}`);
+  // --- ДОБАВЛЕНО: Basic Auth (Логин и Пароль) ---
+  const username = "admin";
+  // Используем unescape(encodeURIComponent()) для безопасного кодирования, если в пароле есть спецсимволы
+  const credentials = btoa(unescape(encodeURIComponent(`${username}:${ADMIN_PASSWORD}`)));
   headers.set("Authorization", `Basic ${credentials}`);
-  // --------------------------------------------------------
+  // ----------------------------------------------
 
   const isFormData = options.body instanceof FormData;
 
