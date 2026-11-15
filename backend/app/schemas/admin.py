@@ -165,8 +165,19 @@ class StoreSettingsIn(BaseModel):
     instagram: str = Field(default="", max_length=120)
     telegram: str = Field(default="", max_length=120)
 
+    hero_title_ru: str = Field(default="", max_length=160)
+    hero_title_uz: str = Field(default="", max_length=160)
+    hero_title_uzc: str = Field(default="", max_length=160)
+    hero_text_ru: str = Field(default="", max_length=2000)
+    hero_text_uz: str = Field(default="", max_length=2000)
+    hero_text_uzc: str = Field(default="", max_length=2000)
+
 
 class StoreSettingsOut(StoreSettingsIn):
     model_config = ConfigDict(from_attributes=True)
 
     updated_at: datetime | None = None
+
+
+class ReorderBody(BaseModel):
+    ordered_ids: list[int] = Field(default_factory=list)

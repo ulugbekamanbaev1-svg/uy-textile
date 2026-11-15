@@ -20,6 +20,25 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
 
+        # Колонки, появившиеся после создания схемы на существующей базе
+        await connection.execute(
+            text(
+                "ALTER TABLE products "
+                "ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0"
+            )
+        )
+        await connection.execute(
+            text(
+                "ALTER TABLE store_settings "
+                "ADD COLUMN IF NOT EXISTS hero_title_ru VARCHAR(160) NOT NULL DEFAULT '', "
+                "ADD COLUMN IF NOT EXISTS hero_title_uz VARCHAR(160) NOT NULL DEFAULT '', "
+                "ADD COLUMN IF NOT EXISTS hero_title_uzc VARCHAR(160) NOT NULL DEFAULT '', "
+                "ADD COLUMN IF NOT EXISTS hero_text_ru TEXT NOT NULL DEFAULT '', "
+                "ADD COLUMN IF NOT EXISTS hero_text_uz TEXT NOT NULL DEFAULT '', "
+                "ADD COLUMN IF NOT EXISTS hero_text_uzc TEXT NOT NULL DEFAULT ''"
+            )
+        )
+
     await seed_data()
 
     yield

@@ -28,4 +28,5 @@ backend/app/static/uploads/*
 
 # Local database / portable PostgreSQL
 .postgres/
+backups/
 *.sqlite3

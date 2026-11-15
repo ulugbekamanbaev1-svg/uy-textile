@@ -89,6 +89,67 @@ export default function SettingsForm({
         </div>
       </section>
 
+      <section className="form-section">
+        <h3>{t("settingsHero")}</h3>
+
+        <div className="admin-field">
+          <span>{t("heroTitleRu")}</span>
+          <input
+            type="text"
+            value={form["hero_title_ru"] ?? ""}
+            onChange={(event) => onChange("hero_title_ru", event.target.value)}
+          />
+        </div>
+
+        <div className="admin-field">
+          <span>{t("heroTextRu")}</span>
+          <textarea
+            rows={2}
+            value={form["hero_text_ru"] ?? ""}
+            placeholder={t("heroTextHint")}
+            onChange={(event) => onChange("hero_text_ru", event.target.value)}
+          />
+        </div>
+
+        <div className="admin-field">
+          <span>{t("heroTitleUz")}</span>
+          <input
+            type="text"
+            value={form["hero_title_uz"] ?? ""}
+            onChange={(event) => onChange("hero_title_uz", event.target.value)}
+          />
+        </div>
+
+        <div className="admin-field">
+          <span>{t("heroTextUz")}</span>
+          <textarea
+            rows={2}
+            value={form["hero_text_uz"] ?? ""}
+            placeholder={t("heroTextHint")}
+            onChange={(event) => onChange("hero_text_uz", event.target.value)}
+          />
+        </div>
+
+        <div className="admin-field">
+          <span>{t("heroTitleUzc")}</span>
+          <input
+            type="text"
+            value={form["hero_title_uzc"] ?? ""}
+            onChange={(event) => onChange("hero_title_uzc", event.target.value)}
+          />
+        </div>
+
+        <div className="admin-field">
+          <span>{t("heroTextUzc")}</span>
+          <textarea
+            rows={2}
+            value={form["hero_text_uzc"] ?? ""}
+            placeholder={t("heroTextHint")}
+            onChange={(event) => onChange("hero_text_uzc", event.target.value)}
+          />
+        </div>
+      </section>
+
       <footer className="settings-foot">
         {state === "saved" && (
           <span className="save-ok">{t("settingsSaved")}</span>

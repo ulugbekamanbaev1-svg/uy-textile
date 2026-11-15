@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CategoryOut(BaseModel):
@@ -11,6 +11,14 @@ class CategoryOut(BaseModel):
     name_uzc: str
     sort_order: int
     product_count: int = 0
+
+
+class CategoryIn(BaseModel):
+    slug: str = Field(min_length=1, max_length=50)
+    name_ru: str = Field(min_length=1, max_length=120)
+    name_uz: str = Field(min_length=1, max_length=120)
+    name_uzc: str = Field(min_length=1, max_length=120)
+    sort_order: int = 0
 
 
 class VariantOut(BaseModel):
@@ -52,6 +60,7 @@ class ProductListItem(BaseModel):
     custom_size_allowed: bool
     is_featured: bool
     is_active: bool
+    sort_order: int = 0
 
 
 class ProductDetail(ProductListItem):

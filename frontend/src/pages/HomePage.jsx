@@ -8,19 +8,23 @@ export default function HomePage({
   lang,
   categories,
   products,
+  hero,
   onOpenProduct,
   onOpenCategory,
   isFavorite,
   onToggleFavorite
 }) {
   const featured = products.filter((product) => product.is_featured).slice(0, 4);
+  const localeCode = lang === "uzc" ? "uzc" : lang === "uz" ? "uz" : "ru";
+  const heroTitle = hero?.[`hero_title_${localeCode}`] || t("heroTitle");
+  const heroText = hero?.[`hero_text_${localeCode}`] || t("heroText");
 
   return (
     <main>
       <section className="hero">
         <span className="eyebrow">{t("heroEyebrow")}</span>
-        <h2>{t("heroTitle")}</h2>
-        <p>{t("heroText")}</p>
+        <h2>{heroTitle}</h2>
+        <p>{heroText}</p>
         <button
           className="primary-button"
           type="button"

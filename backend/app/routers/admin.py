@@ -1,9 +1,12 @@
+import csv
+import io
 import re
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -27,13 +30,14 @@ from app.schemas.admin import (
     AnalyticsOut,
     ClientOut,
     DailySalesOut,
+    ReorderBody,
     StatusCountOut,
     StoreSettingsIn,
     StoreSettingsOut,
     TopProductOut,
     UploadResult,
 )
-from app.schemas.catalog import AdminSummary, CategoryOut, ProductListItem
+from app.schemas.catalog import AdminSummary, CategoryIn, CategoryOut, ProductListItem
 from app.schemas.order import OrderOut, OrderStatusUpdate
 from app.services.store_settings import get_store_settings
 from app.services.telegram_auth import require_admin
@@ -118,6 +122,179 @@ async def admin_categories(db: AsyncSession = Depends(get_db)):
     ]
 
 
+async def get_category_or_404(
+    category_id: int,
+    db: AsyncSession,
+) -> Category:
+    result = await db.execute(
+        select(Category).where(Category.id == category_id)
+    )
+    category = result.scalar_one_or_none()
+
+    if category is None:
+        raise HTTPException(status_code=404, detail="Категория не найдена")
+
+    return category
+
+
+@router.post("/categories", response_model=CategoryOut, status_code=201)
+async def create_category(
+    payload: CategoryIn,
+    db: AsyncSession = Depends(get_db),
+):
+    slug = payload.slug.strip().lower()
+
+    if not SLUG_PATTERN.match(slug):
+        raise HTTPException(
+            status_code=422,
+            detail="Ссылка: только латиница, цифры и дефис",
+        )
+
+    if await db.scalar(select(Category.id).where(Category.slug == slug)) is not None:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Категория со ссылкой «{slug}» уже существует",
+        )
+
+    category = Category(
+        slug=slug,
+        name_ru=payload.name_ru.strip(),
+        name_uz=payload.name_uz.strip(),
+        name_uzc=payload.name_uzc.strip(),
+        sort_order=payload.sort_order,
+    )
+    db.add(category)
+    await db.commit()
+    await db.refresh(category)
+
+    product_count = await db.scalar(
+        select(func.count())
+        .select_from(Product)
+        .where(Product.category_id == category.id, Product.is_active.is_(True))
+    )
+
+    return CategoryOut(
+        id=category.id,
+        slug=category.slug,
+        name_ru=category.name_ru,
+        name_uz=category.name_uz,
+        name_uzc=category.name_uzc,
+        sort_order=category.sort_order,
+        product_count=product_count or 0,
+    )
+
+
+@router.patch("/categories/{category_id}", response_model=CategoryOut)
+async def update_category(
+    category_id: int,
+    payload: CategoryIn,
+    db: AsyncSession = Depends(get_db),
+):
+    category = await get_category_or_404(category_id, db)
+
+    slug = payload.slug.strip().lower()
+
+    if not SLUG_PATTERN.match(slug):
+        raise HTTPException(
+            status_code=422,
+            detail="Ссылка: только латиница, цифры и дефис",
+        )
+
+    if await db.scalar(
+        select(Category.id).where(
+            Category.slug == slug,
+            Category.id != category_id,
+        )
+    ) is not None:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Категория со ссылкой «{slug}» уже существует",
+        )
+
+    category.slug = slug
+    category.name_ru = payload.name_ru.strip()
+    category.name_uz = payload.name_uz.strip()
+    category.name_uzc = payload.name_uzc.strip()
+    category.sort_order = payload.sort_order
+
+    await db.commit()
+    await db.refresh(category)
+
+    result = await db.execute(
+        select(Category)
+        .options(selectinload(Category.products))
+        .where(Category.id == category_id)
+    )
+    category = result.scalar_one()
+
+    product_count = await db.scalar(
+        select(func.count())
+        .select_from(Product)
+        .where(Product.category_id == category.id, Product.is_active.is_(True))
+    )
+
+    return CategoryOut(
+        id=category.id,
+        slug=category.slug,
+        name_ru=category.name_ru,
+        name_uz=category.name_uz,
+        name_uzc=category.name_uzc,
+        sort_order=category.sort_order,
+        product_count=product_count or 0,
+    )
+
+
+@router.delete("/categories/{category_id}", status_code=204)
+async def delete_category(
+    category_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    category = await get_category_or_404(category_id, db)
+
+    await db.delete(category)
+    await db.commit()
+
+
+@router.post("/categories/order", response_model=list[CategoryOut])
+async def reorder_categories(
+    payload: ReorderBody,
+    db: AsyncSession = Depends(get_db),
+):
+    """Переупорядочивает категории: порядок = порядок в списке `ordered_ids`."""
+    ordered_ids = payload.ordered_ids
+    result = await db.execute(
+        select(Category).where(Category.id.in_(ordered_ids))
+    )
+    categories = {category.id: category for category in result.scalars().all()}
+
+    if len(categories) != len(ordered_ids):
+        raise HTTPException(status_code=404, detail="Категория не найдена")
+
+    for index, category_id in enumerate(ordered_ids, start=1):
+        categories[category_id].sort_order = index
+
+    await db.commit()
+
+    result = await db.execute(
+        select(Category)
+        .options(selectinload(Category.products))
+        .order_by(Category.sort_order, Category.id)
+    )
+
+    return [
+        CategoryOut(
+            id=category.id,
+            slug=category.slug,
+            name_ru=category.name_ru,
+            name_uz=category.name_uz,
+            name_uzc=category.name_uzc,
+            sort_order=category.sort_order,
+            product_count=sum(1 for p in category.products if p.is_active),
+        )
+        for category in result.scalars().all()
+    ]
+
+
 @router.get("/products", response_model=list[ProductListItem])
 async def admin_products(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
@@ -126,7 +303,7 @@ async def admin_products(db: AsyncSession = Depends(get_db)):
             selectinload(Product.variants),
             selectinload(Product.category),
         )
-        .order_by(Product.id)
+        .order_by(Product.sort_order, Product.id)
     )
 
     return [to_list_item(product) for product in result.scalars().all()]
@@ -150,6 +327,29 @@ async def get_product_or_404(
         raise HTTPException(status_code=404, detail="Товар не найден")
 
     return product
+
+
+@router.post("/products/order", response_model=dict)
+async def reorder_products(
+    payload: ReorderBody,
+    db: AsyncSession = Depends(get_db),
+):
+    """Переупорядочивает товары: порядок = порядок в списке `ordered_ids`."""
+    ordered_ids = payload.ordered_ids
+    result = await db.execute(
+        select(Product).where(Product.id.in_(ordered_ids))
+    )
+    products = {product.id: product for product in result.scalars().all()}
+
+    if len(products) != len(ordered_ids):
+        raise HTTPException(status_code=404, detail="Товар не найден")
+
+    for index, product_id in enumerate(ordered_ids, start=1):
+        products[product_id].sort_order = index
+
+    await db.commit()
+
+    return {"ordered_ids": ordered_ids}
 
 
 @router.get("/products/{product_id}", response_model=AdminProductOut)
@@ -460,16 +660,114 @@ async def update_order_status(
     return order_to_out(order)
 
 
+@router.get("/orders/export")
+async def export_orders(db: AsyncSession = Depends(get_db)):
+    """Экспорт заказов в CSV (для бэкапов и выгрузки)."""
+    result = await db.execute(
+        select(Order)
+        .options(selectinload(Order.items))
+        .order_by(Order.created_at.desc(), Order.id.desc())
+        .limit(2000)
+    )
+    orders = result.scalars().all()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([
+        "id",
+        "number",
+        "status",
+        "customer_name",
+        "phone",
+        "address",
+        "comment",
+        "total",
+        "created_at",
+        "latitude",
+        "longitude",
+    ])
+
+    for order in orders:
+        writer.writerow(
+            [
+                order.id,
+                order.number,
+                order.status,
+                order.customer_name,
+                order.phone,
+                order.address,
+                order.comment,
+                order.total,
+                order.created_at.isoformat() if order.created_at else "",
+                order.latitude if order.latitude is not None else "",
+                order.longitude if order.longitude is not None else "",
+            ]
+        )
+
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="orders.csv"'},
+    )
+
+
+@router.get("/clients/export")
+async def export_clients(db: AsyncSession = Depends(get_db)):
+    """Экспорт клиентов в CSV (агрегация по заказам)."""
+    result = await db.execute(
+        select(Order).order_by(Order.created_at.desc(), Order.id.desc())
+    )
+    orders = result.scalars().all()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(
+        [
+            "name",
+            "phone",
+            "telegram_username",
+            "address",
+            "orders_count",
+            "total_spent",
+            "last_order_at",
+        ]
+    )
+
+    for client in collect_clients(orders):
+        writer.writerow(
+            [
+                client["name"],
+                client["phone"],
+                client["telegram_username"] or "",
+                client["address"],
+                client["orders_count"],
+                client["total_spent"],
+                client["last_order_at"].isoformat() if client["last_order_at"] else "",
+            ]
+        )
+
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="clients.csv"'},
+    )
+
+
 @router.get("/clients", response_model=list[ClientOut])
 async def admin_clients(db: AsyncSession = Depends(get_db)):
     """Клиенты собираются из заказов: телефон — основной ключ."""
     result = await db.execute(
         select(Order).order_by(Order.created_at.desc(), Order.id.desc())
     )
+    orders = result.scalars().all()
 
+    return [ClientOut(**client) for client in collect_clients(orders)]
+
+
+def collect_clients(orders: list[Order]) -> list[dict]:
     clients: dict[str, dict] = {}
 
-    for order in result.scalars().all():
+    for order in orders:
         phone = (order.phone or "").strip()
 
         if phone:
@@ -493,8 +791,6 @@ async def admin_clients(db: AsyncSession = Depends(get_db)):
             }
             clients[key] = client
 
-        # Данные берём из самого свежего заказа, но не теряем
-        # username/адрес, если в новом заказе они не заполнены.
         if not client["address"] and order.address:
             client["address"] = order.address
 
@@ -506,7 +802,7 @@ async def admin_clients(db: AsyncSession = Depends(get_db)):
         if order.status != "cancelled":
             client["total_spent"] += order.total
 
-    return [ClientOut(**client) for client in clients.values()]
+    return list(clients.values())
 
 
 @router.get("/analytics", response_model=AnalyticsOut)

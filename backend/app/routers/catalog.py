@@ -45,6 +45,7 @@ def to_list_item(product: Product) -> ProductListItem:
         custom_size_allowed=product.custom_size_allowed,
         is_featured=product.is_featured,
         is_active=product.is_active,
+        sort_order=product.sort_order,
     )
 
 
@@ -102,7 +103,7 @@ async def list_products(
             )
         )
 
-    stmt = stmt.order_by(Product.is_featured.desc(), Product.id)
+    stmt = stmt.order_by(Product.is_featured.desc(), Product.sort_order, Product.id)
 
     result = await db.execute(stmt)
     return [to_list_item(product) for product in result.scalars().all()]

@@ -15,6 +15,7 @@ export const translations = {
     menuMap: "Карта доставки",
     menuAnalytics: "Аналитика",
     menuSettings: "Настройки",
+    menuCategories: "Категории",
     dashboardTitle: "Главная панель",
     dashboardSubtitle: "Управление магазином Uy Textile",
     ownerPanel: "ПАНЕЛЬ ВЛАДЕЛЬЦА",
@@ -186,7 +187,36 @@ export const translations = {
     settingsPublicNote:
       "Эти контакты и условия показываются покупателям в профиле.",
     contactDelivery: "Например: доставка по Ташкенту — 20 000 сум",
-    contactPayment: "Например: оплата при получении"
+    contactPayment: "Например: оплата при получении",
+
+    settingsHero: "Главный экран",
+    heroTitleRu: "Заголовок экрана (Русский)",
+    heroTextRu: "Текст экрана (Русский)",
+    heroTitleUz: "Заголовок экрана (O'zbekcha)",
+    heroTextUz: "Текст экрана (O'zbekcha)",
+    heroTitleUzc: "Заголовок экрана (Ўзбекча)",
+    heroTextUzc: "Текст экрана (Ўзбекча)",
+    heroTextHint:
+      "Если поле пустое, у покупателя используется текст по умолчанию для языка.",
+
+    categoriesTitle: "Категории",
+    categoriesSubtitle: "Разделы каталога и порядок товаров",
+    categoryAdd: "Добавить категорию",
+    categoryEdit: "Редактировать категорию",
+    categoryDelete: "Удалить категорию",
+    categorySlug: "Ссылка",
+    categoryNameRu: "Название (Русский)",
+    categoryNameUz: "Название (O'zbekcha)",
+    categoryNameUzc: "Название (Ўзбекча)",
+    categoryMoveUp: "Выше",
+    categoryMoveDown: "Ниже",
+    categoryCreated: "Категория создана",
+    categoryUpdated: "Категория обновлена",
+    categoryDeleted: "Категория удалена",
+    categorySaveError: "Не удалось сохранить категорию",
+    categorySave: "Сохранить",
+    categorySort: "Порядок",
+    categoryProducts: "Товаров: {count}",
   },
 
   uz: {
@@ -199,7 +229,24 @@ export const translations = {
     menuMap: "Yetkazib berish xaritasi",
     menuAnalytics: "Analitika",
     menuSettings: "Sozlamalar",
+    menuCategories: "Kategoriyalar",
     dashboardTitle: "Asosiy panel",
+    categoryAdd: "Yangi kategoriya",
+    categoryEdit: "Tahrirlash",
+    categoryDelete: "O'chirish",
+    categorySlug: "Link",
+    categoryNameRu: "Nom (Rus)",
+    categoryNameUz: "Nom (O'zbekcha)",
+    categoryNameUzc: "Nom (O'zbekcha)",
+    categoryMoveUp: "Yuqoriga",
+    categoryMoveDown: "Pazirga",
+    categoryCreated: "Kategoriya yaratildi",
+    categoryUpdated: "Kategoriya yangilandi",
+    categoryDeleted: "Kategoriya o'chirildi",
+    categorySaveError: "Kategoriyni saqlab bo'lmadi",
+    categorySave: "Saqlash",
+    categorySort: "Tartib",
+    categoryProducts: "Mahsulotlar: {count}",
     dashboardSubtitle: "Uy Textile do'konini boshqarish",
     ownerPanel: "EGASI PANELI",
     welcomeTitle: "Uy Textile'ga xush kelibsiz",
@@ -370,7 +417,17 @@ export const translations = {
     settingsPublicNote:
       "Bu kontaktlar va shartlar xaridorlarga profilda ko'rsatiladi.",
     contactDelivery: "Masalan: Toshkent bo'ylab yetkazish — 20 000 so'm",
-    contactPayment: "Masalan: to'lov yetkazib berishda"
+    contactPayment: "Masalan: to'lov yetkazib berishda",
+
+    settingsHero: "Bosh sahifa",
+    heroTitleRu: "Sahifa sarlavhasi (Rus)",
+    heroTextRu: "Sahifa matni (Rus)",
+    heroTitleUz: "Sahifa sarlavhi (O'zbekcha)",
+    heroTextUz: "Sahifa matni (O'zbekcha)",
+    heroTitleUzc: "Sahifa sarlavhasi (O'zbekcha)",
+    heroTextUzc: "Sahifa matni (O'zbekcha)",
+    heroTextHint:
+      "Agar maydon bo'sh bo'lsa, xaridor davridagi standart matn ishlatilir."
   },
 
   uzc: {
@@ -383,7 +440,24 @@ export const translations = {
     menuMap: "Етказиб бериш харитаси",
     menuAnalytics: "Аналитика",
     menuSettings: "Созламалар",
+    menuCategories: "Категориялар",
     dashboardTitle: "Асосий панел",
+    categoryAdd: "Yangi kategoriya",
+    categoryEdit: "Tahrirlish",
+    categoryDelete: "O'chirish",
+    categorySlug: "Havola",
+    categoryNameRu: "Nom (Rus)",
+    categoryNameUz: "Nom (O'zbekcha)",
+    categoryNameUzc: "Nom (O'zbekcha)",
+    categoryMoveUp: "Yuqoriga",
+    categoryMoveDown: "Pastga",
+    categoryCreated: "Kategoriya yaratildi",
+    categoryUpdated: "Kategoriya yangilandi",
+    categoryDeleted: "Kategoriya o'chirildi",
+    categorySaveError: "Kategoriyni saqlab bo'lmadi",
+    categorySave: "Saqlash",
+    categorySort: "Tartib",
+    categoryProducts: "Маҳсулотлар: {count}",
     dashboardSubtitle: "Uy Textile дўконини бошқариш",
     ownerPanel: "ЭГАСИ ПАНЕЛИ",
     welcomeTitle: "Uy Textile'га хуш келибсиз",
@@ -554,7 +628,17 @@ export const translations = {
     settingsPublicNote:
       "Бу контактлар ва шартлар харидорларга профилда кўрсатилади.",
     contactDelivery: "Масалан: Тошкент бўйлаб етказиш — 20 000 сўм",
-    contactPayment: "Масалан: тўлов етказиб беришда"
+    contactPayment: "Масалан: тўлов етказиб беришда",
+
+    settingsHero: "Асосий экран",
+    heroTitleRu: "Экран sarlavhasi (Rus)",
+    heroTextRu: "Экран matni (Rus)",
+    heroTitleUz: "Экран sarlavhi (O'zbekcha)",
+    heroTextUz: "Экран matni (O'zbekcha)",
+    heroTitleUzc: "Экран sarlavhasi (Ўзбекча)",
+    heroTextUzc: "Экран matni (Ўзбекча)",
+    heroTextHint:
+      "Agar maydon bo'sh bo'lsa, xaridor davridagi standart matn ishlatilir."
   }
 };
 

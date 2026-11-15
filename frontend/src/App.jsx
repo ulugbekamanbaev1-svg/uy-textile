@@ -16,6 +16,7 @@ import {
   checkServer,
   fetchCategories,
   fetchProducts,
+  fetchStoreSettings,
   telegramLogin
 } from "./services/api";
 
@@ -29,6 +30,7 @@ export default function App() {
   const [authState, setAuthState] = useState("idle");
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [storeSettings, setStoreSettings] = useState(null);
   const [catalogState, setCatalogState] = useState("loading");
 
   const cart = useCart();
@@ -102,6 +104,10 @@ export default function App() {
       .catch(() => setServer("offline"));
 
     loadCatalog();
+
+    fetchStoreSettings()
+      .then(setStoreSettings)
+      .catch(() => setStoreSettings(null));
   }, [loadCatalog]);
 
   useEffect(() => {
@@ -235,6 +241,7 @@ export default function App() {
         lang={lang}
         categories={categories}
         products={products}
+        hero={storeSettings}
         onOpenProduct={openProduct}
         onOpenCategory={openCategory}
         isFavorite={favorites.isFavorite}

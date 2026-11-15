@@ -8,6 +8,7 @@ import {
   Package,
   Settings,
   TrendingUp,
+  Tag,
   Wifi,
   WifiOff,
   Menu,
@@ -17,7 +18,9 @@ import {
   ExternalLink,
   Pencil,
   Plus,
-  Trash2
+  Trash2,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 
 import DeliveryMap from "./components/DeliveryMap";
@@ -45,6 +48,7 @@ const MENU = [
   [LayoutDashboard, "menuHome", "home"],
   [ShoppingBag, "menuOrders", "orders"],
   [Package, "menuProducts", "products"],
+  [Tag, "menuCategories", "categories"],
   [Users, "menuClients", "clients"],
   [MapPin, "menuMap", "map"],
   [TrendingUp, "menuAnalytics", "analytics"],
@@ -58,7 +62,8 @@ const SECTION_META = {
   clients: ["clientsTitle", "clientsSubtitle"],
   map: ["mapTitle", "mapSubtitle"],
   analytics: ["analyticsTitle", "analyticsSubtitle"],
-  settings: ["settingsTitle", "settingsSubtitle"]
+  settings: ["settingsTitle", "settingsSubtitle"],
+  categories: ["categoriesTitle", "categoriesSubtitle"]
 };
 
 const EMPTY_SETTINGS = {
@@ -69,7 +74,13 @@ const EMPTY_SETTINGS = {
   delivery_info: "",
   payment_info: "",
   instagram: "",
-  telegram: ""
+  telegram: "",
+  hero_title_ru: "",
+  hero_title_uz: "",
+  hero_title_uzc: "",
+  hero_text_ru: "",
+  hero_text_uz: "",
+  hero_text_uzc: ""
 };
 
 function toSettingsForm(settings) {
@@ -97,6 +108,9 @@ export default function App() {
   const [settingsForm, setSettingsForm] = useState(null);
   const [settingsState, setSettingsState] = useState("idle");
   const [settingsError, setSettingsError] = useState("");
+  const [categoryDraft, setCategoryDraft] = useState(null);
+  const [categoryDeleteTarget, setCategoryDeleteTarget] = useState(null);
+  const [categoryError, setCategoryError] = useState("");
 
   const t = (key, vars = {}) => {
     const dictionary = translations[lang] || translations.ru;
@@ -287,6 +301,125 @@ export default function App() {
     ? orders.filter((order) => order.status === orderFilter)
     : orders;
 
+  const openCategoryCreate = () => {
+    setCategoryDeleteTarget(null);
+    setCategoryError("");
+    setCategoryDraft({
+      id: null,
+      slug: "",
+      name_ru: "",
+      name_uz: "",
+      name_uzc: "",
+      sort_order: categories.length + 1
+    });
+  };
+
+  const openCategoryEdit = (category) => {
+    setCategoryDeleteTarget(null);
+    setCategoryError("");
+    setCategoryDraft({ ...category });
+  };
+
+  const saveCategory = async (event) => {
+    event.preventDefault();
+
+    if (!categoryDraft) {
+      return;
+    }
+
+    const payload = {
+      slug: categoryDraft.slug,
+      name_ru: categoryDraft.name_ru,
+      name_uz: categoryDraft.name_uz,
+      name_uzc: categoryDraft.name_uzc,
+      sort_order: Number(categoryDraft.sort_order) || 0
+    };
+
+    try {
+      if (categoryDraft.id) {
+        await adminFetch(`/api/admin/categories/${categoryDraft.id}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await adminFetch("/api/admin/categories", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+      }
+
+      setCategoryDraft(null);
+      loadData();
+    } catch (error) {
+      setCategoryError(error.message || t("categorySaveError"));
+    }
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!categoryDeleteTarget) {
+      return;
+    }
+
+    try {
+      await adminFetch(`/api/admin/categories/${categoryDeleteTarget.id}`, {
+        method: "DELETE"
+      });
+
+      setCategoryDeleteTarget(null);
+      loadData();
+    } catch (error) {
+      setCategoryError(error.message || t("categorySaveError"));
+    }
+  };
+
+  const moveCategory = async (category, direction) => {
+    const index = categories.findIndex((item) => item.id === category.id);
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+
+    if (swapIndex < 0 || swapIndex >= categories.length) {
+      return;
+    }
+
+    const next = [...categories];
+    [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+    const orderedIds = next.map((item) => item.id);
+
+    try {
+      await adminFetch("/api/admin/categories/order", {
+        method: "POST",
+        body: JSON.stringify({ ordered_ids: orderedIds })
+      });
+    } catch {
+      // если порядок не удалось сохранить — просто перечитаем данные
+    }
+
+    loadData();
+  };
+
+  const moveProduct = async (product, direction, list = products) => {
+    const index = list.findIndex((item) => item.id === product.id);
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+
+    if (swapIndex < 0 || swapIndex >= list.length) {
+      return;
+    }
+
+    const next = [...list];
+    [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+    const orderedIds = next.map((item) => item.id);
+
+    try {
+      await adminFetch("/api/admin/products/order", {
+        method: "POST",
+        body: JSON.stringify({ ordered_ids: orderedIds })
+      });
+    } catch {
+      // если порядок не удалось сохранить — просто перечитаем данные
+    }
+
+    loadData();
+  };
+
   return (
     <div className="admin">
       <aside className="sidebar">
@@ -460,7 +593,124 @@ export default function App() {
                   setDeleteError("");
                   setDeleteTarget(product);
                 }}
+                onMove={moveProduct}
               />
+            )}
+          </>
+        )}
+
+        {section === "categories" && (
+          <>
+            {dataState === "loading" && (
+              <p className="admin-note">{t("loading")}</p>
+            )}
+
+            {dataState === "error" && (
+              <div className="admin-error">
+                <p>{t("errorLoading")}</p>
+                <button type="button" onClick={loadData}>
+                  {t("retry")}
+                </button>
+              </div>
+            )}
+
+            {dataState === "ready" && !categoryDraft && (
+              <CategoriesCard
+                t={t}
+                lang={lang}
+                categories={categories}
+                onAdd={() => openCategoryCreate()}
+                onEdit={openCategoryEdit}
+                onDelete={(category) => {
+                  setCategoryError("");
+                  setCategoryDeleteTarget(category);
+                }}
+                onMove={moveCategory}
+              />
+            )}
+
+            {dataState === "ready" && categoryDraft && (
+              <section className="products-card">
+                <div className="products-card-head">
+                  <div>
+                    <h3>
+                      {categoryDraft.id ? t("categoryEdit") : t("categoryAdd")}
+                    </h3>
+                  </div>
+                </div>
+
+                <form className="settings-card" onSubmit={saveCategory}>
+                  <div className="admin-field">
+                    <span>{t("categorySlug")}</span>
+                    <input
+                      type="text"
+                      value={categoryDraft.slug ?? ""}
+                      onChange={(event) =>
+                        setCategoryDraft({ ...categoryDraft, slug: event.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <span>{t("categoryNameRu")}</span>
+                    <input
+                      type="text"
+                      value={categoryDraft.name_ru ?? ""}
+                      onChange={(event) =>
+                        setCategoryDraft({ ...categoryDraft, name_ru: event.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <span>{t("categoryNameUz")}</span>
+                    <input
+                      type="text"
+                      value={categoryDraft.name_uz ?? ""}
+                      onChange={(event) =>
+                        setCategoryDraft({ ...categoryDraft, name_uz: event.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <span>{t("categoryNameUzc")}</span>
+                    <input
+                      type="text"
+                      value={categoryDraft.name_uzc ?? ""}
+                      onChange={(event) =>
+                        setCategoryDraft({ ...categoryDraft, name_uzc: event.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <span>{t("categorySort")}</span>
+                    <input
+                      type="number"
+                      value={categoryDraft.sort_order ?? 0}
+                      onChange={(event) =>
+                        setCategoryDraft({ ...categoryDraft, sort_order: Number(event.target.value) || 0 })
+                      }
+                    />
+                  </div>
+
+                  {categoryError && <p className="form-error">{categoryError}</p>}
+
+                  <footer className="settings-foot">
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => setCategoryDraft(null)}
+                    >
+                      {t("cancel")}
+                    </button>
+                    <button type="submit" className="primary-admin-button">
+                      {t("categorySave")}
+                    </button>
+                  </footer>
+                </form>
+              </section>
             )}
           </>
         )}
@@ -609,7 +859,7 @@ export default function App() {
           <DeliveryMap orders={orders} t={t} lang={lang} />
         )}
 
-        {!["home", "products", "orders", "clients", "map", "analytics", "settings"].includes(
+        {!["home", "products", "orders", "clients", "map", "analytics", "settings", "categories"].includes(
           section
         ) && (
           <div className="admin-placeholder">
@@ -768,6 +1018,119 @@ function OrderCard({ order, t, lang, onStatusChange }) {
   );
 }
 
+function CategoriesCard({
+  t,
+  lang,
+  categories,
+  onAdd,
+  onEdit,
+  onDelete,
+  onMove
+}) {
+  const nameOf = (category) =>
+    category[`name_${lang}`] || category.name_ru || "";
+
+  return (
+    <section className="products-card">
+      <div className="products-card-head">
+        <div>
+          <h3>{t("categoriesTitle")}</h3>
+          <p>{t("categoriesSubtitle")}</p>
+        </div>
+        <span className="table-count">
+          {t("categoryProducts", { count: categories.length })}
+        </span>
+        <button
+          type="button"
+          className="primary-admin-button"
+          onClick={onAdd}
+        >
+          <Plus size={16} />
+          {t("categoryAdd")}
+        </button>
+      </div>
+
+      {categories.length === 0 ? (
+        <p className="admin-note">{t("catalogEmpty")}</p>
+      ) : (
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{t("categorySort")}</th>
+                <th>{t("colCategory")}</th>
+                <th>{t("categoryProducts", { count: categories.length })}</th>
+                <th>{t("tableActions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categories.map((category, index) => (
+                <tr key={category.id}>
+                  <td>
+                    <div className="table-actions">
+                      <button
+                        type="button"
+                        className="icon-button"
+                        disabled={index === 0}
+                        title={t("categoryMoveUp")}
+                        aria-label={t("categoryMoveUp")}
+                        onClick={() => onMove(category, "up")}
+                      >
+                        <ChevronUp size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        disabled={index === categories.length - 1}
+                        title={t("categoryMoveDown")}
+                        aria-label={t("categoryMoveDown")}
+                        onClick={() => onMove(category, "down")}
+                      >
+                        <ChevronDown size={15} />
+                      </button>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="table-product">
+                      <div>
+                        <strong>{nameOf(category)}</strong>
+                        <span>{category.slug}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{category.product_count}</td>
+                  <td>
+                    <div className="table-actions">
+                      <button
+                        type="button"
+                        className="icon-button"
+                        title={t("categoryEdit")}
+                        aria-label={t("categoryEdit")}
+                        onClick={() => onEdit(category)}
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-button danger"
+                        title={t("categoryDelete")}
+                        aria-label={t("categoryDelete")}
+                        onClick={() => onDelete(category)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function ProductsTable({
   t,
   lang,
@@ -776,7 +1139,8 @@ function ProductsTable({
   subtitle,
   compact,
   onEdit,
-  onDelete
+  onDelete,
+  onMove
 }) {
   return (
     <section className={`products-card${compact ? " compact" : ""}`}>
@@ -805,7 +1169,7 @@ function ProductsTable({
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
+              {products.map((product, index) => (
                 <tr key={product.id}>
                   <td>
                     <div className="table-product">
@@ -847,6 +1211,26 @@ function ProductsTable({
                   {!compact && (
                     <td>
                       <div className="table-actions">
+                        <button
+                          type="button"
+                          className="icon-button"
+                          disabled={index === 0}
+                          title={t("categoryMoveUp")}
+                          aria-label={t("categoryMoveUp")}
+                          onClick={() => onMove?.(product, "up", products)}
+                        >
+                          <ChevronUp size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-button"
+                          disabled={index === products.length - 1}
+                          title={t("categoryMoveDown")}
+                          aria-label={t("categoryMoveDown")}
+                          onClick={() => onMove?.(product, "down", products)}
+                        >
+                          <ChevronDown size={15} />
+                        </button>
                         <button
                           type="button"
                           className="icon-button"

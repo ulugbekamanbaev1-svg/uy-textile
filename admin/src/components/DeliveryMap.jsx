@@ -5,7 +5,8 @@ import { MapPin, Navigation } from "lucide-react";
 
 import { formatPrice } from "../utils/format";
 
-const TASHKENT = [41.3111, 69.2797];
+// Центр доставки — город Хорезм (Ургенч)
+const DELIVERY_CENTER = [41.5505, 60.633];
 
 const STATUS_KEYS = {
   new: "statusNew",
@@ -47,15 +48,20 @@ export default function DeliveryMap({ orders, t, lang }) {
     }
 
     const map = L.map(containerRef.current, {
-      center: TASHKENT,
-      zoom: 11,
-      scrollWheelZoom: true
+      center: DELIVERY_CENTER,
+      zoom: 10,
+      scrollWheelZoom: true,
+      // без стандартного контрола — свой префикс без флага
+      attributionControl: false
     });
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution:
+    L.control.attribution({
+      prefix:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19
     }).addTo(map);
 
     mapRef.current = map;

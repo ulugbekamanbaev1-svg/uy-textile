@@ -1665,3 +1665,8 @@ button {
     height: 180px;
   }
 }
+
+/* Leaflet: скрываем флаг Украины в атрибуции карты */
+.leaflet-attribution-flag {
+  display: none !important;
+}

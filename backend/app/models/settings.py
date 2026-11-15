@@ -26,6 +26,13 @@ class StoreSettings(Base):
     instagram: Mapped[str] = mapped_column(String(120), default="")
     telegram: Mapped[str] = mapped_column(String(120), default="")
 
+    hero_title_ru: Mapped[str] = mapped_column(String(160), default="")
+    hero_title_uz: Mapped[str] = mapped_column(String(160), default="")
+    hero_title_uzc: Mapped[str] = mapped_column(String(160), default="")
+    hero_text_ru: Mapped[str] = mapped_column(Text, default="")
+    hero_text_uz: Mapped[str] = mapped_column(Text, default="")
+    hero_text_uzc: Mapped[str] = mapped_column(Text, default="")
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
