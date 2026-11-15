@@ -96,6 +96,7 @@ export default function App() {
   const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
   const [orderFilter, setOrderFilter] = useState("");
+  const [orderSearch, setOrderSearch] = useState("");
   const [dataState, setDataState] = useState("loading");
   const [search, setSearch] = useState("");
   const [formProduct, setFormProduct] = useState(undefined);
@@ -299,9 +300,27 @@ export default function App() {
     }
   };
 
-  const visibleOrders = orderFilter
-    ? orders.filter((order) => order.status === orderFilter)
-    : orders;
+  const visibleOrders = useMemo(() => {
+    let list = orderFilter
+      ? orders.filter((order) => order.status === orderFilter)
+      : orders;
+
+    const q = orderSearch.trim().toLowerCase();
+    if (q) {
+      const digits = q.replace(/\D/g, "");
+      list = list.filter((order) => {
+        return (
+          (order.number || "").toLowerCase().includes(q) ||
+          (order.customer_name || "").toLowerCase().includes(q) ||
+          (order.phone || "").toLowerCase().includes(q) ||
+          (order.address || "").toLowerCase().includes(q) ||
+          (digits && (order.phone || "").replace(/\D/g, "").includes(digits))
+        );
+      });
+    }
+
+    return list;
+  }, [orders, orderFilter, orderSearch]);
 
   const openCategoryCreate = () => {
     setCategoryDeleteTarget(null);
@@ -719,6 +738,17 @@ export default function App() {
 
         {section === "orders" && (
           <>
+            <div className="table-toolbar" style={{ marginBottom: 12 }}>
+              <div className="admin-search">
+                <Search size={17} />
+                <input
+                  type="search"
+                  value={orderSearch}
+                  placeholder={t("clientSearch")}
+                  onChange={(event) => setOrderSearch(event.target.value)}
+                />
+              </div>
+            </div>
             <div className="order-filters">
               <button
                 type="button"

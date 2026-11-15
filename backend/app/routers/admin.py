@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -620,6 +620,7 @@ async def upload_image(file: UploadFile = File(...)):
 @router.get("/orders", response_model=list[OrderOut])
 async def admin_orders(
     status: str | None = None,
+    q: str | None = Query(default=None, max_length=80),
     db: AsyncSession = Depends(get_db),
 ):
     stmt = (
@@ -631,6 +632,26 @@ async def admin_orders(
 
     if status:
         stmt = stmt.where(Order.status == status)
+
+    if q and q.strip():
+        term = q.strip()
+        digits = re.sub(r"\D", "", term)
+        conditions = [
+            Order.customer_name.ilike(f"%{term}%"),
+            Order.phone.ilike(f"%{term}%"),
+            Order.address.ilike(f"%{term}%"),
+        ]
+        match = re.search(r"(\d+)$", term)
+        if match:
+            try:
+                conditions.append(Order.id == int(match.group(1)))
+            except ValueError:
+                pass
+        if len(digits) >= 4:
+            conditions.append(
+                func.regexp_replace(Order.phone, r"\D", "", "g").like(f"%{digits}%")
+            )
+        stmt = stmt.where(or_(*conditions))
 
     result = await db.execute(stmt)
 

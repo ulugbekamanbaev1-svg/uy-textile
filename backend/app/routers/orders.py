@@ -1,5 +1,7 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from sqlalchemy import select
+import re
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -33,6 +35,45 @@ def order_to_out(order: Order) -> OrderOut:
         created_at=order.created_at,
         items=order.items,
     )
+
+
+@router.get("/track", response_model=list[OrderOut])
+async def track_orders(
+    phone: str | None = Query(default=None, max_length=40),
+    number: str | None = Query(default=None, max_length=20),
+    db: AsyncSession = Depends(get_db),
+):
+    phone_digits = re.sub(r"\D", "", phone or "")
+    number_clean = (number or "").strip().upper()
+
+    if len(phone_digits) < 7 and not number_clean:
+        raise HTTPException(
+            status_code=422,
+            detail="Укажите номер телефона или номер заказа",
+        )
+
+    stmt = (
+        select(Order)
+        .options(selectinload(Order.items))
+        .order_by(Order.created_at.desc(), Order.id.desc())
+        .limit(20)
+    )
+
+    if number_clean:
+        # UY-00012 -> id 12
+        match = re.search(r"(\d+)$", number_clean)
+        if not match:
+            raise HTTPException(status_code=422, detail="Некорректный номер заказа")
+        order_id = int(match.group(1))
+        stmt = stmt.where(Order.id == order_id)
+    elif phone_digits:
+        tail = phone_digits[-9:]
+        stmt = stmt.where(
+            func.regexp_replace(Order.phone, r"\D", "", "g").like(f"%{tail}%")
+        )
+
+    result = await db.execute(stmt)
+    return [order_to_out(order) for order in result.scalars().all()]
 
 
 @router.post("", response_model=OrderCreated, status_code=201)

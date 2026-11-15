@@ -54,12 +54,13 @@ export function fetchCategories() {
   return request("/api/catalog/categories");
 }
 
-export function fetchProducts({ category, search, featured } = {}) {
+export function fetchProducts({ category, search, featured, sort } = {}) {
   const params = new URLSearchParams();
 
   if (category) params.set("category", category);
   if (search) params.set("search", search);
   if (featured) params.set("featured", "true");
+  if (sort) params.set("sort", sort);
 
   const query = params.toString();
 
@@ -100,6 +101,24 @@ export async function createOrder(payload) {
         : "Не удалось отправить заказ";
 
     throw new Error(detail);
+  }
+
+  return data;
+}
+
+export async function trackOrders({ phone, number } = {}) {
+  const params = new URLSearchParams();
+  if (phone) params.set("phone", phone);
+  if (number) params.set("number", number);
+  const query = params.toString();
+
+  const response = await fetch(
+    `${API_URL}/api/orders/track${query ? `?${query}` : ""}`
+  );
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Не удалось найти заказы");
   }
 
   return data;

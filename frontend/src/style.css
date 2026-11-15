@@ -1402,3 +1402,99 @@ button {
 .leaflet-attribution-flag {
   display: none !important;
 }
+
+/* ---------- Upgrade: order tracking (profile) ---------- */
+
+.track-form {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+.track-form input {
+  flex: 1;
+  border: 1px solid #ddd9cf;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  background: #faf9f5;
+}
+
+.track-form .primary-button {
+  margin: 0;
+  padding: 10px 14px;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.tracked-orders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tracked-order {
+  border: 1px solid #eeeade;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fcfbf7;
+}
+
+.tracked-order-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tracked-order-head strong {
+  font-size: 13px;
+}
+
+.tracked-order-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #6f6d63;
+}
+
+.tracked-order .status-pill {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eceae2;
+  color: #4a4d44;
+}
+
+.tracked-order .status-pill.new { background: #e8f0ff; color: #2f5da8; }
+.tracked-order .status-pill.confirmed { background: #fff4dd; color: #8a6a1f; }
+.tracked-order .status-pill.delivering { background: #e9f4e7; color: #3f6a3a; }
+.tracked-order .status-pill.done { background: #e7f7ea; color: #1f7a3a; }
+.tracked-order .status-pill.cancelled { background: #fdecec; color: #9a3b35; }
+
+/* ---------- Upgrade: catalog sort ---------- */
+
+.catalog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 10px;
+}
+
+.catalog-toolbar .result-count {
+  margin: 0;
+}
+
+.sort-select {
+  border: 1px solid #ddd9cf;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  background: #fff;
+  color: #34322b;
+}

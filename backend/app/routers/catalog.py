@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import or_, select
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models import Category, Product
+from app.models import Category, Product, ProductVariant
 from app.schemas.catalog import (
     CategoryOut,
     ColorOut,
@@ -76,6 +76,7 @@ async def list_products(
     category: str | None = None,
     search: str | None = None,
     featured: bool = False,
+    sort: str = Query(default="default"),
     db: AsyncSession = Depends(get_db),
 ):
     stmt = (
@@ -103,7 +104,28 @@ async def list_products(
             )
         )
 
-    stmt = stmt.order_by(Product.is_featured.desc(), Product.sort_order, Product.id)
+    if sort in ("price_asc", "price_desc"):
+        price_expr = func.coalesce(
+            select(func.min(ProductVariant.price))
+            .where(
+                ProductVariant.product_id == Product.id,
+                ProductVariant.is_active.is_(True),
+            )
+            .correlate(Product)
+            .scalar_subquery(),
+            Product.price_per_m2,
+            0,
+        )
+        stmt = stmt.order_by(
+            price_expr.asc() if sort == "price_asc" else price_expr.desc(),
+            Product.id,
+        )
+    elif sort == "newest":
+        stmt = stmt.order_by(Product.id.desc())
+    else:
+        stmt = stmt.order_by(
+            Product.is_featured.desc(), Product.sort_order, Product.id
+        )
 
     result = await db.execute(stmt)
     return [to_list_item(product) for product in result.scalars().all()]

@@ -16,11 +16,12 @@ export default function CatalogPage({
   onToggleFavorite
 }) {
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("default");
 
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return products.filter((product) => {
+    const filtered = products.filter((product) => {
       const matchCategory =
         !activeCategory || product.category_slug === activeCategory;
 
@@ -36,7 +37,19 @@ export default function CatalogPage({
         (product[`name_${code}`] || "").toLowerCase().includes(query)
       );
     });
-  }, [products, activeCategory, search]);
+
+    const sorted = [...filtered];
+
+    if (sort === "price_asc") {
+      sorted.sort((a, b) => (a.min_price || 0) - (b.min_price || 0));
+    } else if (sort === "price_desc") {
+      sorted.sort((a, b) => (b.min_price || 0) - (a.min_price || 0));
+    } else if (sort === "newest") {
+      sorted.sort((a, b) => (b.id || 0) - (a.id || 0));
+    }
+
+    return sorted;
+  }, [products, activeCategory, search, sort]);
 
   return (
     <main>
@@ -83,9 +96,22 @@ export default function CatalogPage({
         ))}
       </div>
 
-      <p className="result-count">
-        {t("productsFound", { count: visible.length })}
-      </p>
+      <div className="catalog-toolbar">
+        <p className="result-count">
+          {t("productsFound", { count: visible.length })}
+        </p>
+        <select
+          className="sort-select"
+          value={sort}
+          onChange={(event) => setSort(event.target.value)}
+          aria-label={t("sortLabel")}
+        >
+          <option value="default">{t("sortDefault")}</option>
+          <option value="price_asc">{t("sortPriceAsc")}</option>
+          <option value="price_desc">{t("sortPriceDesc")}</option>
+          <option value="newest">{t("sortNewest")}</option>
+        </select>
+      </div>
 
       {visible.length === 0 ? (
         <div className="empty-state">
@@ -95,6 +121,7 @@ export default function CatalogPage({
             type="button"
             onClick={() => {
               setSearch("");
+              setSort("default");
               onCategoryChange("");
             }}
           >

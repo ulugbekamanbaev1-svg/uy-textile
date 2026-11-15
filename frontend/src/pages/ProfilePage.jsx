@@ -5,6 +5,7 @@ import {
   Heart,
   Instagram,
   MapPin,
+  PackageSearch,
   Phone,
   Send,
   ShoppingBag,
@@ -14,8 +15,16 @@ import {
 } from "lucide-react";
 
 import { LANGUAGES } from "../i18n";
-import { fetchStoreSettings } from "../services/api";
+import { fetchStoreSettings, trackOrders } from "../services/api";
 import { formatPrice } from "../utils/format";
+
+const STATUS_KEYS = {
+  new: "statusNew",
+  confirmed: "statusConfirmed",
+  delivering: "statusDelivering",
+  done: "statusDone",
+  cancelled: "statusCancelled"
+};
 
 function socialHandle(value) {
   return (value || "")
@@ -38,12 +47,33 @@ export default function ProfilePage({
   onFavorites
 }) {
   const [store, setStore] = useState(null);
+  const [trackPhone, setTrackPhone] = useState("");
+  const [trackedOrders, setTrackedOrders] = useState([]);
+  const [trackState, setTrackState] = useState("idle"); // idle | loading | done | error
 
   useEffect(() => {
     fetchStoreSettings()
       .then(setStore)
       .catch(() => setStore(null));
   }, []);
+
+  const handleTrack = async () => {
+    const phone = trackPhone.trim();
+    if (phone.replace(/\D/g, "").length < 7) {
+      setTrackState("error");
+      return;
+    }
+
+    setTrackState("loading");
+    try {
+      const orders = await trackOrders({ phone });
+      setTrackedOrders(Array.isArray(orders) ? orders : []);
+      setTrackState("done");
+    } catch {
+      setTrackState("error");
+      setTrackedOrders([]);
+    }
+  };
 
   const hasContacts =
     store &&
@@ -163,6 +193,56 @@ export default function ProfilePage({
           )}
         </section>
       )}
+
+      <section className="profile-section">
+        <h3>{t("trackOrdersTitle")}</h3>
+        <p className="option-hint">{t("trackOrdersHint")}</p>
+
+        <div className="track-form">
+          <input
+            type="tel"
+            value={trackPhone}
+            placeholder={t("trackOrdersPlaceholder")}
+            onChange={(event) => setTrackPhone(event.target.value)}
+          />
+          <button
+            type="button"
+            className="primary-button"
+            onClick={handleTrack}
+            disabled={trackState === "loading"}
+          >
+            <PackageSearch size={16} />
+            {trackState === "loading" ? t("loading") : t("trackOrdersButton")}
+          </button>
+        </div>
+
+        {trackState === "error" && (
+          <p className="form-error">{t("trackOrdersError")}</p>
+        )}
+
+        {trackState === "done" && trackedOrders.length === 0 && (
+          <p className="option-hint">{t("trackOrdersEmpty")}</p>
+        )}
+
+        {trackState === "done" && trackedOrders.length > 0 && (
+          <div className="tracked-orders">
+            {trackedOrders.map((order) => (
+              <div className="tracked-order" key={order.id}>
+                <div className="tracked-order-head">
+                  <strong>{order.number}</strong>
+                  <span className={`status-pill ${order.status}`}>
+                    {t(STATUS_KEYS[order.status] || "orderStatus")}
+                  </span>
+                </div>
+                <div className="tracked-order-meta">
+                  <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                  <strong>{formatPrice(order.total, lang)}</strong>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="profile-section">
         <h3>{t("language")}</h3>
