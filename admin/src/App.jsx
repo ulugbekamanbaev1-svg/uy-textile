@@ -1,0 +1,879 @@
+import { useEffect, useMemo, useState } from "react";
+
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Users,
+  MapPin,
+  Package,
+  Settings,
+  TrendingUp,
+  Wifi,
+  WifiOff,
+  Menu,
+  Search,
+  ImageOff,
+  Phone,
+  ExternalLink,
+  Pencil,
+  Plus,
+  Trash2
+} from "lucide-react";
+
+import DeliveryMap from "./components/DeliveryMap";
+import ProductForm from "./components/ProductForm";
+import AnalyticsPanel from "./components/AnalyticsPanel";
+import ClientsTable from "./components/ClientsTable";
+import SettingsForm from "./components/SettingsForm";
+import { LANGUAGES, detectLanguage, translations } from "./i18n";
+import { adminFetch } from "./services/adminApi";
+import { assetUrl, formatPrice, localized, priceLabel } from "./utils/format";
+
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+const STATUS_KEYS = {
+  new: "statusNew",
+  confirmed: "statusConfirmed",
+  delivering: "statusDelivering",
+  done: "statusDone",
+  cancelled: "statusCancelled"
+};
+
+const STATUSES = Object.keys(STATUS_KEYS);
+
+const MENU = [
+  [LayoutDashboard, "menuHome", "home"],
+  [ShoppingBag, "menuOrders", "orders"],
+  [Package, "menuProducts", "products"],
+  [Users, "menuClients", "clients"],
+  [MapPin, "menuMap", "map"],
+  [TrendingUp, "menuAnalytics", "analytics"],
+  [Settings, "menuSettings", "settings"]
+];
+
+const SECTION_META = {
+  home: ["dashboardTitle", "dashboardSubtitle"],
+  orders: ["ordersTitle", "ordersSubtitle"],
+  products: ["productsTitle", "productsSubtitle"],
+  clients: ["clientsTitle", "clientsSubtitle"],
+  map: ["mapTitle", "mapSubtitle"],
+  analytics: ["analyticsTitle", "analyticsSubtitle"],
+  settings: ["settingsTitle", "settingsSubtitle"]
+};
+
+const EMPTY_SETTINGS = {
+  store_name: "Uy Textile",
+  phone: "",
+  address: "",
+  working_hours: "",
+  delivery_info: "",
+  payment_info: "",
+  instagram: "",
+  telegram: ""
+};
+
+function toSettingsForm(settings) {
+  return settings ? { ...EMPTY_SETTINGS, ...settings } : null;
+}
+
+export default function App() {
+  const [server, setServer] = useState("checking");
+  const [lang, setLang] = useState(detectLanguage);
+  const [section, setSection] = useState("home");
+  const [summary, setSummary] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [orderFilter, setOrderFilter] = useState("");
+  const [dataState, setDataState] = useState("loading");
+  const [search, setSearch] = useState("");
+  const [formProduct, setFormProduct] = useState(undefined);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [clients, setClients] = useState([]);
+  const [clientSearch, setClientSearch] = useState("");
+  const [analyticsDays, setAnalyticsDays] = useState(30);
+  const [analytics, setAnalytics] = useState(null);
+  const [settingsForm, setSettingsForm] = useState(null);
+  const [settingsState, setSettingsState] = useState("idle");
+  const [settingsError, setSettingsError] = useState("");
+
+  const t = (key, vars = {}) => {
+    const dictionary = translations[lang] || translations.ru;
+    let text = dictionary[key] ?? translations.ru[key] ?? key;
+
+    for (const [name, value] of Object.entries(vars)) {
+      text = text.replaceAll(`{${name}}`, String(value));
+    }
+
+    return text;
+  };
+
+  const loadData = () => {
+    setDataState("loading");
+
+    Promise.all([
+      adminFetch("/api/admin/summary"),
+      adminFetch("/api/admin/products"),
+      adminFetch("/api/admin/orders"),
+      adminFetch("/api/admin/categories"),
+      adminFetch("/api/admin/clients"),
+      adminFetch(`/api/admin/analytics?days=${analyticsDays}`),
+      adminFetch("/api/admin/settings")
+    ])
+      .then(
+        ([
+          summaryData,
+          productList,
+          orderList,
+          categoryList,
+          clientList,
+          analyticsData,
+          settingsData
+        ]) => {
+          setSummary(summaryData);
+          setProducts(productList);
+          setOrders(orderList);
+          setCategories(categoryList);
+          setClients(clientList);
+          setAnalytics(analyticsData);
+          setSettingsForm((current) => current ?? toSettingsForm(settingsData));
+          setDataState("ready");
+        }
+      )
+      .catch((error) => {
+        setDataState(
+          error?.status === 401 || error?.status === 403 ? "denied" : "error"
+        );
+      });
+  };
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("uy_admin_lang", lang);
+    } catch {
+      // localStorage может быть недоступен
+    }
+
+    document.documentElement.lang = lang === "uzc" ? "uz-Cyrl" : lang;
+  }, [lang]);
+
+  useEffect(() => {
+    fetch(`${API}/api/health`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Server error");
+        return response.json();
+      })
+      .then((data) => {
+        setServer(data.database === "connected" ? "online" : "offline");
+      })
+      .catch(() => setServer("offline"));
+
+    loadData();
+  }, []);
+
+  const visibleProducts = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) {
+      return products;
+    }
+
+    return products.filter((product) =>
+      ["ru", "uz", "uzc"].some((code) =>
+        (product[`name_${code}`] || "").toLowerCase().includes(query)
+      )
+    );
+  }, [products, search]);
+
+  const statCards = [
+    ["statOrdersToday", summary?.orders_today ?? 0, ShoppingBag],
+    ["statNewOrders", summary?.orders_new ?? 0, TrendingUp],
+    ["statBuyers", summary?.users ?? 0, Users],
+    ["statProducts", summary?.products ?? 0, Package],
+    ["statCategories", summary?.categories ?? 0, LayoutDashboard]
+  ];
+
+  const changeStatus = async (orderId, status) => {
+    setOrders((current) =>
+      current.map((order) =>
+        order.id === orderId ? { ...order, status } : order
+      )
+    );
+
+    try {
+      await adminFetch(`/api/admin/orders/${orderId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status })
+      });
+
+      const summaryData = await adminFetch("/api/admin/summary");
+      setSummary(summaryData);
+    } catch {
+      loadData();
+    }
+  };
+
+  const openEdit = async (product) => {
+    try {
+      const detail = await adminFetch(`/api/admin/products/${product.id}`);
+      setFormProduct(detail);
+    } catch (error) {
+      setDataState(
+        error?.status === 401 || error?.status === 403 ? "denied" : "error"
+      );
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+
+    setDeleteError("");
+
+    try {
+      await adminFetch(`/api/admin/products/${deleteTarget.id}`, {
+        method: "DELETE"
+      });
+
+      setDeleteTarget(null);
+      loadData();
+    } catch (error) {
+      setDeleteError(error.message || t("formError"));
+    }
+  };
+
+  const loadAnalytics = async (days) => {
+    setAnalyticsDays(days);
+
+    try {
+      setAnalytics(await adminFetch(`/api/admin/analytics?days=${days}`));
+    } catch {
+      // оставляем предыдущие данные, если запрос не удался
+    }
+  };
+
+  const updateSettingsField = (field, value) => {
+    setSettingsForm((current) => ({ ...current, [field]: value }));
+    setSettingsState("idle");
+  };
+
+  const saveSettings = async (event) => {
+    event.preventDefault();
+
+    if (settingsState === "saving" || !settingsForm) {
+      return;
+    }
+
+    setSettingsState("saving");
+    setSettingsError("");
+
+    try {
+      const saved = await adminFetch("/api/admin/settings", {
+        method: "PUT",
+        body: JSON.stringify(settingsForm)
+      });
+
+      setSettingsForm(toSettingsForm(saved));
+      setSettingsState("saved");
+    } catch (error) {
+      setSettingsState("error");
+      setSettingsError(error.message || t("settingsError"));
+    }
+  };
+
+  const visibleOrders = orderFilter
+    ? orders.filter((order) => order.status === orderFilter)
+    : orders;
+
+  return (
+    <div className="admin">
+      <aside className="sidebar">
+        <div className="admin-brand">
+          <div className="admin-logo">U</div>
+          <div>
+            <h2>UY TEXTILE</h2>
+            <p>{t("controlPanel")}</p>
+          </div>
+        </div>
+
+        <nav>
+          {MENU.map(([Icon, key, value]) => (
+            <button
+              className={section === value ? "selected" : ""}
+              key={key}
+              type="button"
+              onClick={() => setSection(value)}
+            >
+              <Icon size={19} />
+              {t(key)}
+            </button>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          <span className="online-dot" />
+          Uy Textile v1.0
+        </div>
+      </aside>
+
+      <main className="admin-content">
+        <header className="admin-header">
+          <button className="menu-button" aria-label="Меню">
+            <Menu />
+          </button>
+          <div>
+            <h1>{t((SECTION_META[section] || SECTION_META.home)[0])}</h1>
+            <p>{t((SECTION_META[section] || SECTION_META.home)[1])}</p>
+          </div>
+
+          <div className="admin-header-actions">
+            <div
+              className="language-switch"
+              role="group"
+              aria-label={t("language")}
+            >
+              {Object.entries(LANGUAGES).map(([code, item]) => (
+                <button
+                  key={code}
+                  type="button"
+                  title={item.name}
+                  className={lang === code ? "active" : ""}
+                  onClick={() => setLang(code)}
+                >
+                  {item.short}
+                </button>
+              ))}
+            </div>
+
+            <div className="admin-avatar">U</div>
+          </div>
+        </header>
+
+        {dataState === "denied" ? (
+          <div className="admin-placeholder access-denied">
+            <h2>{t("accessDeniedTitle")}</h2>
+            <p>{t("accessDeniedText")}</p>
+            <p className="admin-note">{t("accessDeniedHint")}</p>
+          </div>
+        ) : (
+          <>
+            {section === "home" && (
+          <>
+            <div className="welcome-card">
+              <span>{t("ownerPanel")}</span>
+              <h2>{t("welcomeTitle")}</h2>
+              <p>{t("welcomeText")}</p>
+            </div>
+
+            <section className="stats">
+              {statCards.map(([key, value, Icon]) => (
+                <div className="stat-card" key={key}>
+                  <Icon size={22} />
+                  <p>{t(key)}</p>
+                  <h2>{dataState === "ready" ? value : "—"}</h2>
+                </div>
+              ))}
+            </section>
+
+            <section className="connection-card">
+              <h3>{t("systemStatus")}</h3>
+
+              <div className="connection-status">
+                {server === "online" ? (
+                  <>
+                    <Wifi color="#16a34a" />
+                    <span>{t("backendOnline")}</span>
+                  </>
+                ) : server === "offline" ? (
+                  <>
+                    <WifiOff color="#dc2626" />
+                    <span>{t("backendOffline")}</span>
+                  </>
+                ) : (
+                  <span>{t("backendChecking")}</span>
+                )}
+              </div>
+
+              <p>{t("statsNote")}</p>
+            </section>
+
+            {dataState === "ready" && (
+              <ProductsTable
+                t={t}
+                lang={lang}
+                products={products.slice(0, 5)}
+                title={t("productsTitle")}
+                subtitle={null}
+                compact
+              />
+            )}
+          </>
+        )}
+
+        {section === "products" && (
+          <>
+            <div className="table-toolbar">
+              <div className="admin-search">
+                <Search size={17} />
+                <input
+                  type="search"
+                  value={search}
+                  placeholder={t("adminSearch")}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </div>
+              <span className="table-count">
+                {t("productsCount", { count: visibleProducts.length })}
+              </span>
+              <button
+                type="button"
+                className="primary-admin-button"
+                onClick={() => setFormProduct(null)}
+              >
+                <Plus size={16} />
+                {t("addProduct")}
+              </button>
+            </div>
+
+            {dataState === "loading" && <p className="admin-note">{t("loading")}</p>}
+
+            {dataState === "error" && (
+              <div className="admin-error">
+                <p>{t("errorLoading")}</p>
+                <button type="button" onClick={loadData}>
+                  {t("retry")}
+                </button>
+              </div>
+            )}
+
+            {dataState === "ready" && (
+              <ProductsTable
+                t={t}
+                lang={lang}
+                products={visibleProducts}
+                title={t("productsTitle")}
+                subtitle={t("productsSubtitle")}
+                onEdit={openEdit}
+                onDelete={(product) => {
+                  setDeleteError("");
+                  setDeleteTarget(product);
+                }}
+              />
+            )}
+          </>
+        )}
+
+        {section === "orders" && (
+          <>
+            <div className="order-filters">
+              <button
+                type="button"
+                className={orderFilter === "" ? "active" : ""}
+                onClick={() => setOrderFilter("")}
+              >
+                {t("filterAll")} ({orders.length})
+              </button>
+              {STATUSES.map((status) => {
+                const count = orders.filter(
+                  (order) => order.status === status
+                ).length;
+
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    className={orderFilter === status ? "active" : ""}
+                    onClick={() => setOrderFilter(status)}
+                  >
+                    {t(STATUS_KEYS[status])} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {dataState === "loading" && (
+              <p className="admin-note">{t("loading")}</p>
+            )}
+
+            {dataState === "error" && (
+              <div className="admin-error">
+                <p>{t("errorLoading")}</p>
+                <button type="button" onClick={loadData}>
+                  {t("retry")}
+                </button>
+              </div>
+            )}
+
+            {dataState === "ready" && visibleOrders.length === 0 && (
+              <div className="admin-placeholder">
+                <h2>{t("noOrders")}</h2>
+                <p>{t("ordersSubtitle")}</p>
+              </div>
+            )}
+
+            {dataState === "ready" && visibleOrders.length > 0 && (
+              <div className="orders-list">
+                {visibleOrders.map((order) => (
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    t={t}
+                    lang={lang}
+                    onStatusChange={changeStatus}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {section === "clients" && (
+          <>
+            {dataState === "loading" && <p className="admin-note">{t("loading")}</p>}
+
+            {dataState === "error" && (
+              <div className="admin-error">
+                <p>{t("errorLoading")}</p>
+                <button type="button" onClick={loadData}>
+                  {t("retry")}
+                </button>
+              </div>
+            )}
+
+            {dataState === "ready" && (
+              <ClientsTable
+                clients={clients}
+                t={t}
+                lang={lang}
+                search={clientSearch}
+                onSearchChange={setClientSearch}
+              />
+            )}
+          </>
+        )}
+
+        {section === "analytics" && (
+          <>
+            {dataState === "loading" && <p className="admin-note">{t("loading")}</p>}
+
+            {dataState === "error" && (
+              <div className="admin-error">
+                <p>{t("errorLoading")}</p>
+                <button type="button" onClick={loadData}>
+                  {t("retry")}
+                </button>
+              </div>
+            )}
+
+            {dataState === "ready" && (
+              <AnalyticsPanel
+                analytics={analytics}
+                days={analyticsDays}
+                onDaysChange={loadAnalytics}
+                t={t}
+                lang={lang}
+              />
+            )}
+          </>
+        )}
+
+        {section === "settings" && (
+          <>
+            {dataState === "loading" && <p className="admin-note">{t("loading")}</p>}
+
+            {dataState === "error" && (
+              <div className="admin-error">
+                <p>{t("errorLoading")}</p>
+                <button type="button" onClick={loadData}>
+                  {t("retry")}
+                </button>
+              </div>
+            )}
+
+            {dataState === "ready" && (
+              <SettingsForm
+                form={settingsForm}
+                t={t}
+                state={settingsState}
+                error={settingsError}
+                onChange={updateSettingsField}
+                onSubmit={saveSettings}
+              />
+            )}
+          </>
+        )}
+
+        {section === "map" && dataState === "ready" && (
+          <DeliveryMap orders={orders} t={t} lang={lang} />
+        )}
+
+        {!["home", "products", "orders", "clients", "map", "analytics", "settings"].includes(
+          section
+        ) && (
+          <div className="admin-placeholder">
+            <h2>{t("menuSoonTitle")}</h2>
+            <p>{t("menuSoon")}</p>
+          </div>
+        )}
+          </>
+        )}
+
+        {formProduct !== undefined && (
+          <ProductForm
+            key={formProduct?.id ?? "new"}
+            product={formProduct}
+            categories={categories}
+            t={t}
+            lang={lang}
+            onClose={() => setFormProduct(undefined)}
+            onSaved={() => {
+              setFormProduct(undefined);
+              loadData();
+            }}
+          />
+        )}
+
+        {deleteTarget && (
+          <div className="modal-overlay" role="dialog" aria-modal="true">
+            <div className="confirm-modal">
+              <h2>{t("deleteProduct")}</h2>
+              <p>
+                {t("deleteConfirm", {
+                  name: localized(deleteTarget, "name", lang)
+                })}
+              </p>
+              {deleteError && <p className="form-error">{deleteError}</p>}
+              <div className="confirm-actions">
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => {
+                    setDeleteTarget(null);
+                    setDeleteError("");
+                  }}
+                >
+                  {t("cancel")}
+                </button>
+                <button
+                  type="button"
+                  className="danger-button"
+                  onClick={confirmDelete}
+                >
+                  {t("deleteProduct")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function OrderCard({ order, t, lang, onStatusChange }) {
+  const locale =
+    lang === "uzc" ? "uz-Cyrl-UZ" : lang === "uz" ? "uz-UZ" : "ru-RU";
+
+  const createdAt = new Date(order.created_at).toLocaleString(locale, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  return (
+    <article className="order-card">
+      <header className="order-card-head">
+        <div>
+          <h3>{order.number}</h3>
+          <p>
+            {t("orderCreated")}: {createdAt}
+          </p>
+        </div>
+
+        <select
+          className={`status-select status-${order.status}`}
+          value={order.status}
+          onChange={(event) =>
+            onStatusChange(order.id, event.target.value)
+          }
+        >
+          {Object.entries(STATUS_KEYS).map(([status, key]) => (
+            <option key={status} value={status}>
+              {t(key)}
+            </option>
+          ))}
+        </select>
+      </header>
+
+      <div className="order-grid">
+        <div>
+          <span>{t("orderCustomer")}</span>
+          <strong>{order.customer_name}</strong>
+        </div>
+        <div>
+          <span>{t("orderPhone")}</span>
+          <a href={`tel:${order.phone}`}>
+            <Phone size={13} />
+            {order.phone}
+          </a>
+        </div>
+        <div className="order-address">
+          <span>{t("orderAddress")}</span>
+          <strong>{order.address || "—"}</strong>
+          {order.latitude !== null && order.longitude !== null && (
+            <a
+              className="map-link"
+              href={`https://maps.google.com/?q=${order.latitude},${order.longitude}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <MapPin size={13} />
+              {t("openMap")}
+              <ExternalLink size={12} />
+            </a>
+          )}
+        </div>
+      </div>
+
+      <div className="order-items">
+        {order.items.map((item) => (
+          <div className="order-item-line" key={item.id}>
+            <span>
+              {item.quantity} × {localized(item, "name", lang)}
+              {item.variant_label
+                ? ` · ${item.variant_label}`
+                : ""}
+              {item.color_ru ? ` · ${localized(item, "color", lang)}` : ""}
+            </span>
+            <strong>{formatPrice(item.line_total, lang)}</strong>
+          </div>
+        ))}
+      </div>
+
+      {order.comment && (
+        <p className="order-comment">
+          💬 {order.comment}
+        </p>
+      )}
+
+      <footer className="order-card-foot">
+        <span>{t("orderTotalLabel")}</span>
+        <strong>{formatPrice(order.total, lang)}</strong>
+      </footer>
+    </article>
+  );
+}
+
+function ProductsTable({
+  t,
+  lang,
+  products,
+  title,
+  subtitle,
+  compact,
+  onEdit,
+  onDelete
+}) {
+  return (
+    <section className={`products-card${compact ? " compact" : ""}`}>
+      <div className="products-card-head">
+        <div>
+          <h3>{title}</h3>
+          {subtitle && <p>{subtitle}</p>}
+        </div>
+        <span className="table-count">
+          {t("productsCount", { count: products.length })}
+        </span>
+      </div>
+
+      {products.length === 0 ? (
+        <p className="admin-note">{t("catalogEmpty")}</p>
+      ) : (
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{t("colProduct")}</th>
+                <th>{t("colCategory")}</th>
+                <th>{t("colPrice")}</th>
+                <th>{t("colStatus")}</th>
+                {!compact && <th>{t("tableActions")}</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((product) => (
+                <tr key={product.id}>
+                  <td>
+                    <div className="table-product">
+                      <div className="table-thumb">
+                        {product.image_url ? (
+                          <img
+                            src={assetUrl(product.image_url)}
+                            alt={localized(product, "name", lang)}
+                          />
+                        ) : (
+                          <ImageOff size={18} />
+                        )}
+                      </div>
+                      <div>
+                        <strong>{localized(product, "name", lang)}</strong>
+                        {product.is_featured && (
+                          <span className="featured-badge">
+                            {t("featuredBadge")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td>{localized(product, "category_name", lang)}</td>
+                  <td className="price-cell">
+                    {priceLabel(product, t, lang)}
+                  </td>
+                  <td>
+                    <span
+                      className={`status-pill${
+                        product.is_active ? " active" : ""
+                      }`}
+                    >
+                      {product.is_active
+                        ? t("statusActive")
+                        : t("statusHidden")}
+                    </span>
+                  </td>
+                  {!compact && (
+                    <td>
+                      <div className="table-actions">
+                        <button
+                          type="button"
+                          className="icon-button"
+                          title={t("editProduct")}
+                          aria-label={t("editProduct")}
+                          onClick={() => onEdit(product)}
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-button danger"
+                          title={t("deleteProduct")}
+                          aria-label={t("deleteProduct")}
+                          onClick={() => onDelete(product)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}

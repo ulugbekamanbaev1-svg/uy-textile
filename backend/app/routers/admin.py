@@ -1,0 +1,627 @@
+import re
+from datetime import date, datetime, time, timedelta
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.config import settings
+from app.database import get_db
+from app.models import (
+    Category,
+    Order,
+    Product,
+    ProductColor,
+    ProductVariant,
+    User,
+)
+from app.models.order import ORDER_STATUSES
+from app.routers.catalog import to_list_item
+from app.routers.orders import order_to_out
+from app.schemas.admin import (
+    AdminProductIn,
+    AdminProductOut,
+    AnalyticsOut,
+    ClientOut,
+    DailySalesOut,
+    StatusCountOut,
+    StoreSettingsIn,
+    StoreSettingsOut,
+    TopProductOut,
+    UploadResult,
+)
+from app.schemas.catalog import AdminSummary, CategoryOut, ProductListItem
+from app.schemas.order import OrderOut, OrderStatusUpdate
+from app.services.store_settings import get_store_settings
+from app.services.telegram_auth import require_admin
+
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+UPLOAD_DIR = STATIC_DIR / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+MAX_IMAGE_BYTES = settings.MAX_UPLOAD_MB * 1024 * 1024
+
+
+def remove_uploaded_file(url: str) -> None:
+    """Удаляет только файлы, загруженные через админку."""
+    if not url or not url.startswith("/static/uploads/"):
+        return
+
+    path = UPLOAD_DIR / Path(url).name
+
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+router = APIRouter(
+    prefix="/api/admin",
+    tags=["Admin"],
+    dependencies=[Depends(require_admin)],
+)
+
+
+@router.get("/summary", response_model=AdminSummary)
+async def summary(db: AsyncSession = Depends(get_db)):
+    products = await db.scalar(select(func.count()).select_from(Product))
+    categories = await db.scalar(select(func.count()).select_from(Category))
+    users = await db.scalar(select(func.count()).select_from(User))
+
+    # «Сегодня» считаем по местному времени, а не по UTC базы.
+    day_start = datetime.combine(date.today(), time.min).astimezone()
+    day_end = day_start + timedelta(days=1)
+
+    orders_today = await db.scalar(
+        select(func.count())
+        .select_from(Order)
+        .where(
+            Order.created_at >= day_start,
+            Order.created_at < day_end,
+        )
+    )
+    orders_new = await db.scalar(
+        select(func.count()).select_from(Order).where(Order.status == "new")
+    )
+
+    return AdminSummary(
+        products=products or 0,
+        categories=categories or 0,
+        users=users or 0,
+        orders_today=orders_today or 0,
+        orders_new=orders_new or 0,
+    )
+
+
+@router.get("/categories", response_model=list[CategoryOut])
+async def admin_categories(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Category)
+        .options(selectinload(Category.products))
+        .order_by(Category.sort_order, Category.id)
+    )
+
+    return [
+        CategoryOut(
+            id=category.id,
+            slug=category.slug,
+            name_ru=category.name_ru,
+            name_uz=category.name_uz,
+            name_uzc=category.name_uzc,
+            sort_order=category.sort_order,
+            product_count=sum(1 for p in category.products if p.is_active),
+        )
+        for category in result.scalars().all()
+    ]
+
+
+@router.get("/products", response_model=list[ProductListItem])
+async def admin_products(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Product)
+        .options(
+            selectinload(Product.variants),
+            selectinload(Product.category),
+        )
+        .order_by(Product.id)
+    )
+
+    return [to_list_item(product) for product in result.scalars().all()]
+
+
+async def get_product_or_404(
+    product_id: int,
+    db: AsyncSession,
+) -> Product:
+    result = await db.execute(
+        select(Product)
+        .options(
+            selectinload(Product.variants),
+            selectinload(Product.colors),
+        )
+        .where(Product.id == product_id)
+    )
+    product = result.scalar_one_or_none()
+
+    if product is None:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+
+    return product
+
+
+@router.get("/products/{product_id}", response_model=AdminProductOut)
+async def admin_product(product_id: int, db: AsyncSession = Depends(get_db)):
+    return await get_product_or_404(product_id, db)
+
+
+async def ensure_unique_slug(
+    slug: str,
+    db: AsyncSession,
+    product_id: int | None = None,
+) -> None:
+    stmt = select(Product.id).where(Product.slug == slug)
+
+    if product_id is not None:
+        stmt = stmt.where(Product.id != product_id)
+
+    if await db.scalar(stmt) is not None:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Товар со ссылкой «{slug}» уже существует",
+        )
+
+
+def apply_payload(product: Product, payload: AdminProductIn) -> None:
+    product.category_id = payload.category_id
+
+    product.name_ru = payload.name_ru.strip()
+    product.name_uz = payload.name_uz.strip()
+    product.name_uzc = payload.name_uzc.strip()
+
+    product.description_ru = payload.description_ru.strip()
+    product.description_uz = payload.description_uz.strip()
+    product.description_uzc = payload.description_uzc.strip()
+
+    product.material_ru = payload.material_ru.strip()
+    product.material_uz = payload.material_uz.strip()
+    product.material_uzc = payload.material_uzc.strip()
+
+    product.pricing_type = payload.pricing_type
+    product.price_per_m2 = (
+        payload.price_per_m2 if payload.pricing_type == "area" else None
+    )
+
+    product.custom_size_allowed = payload.custom_size_allowed
+    product.is_active = payload.is_active
+    product.is_featured = payload.is_featured
+
+    image_url = payload.image_url.strip()
+
+    if image_url and not (
+        image_url.startswith("/static/")
+        or image_url.startswith("http://")
+        or image_url.startswith("https://")
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Ссылка на изображение должна начинаться с /static/ или http(s)://",
+        )
+
+    product.image_url = image_url
+
+    # --- размеры ---
+    existing_variants = {
+        variant.id: variant for variant in product.variants
+    }
+    ordered_variants: list[ProductVariant] = []
+
+    for index, item in enumerate(payload.variants):
+        if item.id is not None:
+            variant = existing_variants.get(item.id)
+
+            if variant is None:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Размер не найден в этом товаре",
+                )
+        else:
+            variant = ProductVariant()
+
+        variant.label = item.label.strip()
+        variant.width_cm = item.width_cm
+        variant.height_cm = item.height_cm
+        variant.price = item.price
+        variant.is_active = item.is_active
+        variant.sort_order = index
+
+        ordered_variants.append(variant)
+
+    product.variants = ordered_variants
+
+    # --- цвета ---
+    existing_colors = {color.id: color for color in product.colors}
+    ordered_colors: list[ProductColor] = []
+
+    for index, item in enumerate(payload.colors):
+        if item.id is not None:
+            color = existing_colors.get(item.id)
+
+            if color is None:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Цвет не найден в этом товаре",
+                )
+        else:
+            color = ProductColor()
+
+        color.name_ru = item.name_ru.strip()
+        color.name_uz = item.name_uz.strip()
+        color.name_uzc = item.name_uzc.strip()
+        color.hex = item.hex.lower()
+        color.sort_order = index
+
+        ordered_colors.append(color)
+
+    product.colors = ordered_colors
+
+
+def validate_pricing(payload: AdminProductIn) -> None:
+    if payload.pricing_type == "area":
+        if not payload.price_per_m2 or payload.price_per_m2 <= 0:
+            raise HTTPException(
+                status_code=422,
+                detail="Укажите цену за м² для индивидуального размера",
+            )
+
+        return
+
+    active = [variant for variant in payload.variants if variant.is_active]
+
+    if not active:
+        raise HTTPException(
+            status_code=422,
+            detail="Добавьте хотя бы один размер",
+        )
+
+    if any(variant.price <= 0 for variant in active):
+        raise HTTPException(
+            status_code=422,
+            detail="Цена размера должна быть больше нуля",
+        )
+
+
+@router.post("/products", response_model=AdminProductOut, status_code=201)
+async def create_product(
+    payload: AdminProductIn,
+    db: AsyncSession = Depends(get_db),
+):
+    category = await db.get(Category, payload.category_id)
+
+    if category is None:
+        raise HTTPException(status_code=422, detail="Категория не найдена")
+
+    validate_pricing(payload)
+
+    slug = (payload.slug or "").strip().lower()
+
+    if slug:
+        if not SLUG_PATTERN.match(slug):
+            raise HTTPException(
+                status_code=422,
+                detail="Ссылка: только латиница, цифры и дефис",
+            )
+
+        await ensure_unique_slug(slug, db)
+    else:
+        slug = f"product-{uuid4().hex[:8]}"
+
+    product = Product(slug=slug)
+    apply_payload(product, payload)
+
+    db.add(product)
+    await db.commit()
+
+    return await get_product_or_404(product.id, db)
+
+
+@router.patch("/products/{product_id}", response_model=AdminProductOut)
+async def update_product(
+    product_id: int,
+    payload: AdminProductIn,
+    db: AsyncSession = Depends(get_db),
+):
+    product = await get_product_or_404(product_id, db)
+
+    category = await db.get(Category, payload.category_id)
+
+    if category is None:
+        raise HTTPException(status_code=422, detail="Категория не найдена")
+
+    validate_pricing(payload)
+
+    old_image_url = product.image_url
+    slug = (payload.slug or "").strip().lower()
+
+    if slug and slug != product.slug:
+        if not SLUG_PATTERN.match(slug):
+            raise HTTPException(
+                status_code=422,
+                detail="Ссылка: только латиница, цифры и дефис",
+            )
+
+        await ensure_unique_slug(slug, db, product.id)
+        product.slug = slug
+
+    apply_payload(product, payload)
+
+    if old_image_url != product.image_url:
+        remove_uploaded_file(old_image_url)
+
+    await db.commit()
+
+    return await get_product_or_404(product.id, db)
+
+
+@router.delete("/products/{product_id}", status_code=204)
+async def delete_product(
+    product_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    product = await get_product_or_404(product_id, db)
+
+    remove_uploaded_file(product.image_url)
+
+    await db.delete(product)
+    await db.commit()
+
+
+@router.post("/uploads", response_model=UploadResult)
+async def upload_image(file: UploadFile = File(...)):
+    content = await file.read()
+
+    if not content:
+        raise HTTPException(status_code=422, detail="Файл пустой")
+
+    if len(content) > MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Файл больше {settings.MAX_UPLOAD_MB} МБ",
+        )
+
+    extension = None
+
+    if content.startswith(b"\xff\xd8\xff"):
+        extension = ".jpg"
+    elif content.startswith(b"\x89PNG\r\n\x1a\n"):
+        extension = ".png"
+    elif content.startswith((b"GIF87a", b"GIF89a")):
+        extension = ".gif"
+    elif content[:4] == b"RIFF" and content[8:12] == b"WEBP":
+        extension = ".webp"
+
+    if extension is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Поддерживаются JPG, PNG, WEBP и GIF",
+        )
+
+    filename = f"{uuid4().hex}{extension}"
+    (UPLOAD_DIR / filename).write_bytes(content)
+
+    return UploadResult(
+        url=f"/static/uploads/{filename}",
+        size=len(content),
+    )
+
+
+@router.get("/orders", response_model=list[OrderOut])
+async def admin_orders(
+    status: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = (
+        select(Order)
+        .options(selectinload(Order.items))
+        .order_by(Order.created_at.desc(), Order.id.desc())
+        .limit(200)
+    )
+
+    if status:
+        stmt = stmt.where(Order.status == status)
+
+    result = await db.execute(stmt)
+
+    return [order_to_out(order) for order in result.scalars().all()]
+
+
+@router.patch("/orders/{order_id}/status", response_model=OrderOut)
+async def update_order_status(
+    order_id: int,
+    payload: OrderStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Order)
+        .options(selectinload(Order.items))
+        .where(Order.id == order_id)
+    )
+    order = result.scalar_one_or_none()
+
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order.status = payload.status
+    await db.commit()
+    await db.refresh(order, ["items"])
+
+    return order_to_out(order)
+
+
+@router.get("/clients", response_model=list[ClientOut])
+async def admin_clients(db: AsyncSession = Depends(get_db)):
+    """Клиенты собираются из заказов: телефон — основной ключ."""
+    result = await db.execute(
+        select(Order).order_by(Order.created_at.desc(), Order.id.desc())
+    )
+
+    clients: dict[str, dict] = {}
+
+    for order in result.scalars().all():
+        phone = (order.phone or "").strip()
+
+        if phone:
+            key = phone
+        elif order.telegram_id:
+            key = f"tg-{order.telegram_id}"
+        else:
+            key = f"order-{order.id}"
+
+        client = clients.get(key)
+
+        if client is None:
+            client = {
+                "name": order.customer_name,
+                "phone": order.phone,
+                "telegram_username": order.telegram_username,
+                "address": order.address,
+                "orders_count": 0,
+                "total_spent": 0,
+                "last_order_at": order.created_at,
+            }
+            clients[key] = client
+
+        # Данные берём из самого свежего заказа, но не теряем
+        # username/адрес, если в новом заказе они не заполнены.
+        if not client["address"] and order.address:
+            client["address"] = order.address
+
+        if not client["telegram_username"] and order.telegram_username:
+            client["telegram_username"] = order.telegram_username
+
+        client["orders_count"] += 1
+
+        if order.status != "cancelled":
+            client["total_spent"] += order.total
+
+    return [ClientOut(**client) for client in clients.values()]
+
+
+@router.get("/analytics", response_model=AnalyticsOut)
+async def admin_analytics(
+    days: int = Query(default=30, ge=1, le=365),
+    db: AsyncSession = Depends(get_db),
+):
+    start = datetime.combine(date.today(), time.min).astimezone() - timedelta(
+        days=days - 1
+    )
+
+    result = await db.execute(
+        select(Order)
+        .options(selectinload(Order.items))
+        .where(Order.created_at >= start)
+        .order_by(Order.created_at)
+    )
+
+    orders = result.scalars().all()
+
+    daily = {
+        (start + timedelta(days=index)).date().isoformat(): [0, 0]
+        for index in range(days)
+    }
+    statuses = {status: 0 for status in ORDER_STATUSES}
+    clients: set[str] = set()
+    top: dict[str, dict] = {}
+
+    revenue = 0
+    paid_orders = 0
+    delivered = 0
+    cancelled = 0
+
+    for order in orders:
+        statuses[order.status] = statuses.get(order.status, 0) + 1
+
+        if order.status == "cancelled":
+            cancelled += 1
+            continue
+
+        revenue += order.total
+        paid_orders += 1
+
+        if order.status == "done":
+            delivered += 1
+
+        if order.phone:
+            clients.add(order.phone.strip())
+
+        day_key = order.created_at.astimezone().date().isoformat()
+
+        if day_key in daily:
+            daily[day_key][0] += order.total
+            daily[day_key][1] += 1
+
+        for item in order.items:
+            key = item.product_slug or f"{item.name_ru}-{item.id}"
+            product = top.get(key)
+
+            if product is None:
+                product = {
+                    "name_ru": item.name_ru,
+                    "name_uz": item.name_uz,
+                    "name_uzc": item.name_uzc,
+                    "quantity": 0,
+                    "revenue": 0,
+                }
+                top[key] = product
+
+            product["quantity"] += item.quantity
+            product["revenue"] += item.line_total
+
+    top_products = sorted(
+        top.values(), key=lambda entry: entry["revenue"], reverse=True
+    )[:5]
+
+    return AnalyticsOut(
+        days=days,
+        revenue=revenue,
+        orders=paid_orders,
+        average_order=round(revenue / paid_orders) if paid_orders else 0,
+        clients=len(clients),
+        delivered=delivered,
+        cancelled=cancelled,
+        daily=[
+            DailySalesOut(day=day, revenue=values[0], orders=values[1])
+            for day, values in daily.items()
+        ],
+        top_products=[TopProductOut(**product) for product in top_products],
+        statuses=[
+            StatusCountOut(status=status, count=count)
+            for status, count in statuses.items()
+        ],
+    )
+
+
+@router.get("/settings", response_model=StoreSettingsOut)
+async def read_store_settings(db: AsyncSession = Depends(get_db)):
+    return await get_store_settings(db)
+
+
+@router.put("/settings", response_model=StoreSettingsOut)
+async def save_store_settings(
+    payload: StoreSettingsIn,
+    db: AsyncSession = Depends(get_db),
+):
+    store = await get_store_settings(db)
+
+    for field, value in payload.model_dump().items():
+        setattr(store, field, value.strip() if isinstance(value, str) else value)
+
+    if not store.store_name:
+        store.store_name = "Uy Textile"
+
+    await db.commit()
+    await db.refresh(store)
+
+    return store

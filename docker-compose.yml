@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17
+    container_name: uytextile_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: uytextile
+      POSTGRES_USER: uytextile_user
+      POSTGRES_PASSWORD: uytextile_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - uytextile_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uytextile_user -d uytextile"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  uytextile_data:

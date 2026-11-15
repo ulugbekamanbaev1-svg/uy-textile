@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Fabric roll">
+  <rect width="800" height="800" fill="#e9e5db"/>
+  <circle cx="170" cy="640" r="130" fill="#dfd8ca"/>
+  <g transform="translate(400 400) rotate(-6)">
+    <rect x="-90" y="-230" width="180" height="460" rx="90" fill="#faf7f0" stroke="#d9d0c0" stroke-width="4"/>
+    <ellipse cx="0" cy="-230" rx="90" ry="34" fill="#f3ede2" stroke="#d9d0c0" stroke-width="4"/>
+    <ellipse cx="0" cy="-230" rx="46" ry="16" fill="#d9d0c0"/>
+    <path d="M-90 -120 H90" stroke="#e6ddcd" stroke-width="5"/>
+    <path d="M-90 -20 H90" stroke="#e6ddcd" stroke-width="5"/>
+    <path d="M-90 80 H90" stroke="#e6ddcd" stroke-width="5"/>
+    <path d="M-90 180 H90" stroke="#e6ddcd" stroke-width="5"/>
+    <path d="M90 230 Q190 210 210 120" fill="none" stroke="#faf7f0" stroke-width="26" stroke-linecap="round"/>
+  </g>
+</svg>

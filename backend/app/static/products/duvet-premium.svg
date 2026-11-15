@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Duvet cover">
+  <rect width="800" height="800" fill="#ece7dd"/>
+  <circle cx="650" cy="160" r="120" fill="#e1dacc"/>
+  <g transform="translate(400 400)">
+    <rect x="-250" y="-190" width="500" height="380" rx="34" fill="#fbf8f2" stroke="#d8cfbf" stroke-width="4"/>
+    <path d="M-250 -190 H250 L120 190 H-120 Z" fill="#f1eadf"/>
+    <path d="M-250 -190 L-120 190" stroke="#d8cfbf" stroke-width="4"/>
+    <path d="M250 -190 L120 190" stroke="#d8cfbf" stroke-width="4"/>
+    <path d="M-160 -60 Q-40 10 90 -40" fill="none" stroke="#d9d0c0" stroke-width="5" stroke-linecap="round"/>
+    <path d="M-160 40 Q-40 110 90 60" fill="none" stroke="#d9d0c0" stroke-width="5" stroke-linecap="round"/>
+    <path d="M-170 -190 L-70 -190" stroke="#343b30" stroke-width="10" stroke-linecap="round" opacity="0.25"/>
+  </g>
+</svg>
