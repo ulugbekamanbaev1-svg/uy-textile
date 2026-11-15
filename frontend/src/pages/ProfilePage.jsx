@@ -17,6 +17,7 @@ import {
 import { LANGUAGES } from "../i18n";
 import { fetchStoreSettings, trackOrders } from "../services/api";
 import { formatPrice } from "../utils/format";
+import { openExternalLink } from "../utils/telegram";
 
 const STATUS_KEYS = {
   new: "statusNew",
@@ -149,8 +150,10 @@ export default function ProfilePage({
               <a
                 className="contact-row"
                 href={`https://t.me/${socialHandle(store.telegram)}`}
-                target="_blank"
-                rel="noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openExternalLink(`https://t.me/${socialHandle(store.telegram)}`);
+                }}
               >
                 <Send size={16} />
                 <span>{t("contactTelegram")}</span>
@@ -162,8 +165,10 @@ export default function ProfilePage({
               <a
                 className="contact-row"
                 href={`https://instagram.com/${socialHandle(store.instagram)}`}
-                target="_blank"
-                rel="noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openExternalLink(`https://instagram.com/${socialHandle(store.instagram)}`);
+                }}
               >
                 <Instagram size={16} />
                 <span>{t("contactInstagram")}</span>

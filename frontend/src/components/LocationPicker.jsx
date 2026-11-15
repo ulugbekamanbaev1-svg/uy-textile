@@ -3,6 +3,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapPin, Navigation } from "lucide-react";
 
+import { openExternalLink } from "../utils/telegram";
+
 // Центр доставки — Хорезм (Ургенч)
 const DEFAULT_CENTER = [41.5505, 60.633];
 const DEFAULT_ZOOM = 12;
@@ -125,8 +127,12 @@ export default function LocationPicker({
             <span>{t("locationAttached")}</span>
             <a
               href={`https://maps.google.com/?q=${coords.latitude},${coords.longitude}`}
-              target="_blank"
-              rel="noreferrer"
+              onClick={(e) => {
+                e.preventDefault();
+                openExternalLink(
+                  `https://maps.google.com/?q=${coords.latitude},${coords.longitude}`
+                );
+              }}
             >
               {t("openMap")}
             </a>

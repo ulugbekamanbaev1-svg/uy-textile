@@ -4,6 +4,7 @@ import { Clock, CreditCard, Instagram, MapPin, Phone, Send, Truck, X } from "luc
 import BottomNav from "./components/BottomNav";
 import StoreMap from "./components/StoreMap";
 import TopBar from "./components/TopBar";
+import { openExternalLink } from "./utils/telegram";
 import { useCart } from "./hooks/useCart";
 import { useFavorites } from "./hooks/useFavorites";
 import { LANGUAGES, detectLanguage, translations } from "./i18n";
@@ -361,8 +362,10 @@ function StoreLocationModal({ t, store, onClose }) {
               <a
                 className="contact-row"
                 href={`https://t.me/${socialHandle(store.telegram)}`}
-                target="_blank"
-                rel="noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openExternalLink(`https://t.me/${socialHandle(store.telegram)}`);
+                }}
               >
                 <Send size={16} />
                 <span>{t("contactTelegram")}</span>
@@ -373,8 +376,10 @@ function StoreLocationModal({ t, store, onClose }) {
               <a
                 className="contact-row"
                 href={`https://instagram.com/${socialHandle(store.instagram)}`}
-                target="_blank"
-                rel="noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openExternalLink(`https://instagram.com/${socialHandle(store.instagram)}`);
+                }}
               >
                 <Instagram size={16} />
                 <span>{t("contactInstagram")}</span>
@@ -412,7 +417,14 @@ function StoreLocationModal({ t, store, onClose }) {
         )}
 
         {mapUrl && (
-          <a className="primary-button" href={mapUrl} target="_blank" rel="noreferrer">
+          <a
+            className="primary-button"
+            href={mapUrl}
+            onClick={(e) => {
+              e.preventDefault();
+              openExternalLink(mapUrl);
+            }}
+          >
             {t("openInMaps") || "Открыть на карте"}
           </a>
         )}
