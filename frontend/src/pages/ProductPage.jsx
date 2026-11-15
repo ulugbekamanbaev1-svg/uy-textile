@@ -115,7 +115,7 @@ export default function ProductPage({
   const name = localized(product, "name", lang);
   const isCustom = product.pricing_type === "area";
   const customValid = !isCustom || area > 0;
-  const canAdd = customValid && unitPrice > 0;
+  const canAdd = customValid && unitPrice > 0 && product.in_stock !== false;
 
   const handleAdd = () => {
     if (!canAdd) return;
@@ -174,6 +174,9 @@ export default function ProductPage({
         {localized(product, "category_name", lang)}
       </span>
       <h1 className="product-title">{name}</h1>
+      {product.in_stock === false && (
+        <p className="form-error">{t("outOfStockMessage")}</p>
+      )}
       <p className="product-description">
         {localized(product, "description", lang)}
       </p>
@@ -299,7 +302,11 @@ export default function ProductPage({
           onClick={handleAdd}
         >
           {added ? <Check size={18} /> : <ShoppingBag size={18} />}
-          {added ? t("addedToCart") : t("addToCart")}
+          {product.in_stock === false
+            ? t("outOfStock")
+            : added
+              ? t("addedToCart")
+              : t("addToCart")}
         </button>
       </section>
     </main>

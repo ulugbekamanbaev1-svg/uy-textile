@@ -397,6 +397,7 @@ def apply_payload(product: Product, payload: AdminProductIn) -> None:
     product.custom_size_allowed = payload.custom_size_allowed
     product.is_active = payload.is_active
     product.is_featured = payload.is_featured
+    product.in_stock = payload.in_stock
 
     image_url = payload.image_url.strip()
 

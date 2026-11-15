@@ -45,6 +45,7 @@ def to_list_item(product: Product) -> ProductListItem:
         custom_size_allowed=product.custom_size_allowed,
         is_featured=product.is_featured,
         is_active=product.is_active,
+        in_stock=product.in_stock,
         sort_order=product.sort_order,
     )
 

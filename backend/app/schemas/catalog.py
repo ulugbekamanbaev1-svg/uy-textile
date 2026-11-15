@@ -60,6 +60,7 @@ class ProductListItem(BaseModel):
     custom_size_allowed: bool
     is_featured: bool
     is_active: bool
+    in_stock: bool = True
     sort_order: int = 0
 
 

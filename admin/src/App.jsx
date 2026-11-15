@@ -1242,12 +1242,18 @@ function ProductsTable({
                   <td>
                     <span
                       className={`status-pill${
-                        product.is_active ? " active" : ""
+                        !product.in_stock
+                          ? " out-of-stock"
+                          : product.is_active
+                            ? " active"
+                            : ""
                       }`}
                     >
-                      {product.is_active
-                        ? t("statusActive")
-                        : t("statusHidden")}
+                      {!product.in_stock
+                        ? t("statusOutOfStock")
+                        : product.is_active
+                          ? t("statusActive")
+                          : t("statusHidden")}
                     </span>
                   </td>
                   {!compact && (

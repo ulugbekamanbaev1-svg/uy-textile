@@ -49,6 +49,7 @@ class AdminProductIn(BaseModel):
     custom_size_allowed: bool = False
     is_active: bool = True
     is_featured: bool = False
+    in_stock: bool = True
 
     variants: list[AdminVariantIn] = Field(default_factory=list, max_length=50)
     colors: list[AdminColorIn] = Field(default_factory=list, max_length=50)
@@ -103,6 +104,7 @@ class AdminProductOut(BaseModel):
     custom_size_allowed: bool
     is_active: bool
     is_featured: bool
+    in_stock: bool = True
 
     variants: list[AdminVariantOut] = []
     colors: list[AdminColorOut] = []

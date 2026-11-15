@@ -98,6 +98,8 @@ export const translations = {
     customSize: "Свой размер",
     perUnit: "за единицу",
     cartClear: "Очистить корзину",
+    outOfStock: "Нет в наличии",
+    outOfStockMessage: "Этот товар временно отсутствует. Пожалуйста, загляните позже.",
     checkoutTitle: "Оформление заказа",
     checkoutSubtitle:
       "Оставьте контакты — мы позвоним, чтобы подтвердить заказ.",
@@ -249,6 +251,8 @@ export const translations = {
     customSize: "O'z o'lchamim",
     perUnit: "birlik uchun",
     cartClear: "Savatni tozalash",
+    outOfStock: "Mavjud emas",
+    outOfStockMessage: "Bu mahsulot hozircha mavjud emas. Iltimos, keyinroq qayta ko'ring.",
     checkoutTitle: "Buyurtmani rasmiylashtirish",
     checkoutSubtitle:
       "Kontaktlaringizni qoldiring — tasdiqlash uchun qo'ng'iroq qilamiz.",
@@ -400,6 +404,8 @@ export const translations = {
     customSize: "Ўз ўлчамим",
     perUnit: "бирлик учун",
     cartClear: "Саватни тозалаш",
+    outOfStock: "Мавжуд эмас",
+    outOfStockMessage: "Бу маҳсулот ҳозирча мавжуд эмас. Илтимос, кейинроқ қайта кўринг.",
     checkoutTitle: "Буюртмани расмийлаштириш",
     checkoutSubtitle:
       "Контактларингизни қолдиринг — тасдиқлаш учун қўнғироқ қиламиз.",

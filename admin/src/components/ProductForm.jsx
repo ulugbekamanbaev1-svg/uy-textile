@@ -58,6 +58,7 @@ function initialForm(product, categories) {
       custom_size_allowed: product.custom_size_allowed,
       is_active: product.is_active,
       is_featured: product.is_featured,
+      in_stock: product.in_stock !== false,
       variants: (product.variants || []).map((variant) => ({
         id: variant.id,
         label: variant.label,
@@ -93,6 +94,7 @@ function initialForm(product, categories) {
     custom_size_allowed: false,
     is_active: true,
     is_featured: false,
+    in_stock: true,
     variants: [emptyVariant()],
     colors: []
   };
@@ -203,6 +205,7 @@ export default function ProductForm({
       custom_size_allowed: form.custom_size_allowed,
       is_active: form.is_active,
       is_featured: form.is_featured,
+      in_stock: form.in_stock,
       variants: form.pricing_type === "area" ? [] : variants,
       colors: form.colors
         .filter(
@@ -643,6 +646,16 @@ export default function ProductForm({
                   }
                 />
                 {t("flagFeatured")}
+              </label>
+              <label className="flag">
+                <input
+                  type="checkbox"
+                  checked={form.in_stock}
+                  onChange={(event) =>
+                    update("in_stock", event.target.checked)
+                  }
+                />
+                {t("flagInStock")}
               </label>
               <label className="flag">
                 <input

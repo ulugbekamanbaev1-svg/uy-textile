@@ -123,6 +123,12 @@ async def create_order(
                 detail=f"Товар не найден: {item.slug}",
             )
 
+        if not product.in_stock:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Товар временно отсутствует: {product.name_ru}",
+            )
+
         width_cm = None
         height_cm = None
         variant_label = ""

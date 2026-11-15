@@ -1670,3 +1670,8 @@ button {
 .leaflet-attribution-flag {
   display: none !important;
 }
+
+.status-pill.out-of-stock {
+  background: #fdecec;
+  color: #9a3b35;
+}

@@ -29,6 +29,12 @@ async def lifespan(app: FastAPI):
         )
         await connection.execute(
             text(
+                "ALTER TABLE products "
+                "ADD COLUMN IF NOT EXISTS in_stock BOOLEAN NOT NULL DEFAULT TRUE"
+            )
+        )
+        await connection.execute(
+            text(
                 "ALTER TABLE store_settings "
                 "ADD COLUMN IF NOT EXISTS hero_title_ru VARCHAR(160) NOT NULL DEFAULT '', "
                 "ADD COLUMN IF NOT EXISTS hero_title_uz VARCHAR(160) NOT NULL DEFAULT '', "

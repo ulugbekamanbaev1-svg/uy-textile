@@ -38,6 +38,9 @@ export default function ProductCard({
         ) : (
           <ImageOff size={28} />
         )}
+        {product.in_stock === false && (
+          <span className="out-of-stock-badge">{t("outOfStock")}</span>
+        )}
         <FavoriteButton
           active={favorite}
           label={t("favorites")}
