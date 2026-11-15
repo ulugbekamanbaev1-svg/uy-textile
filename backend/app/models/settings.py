@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -14,7 +14,7 @@ class StoreSettings(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
 
     store_name: Mapped[str] = mapped_column(
-        String(120), default="Uy Textile"
+        String(120), default="Farrux shop (Hozoosp)"
     )
     phone: Mapped[str] = mapped_column(String(40), default="")
     address: Mapped[str] = mapped_column(String(255), default="")
@@ -32,6 +32,12 @@ class StoreSettings(Base):
     hero_text_ru: Mapped[str] = mapped_column(Text, default="")
     hero_text_uz: Mapped[str] = mapped_column(Text, default="")
     hero_text_uzc: Mapped[str] = mapped_column(Text, default="")
+
+    banner_active: Mapped[bool] = mapped_column(Boolean, default=False)
+    banner_text_ru: Mapped[str] = mapped_column(String(200), default="")
+    banner_text_uz: Mapped[str] = mapped_column(String(200), default="")
+    banner_text_uzc: Mapped[str] = mapped_column(String(200), default="")
+    banner_category: Mapped[str] = mapped_column(String(80), default="")
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

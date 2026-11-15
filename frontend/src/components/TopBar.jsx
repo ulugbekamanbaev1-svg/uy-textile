@@ -13,9 +13,9 @@ export default function TopBar({
   return (
     <header className="header top-bar">
       <button className="brand brand-button" type="button" onClick={onHome}>
-        <span className="brand-icon">U</span>
+        <span className="brand-icon">F</span>
         <span className="brand-text">
-          <span className="brand-title">UY TEXTILE</span>
+          <span className="brand-title">FARRUX SHOP</span>
           <span className="brand-subtitle">{t("tagline")}</span>
         </span>
       </button>

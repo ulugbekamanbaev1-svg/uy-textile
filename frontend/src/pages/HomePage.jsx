@@ -19,8 +19,22 @@ export default function HomePage({
   const heroTitle = hero?.[`hero_title_${localeCode}`] || t("heroTitle");
   const heroText = hero?.[`hero_text_${localeCode}`] || t("heroText");
 
+  const bannerText = hero?.[`banner_text_${localeCode}`] || "";
+  const showBanner = Boolean(hero?.banner_active && bannerText.trim());
+
   return (
     <main>
+      {showBanner && (
+        <button
+          className="promo-banner"
+          type="button"
+          onClick={() => onOpenCategory(hero.banner_category || "")}
+        >
+          <span>{bannerText}</span>
+          <ArrowRight size={16} />
+        </button>
+      )}
+
       <section className="hero">
         <span className="eyebrow">{t("heroEyebrow")}</span>
         <h2>{heroTitle}</h2>
@@ -38,7 +52,7 @@ export default function HomePage({
       <section className="categories">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">UY TEXTILE</span>
+            <span className="eyebrow">{(hero?.store_name || "Farrux shop (Hozoosp)").toUpperCase()}</span>
             <h2>{t("catalogTitle")}</h2>
           </div>
           <button

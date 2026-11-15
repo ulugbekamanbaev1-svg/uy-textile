@@ -158,7 +158,7 @@ class AnalyticsOut(BaseModel):
 
 
 class StoreSettingsIn(BaseModel):
-    store_name: str = Field(default="Uy Textile", max_length=120)
+    store_name: str = Field(default="Farrux shop (Hozoosp)", max_length=120)
     phone: str = Field(default="", max_length=40)
     address: str = Field(default="", max_length=255)
     working_hours: str = Field(default="", max_length=120)
@@ -173,6 +173,12 @@ class StoreSettingsIn(BaseModel):
     hero_text_ru: str = Field(default="", max_length=2000)
     hero_text_uz: str = Field(default="", max_length=2000)
     hero_text_uzc: str = Field(default="", max_length=2000)
+
+    banner_active: bool = False
+    banner_text_ru: str = Field(default="", max_length=200)
+    banner_text_uz: str = Field(default="", max_length=200)
+    banner_text_uzc: str = Field(default="", max_length=200)
+    banner_category: str = Field(default="", max_length=80)
 
 
 class StoreSettingsOut(StoreSettingsIn):

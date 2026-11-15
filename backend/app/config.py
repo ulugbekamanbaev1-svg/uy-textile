@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "Uy Textile API"
+    APP_NAME: str = "Farrux shop (Hozoosp) API"
     APP_ENV: str = "development"
 
     DATABASE_URL: str

@@ -1,4 +1,4 @@
-const CACHE_NAME = "uy-textile-v1";
+const CACHE_NAME = "farrux-shop-v2";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE_URLS = ["/", "/offline.html", "/manifest.webmanifest"];
 

@@ -67,7 +67,7 @@ const SECTION_META = {
 };
 
 const EMPTY_SETTINGS = {
-  store_name: "Uy Textile",
+  store_name: "Farrux shop (Hozoosp)",
   phone: "",
   address: "",
   working_hours: "",
@@ -80,7 +80,12 @@ const EMPTY_SETTINGS = {
   hero_title_uzc: "",
   hero_text_ru: "",
   hero_text_uz: "",
-  hero_text_uzc: ""
+  hero_text_uzc: "",
+  banner_active: false,
+  banner_text_ru: "",
+  banner_text_uz: "",
+  banner_text_uzc: "",
+  banner_category: ""
 };
 
 function toSettingsForm(settings) {
@@ -447,7 +452,7 @@ export default function App() {
         <div className="admin-brand">
           <div className="admin-logo">U</div>
           <div>
-            <h2>UY TEXTILE</h2>
+            <h2>FARRUX SHOP</h2>
             <p>{t("controlPanel")}</p>
           </div>
         </div>
@@ -468,7 +473,7 @@ export default function App() {
 
         <div className="sidebar-footer">
           <span className="online-dot" />
-          Uy Textile v1.0
+          Farrux shop (Hozoosp) v1.0
         </div>
       </aside>
 
@@ -892,6 +897,7 @@ export default function App() {
                 error={settingsError}
                 onChange={updateSettingsField}
                 onSubmit={saveSettings}
+                categories={categories}
               />
             )}
           </>

@@ -17,9 +17,9 @@ export const translations = {
     menuSettings: "Настройки",
     menuCategories: "Категории",
     dashboardTitle: "Главная панель",
-    dashboardSubtitle: "Управление магазином Uy Textile",
+    dashboardSubtitle: "Управление магазином Farrux shop (Hozoosp)",
     ownerPanel: "ПАНЕЛЬ ВЛАДЕЛЬЦА",
-    welcomeTitle: "Добро пожаловать в Uy Textile",
+    welcomeTitle: "Добро пожаловать в Farrux shop (Hozoosp)",
     welcomeText:
       "Здесь ты будешь управлять товарами, заказами, покупателями и доставкой.",
     statOrdersToday: "Заказы сегодня",
@@ -201,6 +201,15 @@ export const translations = {
     heroTextHint:
       "Если поле пустое, у покупателя используется текст по умолчанию для языка.",
 
+    settingsBanner: "Баннер / акция на главной",
+    bannerActive: "Показывать баннер на главной",
+    bannerTextRu: "Текст баннера (RU)",
+    bannerTextUz: "Текст баннера (UZ)",
+    bannerTextUzc: "Текст баннера (ЎЗ)",
+    bannerTextHint: "Например: Скидка 10% на комплекты",
+    bannerCategory: "Открывать при нажатии",
+    bannerCategoryAll: "Весь каталог",
+
     categoriesTitle: "Категории",
     categoriesSubtitle: "Разделы каталога и порядок товаров",
     categoryAdd: "Добавить категорию",
@@ -249,9 +258,9 @@ export const translations = {
     categorySave: "Saqlash",
     categorySort: "Tartib",
     categoryProducts: "Mahsulotlar: {count}",
-    dashboardSubtitle: "Uy Textile do'konini boshqarish",
+    dashboardSubtitle: "Farrux shop (Hozoosp) do'konini boshqarish",
     ownerPanel: "EGASI PANELI",
-    welcomeTitle: "Uy Textile'ga xush kelibsiz",
+    welcomeTitle: "Farrux shop (Hozoosp)'ga xush kelibsiz",
     welcomeText:
       "Bu yerda mahsulotlar, buyurtmalar, mijozlar va yetkazib berishni boshqarasiz.",
     statOrdersToday: "Bugungi buyurtmalar",
@@ -431,7 +440,16 @@ export const translations = {
     heroTitleUzc: "Sahifa sarlavhasi (O'zbekcha)",
     heroTextUzc: "Sahifa matni (O'zbekcha)",
     heroTextHint:
-      "Agar maydon bo'sh bo'lsa, xaridor davridagi standart matn ishlatilir."
+      "Agar maydon bo'sh bo'lsa, xaridor davridagi standart matn ishlatiladi.",
+
+    settingsBanner: "Bosh sahifadagi banner / aksiya",
+    bannerActive: "Bosh sahifada bannerni ko'rsatish",
+    bannerTextRu: "Banner matni (RU)",
+    bannerTextUz: "Banner matni (UZ)",
+    bannerTextUzc: "Banner matni (ЎЗ)",
+    bannerTextHint: "Masalan: To'plamlarga 10% chegirma",
+    bannerCategory: "Bosilganda ochish",
+    bannerCategoryAll: "Butun katalog"
   },
 
   uzc: {
@@ -462,9 +480,9 @@ export const translations = {
     categorySave: "Saqlash",
     categorySort: "Tartib",
     categoryProducts: "Маҳсулотлар: {count}",
-    dashboardSubtitle: "Uy Textile дўконини бошқариш",
+    dashboardSubtitle: "Farrux shop (Hozoosp) дўконини бошқариш",
     ownerPanel: "ЭГАСИ ПАНЕЛИ",
-    welcomeTitle: "Uy Textile'га хуш келибсиз",
+    welcomeTitle: "Farrux shop (Hozoosp)'га хуш келибсиз",
     welcomeText:
       "Бу ерда маҳсулотлар, буюртмалар, мижозлар ва етказиб беришни бошқарасиз.",
     statOrdersToday: "Бугунги буюртмалар",
@@ -644,7 +662,16 @@ export const translations = {
     heroTitleUzc: "Экран sarlavhasi (Ўзбекча)",
     heroTextUzc: "Экран matni (Ўзбекча)",
     heroTextHint:
-      "Agar maydon bo'sh bo'lsa, xaridor davridagi standart matn ishlatilir."
+      "Agar maydon bo'sh bo'lsa, xaridor davridagi standart matn ishlatiladi.",
+
+    settingsBanner: "Асосий саҳифадаги баннер / акция",
+    bannerActive: "Асосий саҳифада баннерни кўрсатиш",
+    bannerTextRu: "Баннер матни (RU)",
+    bannerTextUz: "Баннер матни (UZ)",
+    bannerTextUzc: "Баннер матни (ЎЗ)",
+    bannerTextHint: "Масалан: Тўпламларга 10% чегирма",
+    bannerCategory: "Босилганда очиш",
+    bannerCategoryAll: "Бутун каталог"
   }
 };
 

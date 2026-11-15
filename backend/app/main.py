@@ -44,6 +44,16 @@ async def lifespan(app: FastAPI):
                 "ADD COLUMN IF NOT EXISTS hero_text_uzc TEXT NOT NULL DEFAULT ''"
             )
         )
+        await connection.execute(
+            text(
+                "ALTER TABLE store_settings "
+                "ADD COLUMN IF NOT EXISTS banner_active BOOLEAN NOT NULL DEFAULT FALSE, "
+                "ADD COLUMN IF NOT EXISTS banner_text_ru VARCHAR(200) NOT NULL DEFAULT '', "
+                "ADD COLUMN IF NOT EXISTS banner_text_uz VARCHAR(200) NOT NULL DEFAULT '', "
+                "ADD COLUMN IF NOT EXISTS banner_text_uzc VARCHAR(200) NOT NULL DEFAULT '', "
+                "ADD COLUMN IF NOT EXISTS banner_category VARCHAR(80) NOT NULL DEFAULT ''"
+            )
+        )
 
     await seed_data()
 
@@ -54,7 +64,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Uy Textile online store API",
+    description="Farrux shop (Hozoosp) online store API",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -79,8 +89,8 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 @app.get("/")
 async def root():
     return {
-        "name": "Uy Textile",
-        "message": "Welcome to Uy Textile API",
+        "name": "Farrux shop (Hozoosp)",
+        "message": "Welcome to Farrux shop (Hozoosp) API",
         "status": "running",
     }
 
@@ -94,7 +104,7 @@ async def health():
         return {
             "status": "healthy",
             "database": "connected",
-            "application": "Uy Textile",
+            "application": "Farrux shop (Hozoosp)",
         }
 
     except Exception:
@@ -107,7 +117,7 @@ async def health():
 @app.get("/api")
 async def api_info():
     return {
-        "project": "Uy Textile",
+        "project": "Farrux shop (Hozoosp)",
         "version": "1.0.0",
         "environment": settings.APP_ENV,
     }

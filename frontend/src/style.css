@@ -1511,3 +1511,21 @@ button {
   border-radius: 999px;
   letter-spacing: 0.2px;
 }
+.promo-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border: 1px solid #e7dfc9;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8f1df, #efe6d2);
+  color: #2f2d28;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.promo-banner span { flex: 1; }

@@ -6,7 +6,8 @@ export default function SettingsForm({
   state,
   error,
   onChange,
-  onSubmit
+  onSubmit,
+  categories = []
 }) {
   if (!form) {
     return <p className="admin-note">{t("loading")}</p>;
@@ -148,6 +149,64 @@ export default function SettingsForm({
             onChange={(event) => onChange("hero_text_uzc", event.target.value)}
           />
         </div>
+      </section>
+
+      <section className="form-section">
+        <h3>{t("settingsBanner")}</h3>
+
+        <label className="flag" style={{ marginBottom: 12 }}>
+          <input
+            type="checkbox"
+            checked={Boolean(form["banner_active"])}
+            onChange={(event) => onChange("banner_active", event.target.checked)}
+          />
+          {t("bannerActive")}
+        </label>
+
+        <div className="admin-field">
+          <span>{t("bannerTextRu")}</span>
+          <input
+            type="text"
+            value={form["banner_text_ru"] ?? ""}
+            onChange={(event) => onChange("banner_text_ru", event.target.value)}
+            placeholder={t("bannerTextHint")}
+          />
+        </div>
+
+        <div className="admin-field">
+          <span>{t("bannerTextUz")}</span>
+          <input
+            type="text"
+            value={form["banner_text_uz"] ?? ""}
+            onChange={(event) => onChange("banner_text_uz", event.target.value)}
+            placeholder={t("bannerTextHint")}
+          />
+        </div>
+
+        <div className="admin-field">
+          <span>{t("bannerTextUzc")}</span>
+          <input
+            type="text"
+            value={form["banner_text_uzc"] ?? ""}
+            onChange={(event) => onChange("banner_text_uzc", event.target.value)}
+            placeholder={t("bannerTextHint")}
+          />
+        </div>
+
+        <label className="admin-field">
+          <span>{t("bannerCategory")}</span>
+          <select
+            value={form["banner_category"] ?? ""}
+            onChange={(event) => onChange("banner_category", event.target.value)}
+          >
+            <option value="">{t("bannerCategoryAll")}</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.slug}>
+                {category.name_ru}
+              </option>
+            ))}
+          </select>
+        </label>
       </section>
 
       <footer className="settings-foot">
