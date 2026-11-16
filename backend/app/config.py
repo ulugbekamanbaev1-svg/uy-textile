@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Если пусто, используется FRONTEND_URL.
     WEBAPP_URL: str = ""
 
+    # Публичный адрес backend (для ссылок на /static, например в Telegram).
+    # Если пусто, используется первый origin из CORS_ORIGINS, начинающийся с https://
+    PUBLIC_API_URL: str = ""
+
     # Открывать админку без Telegram в dev-режиме (в production всегда False).
     ADMIN_DEV_BYPASS: bool = True
 

@@ -2,11 +2,16 @@ import csv
 import io
 import os
 import re
-import boto3
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from uuid import uuid4
-from botocore.config import Config as BotoConfig
+
+try:
+    import boto3
+    from botocore.config import Config as BotoConfig
+except Exception:  # optional in local/dev
+    boto3 = None
+    BotoConfig = None
 
 from fastapi import (
     APIRouter,
@@ -64,16 +69,22 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 MAX_IMAGE_BYTES = settings.MAX_UPLOAD_MB * 1024 * 1024
 
 # --- НАСТРОЙКА CLOUDFLARE R2 ---
-r2_client = boto3.client(
-    service_name="s3",
-    endpoint_url=f"https://{os.environ.get('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
-    aws_access_key_id=os.environ.get("R2_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.environ.get("R2_SECRET_ACCESS_KEY"),
-    region_name="auto",
-    config=BotoConfig(signature_version="s3v4"),
-)
 R2_BUCKET = os.environ.get("R2_BUCKET_NAME", "uy-textile-photos")
 R2_PUBLIC = os.environ.get("R2_PUBLIC_URL", "").rstrip("/")
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID")
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
+
+r2_client = None
+if boto3 and BotoConfig and R2_ACCOUNT_ID and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY:
+    r2_client = boto3.client(
+        service_name="s3",
+        endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        region_name="auto",
+        config=BotoConfig(signature_version="s3v4"),
+    )
 # -------------------------------
 
 
@@ -84,6 +95,8 @@ def remove_uploaded_file(url: str) -> None:
 
     # Если это ссылка из нашего облака R2
     if R2_PUBLIC and url.startswith(R2_PUBLIC):
+        if r2_client is None:
+            return
         object_name = url.replace(f"{R2_PUBLIC}/", "")
         try:
             r2_client.delete_object(Bucket=R2_BUCKET, Key=object_name)
@@ -701,24 +714,33 @@ async def upload_image(file: UploadFile = File(...)):
             detail="Поддерживаются JPG, PNG, WEBP и GIF",
         )
 
-    object_name = f"products/{uuid4().hex}{extension}"
+    filename = f"{uuid4().hex}{extension}"
 
     # --- ЗАГРУЗКА В CLOUDFLARE R2 ---
-    try:
-        r2_client.put_object(
-            Bucket=R2_BUCKET,
-            Key=object_name,
-            Body=content,
-            ContentType=file.content_type
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка при загрузке в облако: {str(e)}")
+    if r2_client and R2_PUBLIC:
+        object_name = f"products/{filename}"
+        try:
+            r2_client.put_object(
+                Bucket=R2_BUCKET,
+                Key=object_name,
+                Body=content,
+                ContentType=file.content_type or "application/octet-stream",
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Ошибка при загрузке в облако: {str(e)}"
+            )
 
-    # Формируем ссылку на публичный файл
-    public_url = f"{R2_PUBLIC}/{object_name}"
+        return UploadResult(
+            url=f"{R2_PUBLIC}/{object_name}",
+            size=len(content),
+        )
+
+    # Локальное сохранение (dev/без R2)
+    (UPLOAD_DIR / filename).write_bytes(content)
 
     return UploadResult(
-        url=public_url,
+        url=f"/static/uploads/{filename}",
         size=len(content),
     )
 

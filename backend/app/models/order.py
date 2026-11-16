@@ -90,6 +90,7 @@ class OrderItem(Base):
     # Метраж для товаров, которые продаются на метры.
     meters: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     pricing_type: Mapped[str] = mapped_column(String(20), default="piece")
+    image_url: Mapped[str] = mapped_column(String(255), default="")
 
     unit_price: Mapped[int] = mapped_column(Integer, default=0)
     quantity: Mapped[int] = mapped_column(Integer, default=1)

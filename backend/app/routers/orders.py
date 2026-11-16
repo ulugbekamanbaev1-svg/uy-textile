@@ -115,6 +115,7 @@ async def create_order(
                 selectinload(Product.variants),
                 selectinload(Product.colors),
                 selectinload(Product.price_tiers),
+                selectinload(Product.images),
             )
             .where(
                 Product.slug == item.slug,
@@ -253,6 +254,10 @@ async def create_order(
         line_total = round_money(unit_price * line_amount)
         total += line_total
 
+        image_url = product.image_url or ""
+        if not image_url and product.images:
+            image_url = product.images[0].url
+
         order.items.append(
             OrderItem(
                 product_id=product.id,
@@ -269,6 +274,7 @@ async def create_order(
                 height_cm=height_cm,
                 meters=meters,
                 pricing_type=product.pricing_type,
+                image_url=image_url or "",
                 unit_price=unit_price,
                 quantity=1 if product.pricing_type == "meter" else item.quantity,
                 line_total=line_total,

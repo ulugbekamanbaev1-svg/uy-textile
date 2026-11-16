@@ -48,6 +48,7 @@ class OrderItemOut(BaseModel):
     height_cm: int | None = None
     meters: float | None = None
     pricing_type: str = "piece"
+    image_url: str = ""
     unit_price: int
     quantity: int
     line_total: int
