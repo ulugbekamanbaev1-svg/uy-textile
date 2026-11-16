@@ -43,8 +43,8 @@ export function resolveApiBase() {
 
   if (isLocalHost()) return DEFAULT_LOCAL_API;
 
-  // На хостинге без VITE_API_URL пробуем тот же домен (если backend проксируется).
-  return normalizeUrl(window.location.origin);
+  // На хостинге без VITE_API_URL используем основной backend сервис.
+  return normalizeUrl(import.meta.env.VITE_API_URL) || "https://uy-textile-bot.onrender.com";
 }
 
 export let API_BASE = resolveApiBase();
