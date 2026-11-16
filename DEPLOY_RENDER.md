@@ -1,0 +1,75 @@
+# Развёртывание на Render: backend + frontend + admin + PostgreSQL
+
+Инструкция для случая, когда сайт уже создан на Render, но админка не входит
+или данные не загружаются.
+
+## 1. Backend (Web Service)
+
+Настройки сервиса:
+
+- **Root Directory:** `backend`
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+Переменные окружения (Environment):
+
+| Переменная | Значение |
+| --- | --- |
+| `APP_ENV` | `production` |
+| `DATABASE_URL` | Internal Database URL из Render PostgreSQL, но схема должна быть `postgresql+asyncpg://` (замените `postgresql://` или `postgres://`) |
+| `ADMIN_PASSWORD` | ваш пароль для админки (если не задан — `admin123`) |
+| `ADMIN_TELEGRAM_ID` | ваш числовой Telegram ID (необязательно) |
+| `BOT_TOKEN` | токен Telegram-бота (необязательно) |
+| `FRONTEND_URL` | `https://ваш-frontend.onrender.com` |
+| `ADMIN_URL` | `https://ваш-admin.onrender.com` |
+| `WEBAPP_URL` | `https://ваш-frontend.onrender.com` (HTTPS, для кнопки Mini App) |
+| `CORS_ORIGINS` | `https://ваш-frontend.onrender.com,https://ваш-admin.onrender.com` |
+
+Важно: `CORS_ORIGINS` — это точные адреса сайтов, через запятую, без пробелов
+и без `/` в конце. Если адрес не совпадает, браузер заблокирует запросы
+(«Failed to fetch», «CORS error»).
+
+## 2. Frontend — витрина (Static Site)
+
+- **Root Directory:** `frontend`
+- **Build Command:** `npm ci && npm run build`
+- **Publish Directory:** `dist`
+- **Environment:** `VITE_API_URL=https://ваш-backend.onrender.com`
+
+`VITE_API_URL` вшивается в файлы при сборке. После изменения переменной нужно
+нажать **Manual Deploy → Clear build cache & deploy**.
+
+## 3. Admin — админка (Static Site)
+
+- **Root Directory:** `admin`
+- **Build Command:** `npm ci && npm run build`
+- **Publish Directory:** `dist`
+- **Environment:** `VITE_API_URL=https://ваш-backend.onrender.com`
+
+В папке `admin/public` уже лежит файл `_redirects` для SPA, чтобы админка
+открывалась по любому адресу и не давала 404 после обновления страницы.
+
+## 4. Вход в админку
+
+Админка принимает пароль (`ADMIN_PASSWORD`, по умолчанию `admin123`).
+Вход через Telegram по `ADMIN_TELEGRAM_ID` тоже работает.
+
+Если при сборке админки не был задан `VITE_API_URL`, на экране входа нажмите
+**«Настройки подключения (адрес сервера)»** и введите адрес backend, например
+`https://farrux-api.onrender.com`. Адрес сохранится в браузере.
+
+## Частые проблемы
+
+- **«Неверный пароль» при верном пароле** — на сервере был старый код, где
+  для `/api/admin/*` требовался только Telegram. Обновите backend (redeploy).
+- **«Не удалось связаться с сервером»** — неверный `VITE_API_URL` в админке
+  или backend не запущен. Проверьте `https://ваш-backend.onrender.com/api/health`
+  в браузере — должен вернуться `healthy`.
+- **CORS error** — добавьте точный адрес сайта в `CORS_ORIGINS` backend и
+  перезапустите сервис.
+- **Долгий первый запрос** — бесплатный тариф Render «засыпает»; первый запрос
+  может занять 30–60 секунд.
+- **Фото не открываются** — загруженные фото хранятся в файловой системе
+  backend (`backend/app/static/uploads`). На бесплатном Render файлы могут
+  пропадать после перезапуска. Для постоянного хранения нужно подключить
+  внешнее хранилище (S3 / Cloudinary) — это отдельная доработка.

@@ -8,6 +8,9 @@ export const translations = {
   ru: {
     language: "Язык",
     controlPanel: "Панель управления",
+    collapseSidebar: "Свернуть меню",
+    expandSidebar: "Развернуть меню",
+    toggleSidebar: "Меню",
     menuHome: "Главная",
     menuOrders: "Заказы",
     menuProducts: "Товары",
@@ -242,6 +245,9 @@ export const translations = {
   uz: {
     language: "Til",
     controlPanel: "Boshqaruv paneli",
+    collapseSidebar: "Menyuni yig'ish",
+    expandSidebar: "Menyuni ochish",
+    toggleSidebar: "Menyu",
     menuHome: "Asosiy",
     menuOrders: "Buyurtmalar",
     menuProducts: "Mahsulotlar",
@@ -473,6 +479,9 @@ export const translations = {
   uzc: {
     language: "Тил",
     controlPanel: "Бошқарув панели",
+    collapseSidebar: "Менюни йиғиш",
+    expandSidebar: "Менюни очиш",
+    toggleSidebar: "Меню",
     menuHome: "Асосий",
     menuOrders: "Буюртмалар",
     menuProducts: "Маҳсулотлар",

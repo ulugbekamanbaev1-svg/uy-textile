@@ -33,10 +33,8 @@ import AnalyticsPanel from "./components/AnalyticsPanel";
 import ClientsTable from "./components/ClientsTable";
 import SettingsForm from "./components/SettingsForm";
 import { LANGUAGES, detectLanguage, translations } from "./i18n";
-import { adminFetch } from "./services/adminApi";
+import { API_BASE, adminDownload, adminFetch } from "./services/adminApi";
 import { assetUrl, formatPrice, localized, priceLabel } from "./utils/format";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const STATUS_KEYS = {
   new: "statusNew",
@@ -203,7 +201,7 @@ export default function App() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    fetch(`${API}/api/health`)
+    fetch(`${API_BASE}/api/health`)
       .then((response) => {
         if (!response.ok) throw new Error("Server error");
         return response.json();
@@ -835,8 +833,12 @@ export default function App() {
               <a
                 className="ghost-button"
                 href={`${API_BASE}/api/admin/orders/export`}
-                target="_blank"
-                rel="noreferrer"
+                onClick={(event) => {
+                  event.preventDefault();
+                  adminDownload("/api/admin/orders/export", "orders.csv").catch(
+                    () => {}
+                  );
+                }}
                 style={{ marginLeft: "auto" }}
               >
                 CSV

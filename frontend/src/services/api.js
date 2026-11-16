@@ -1,4 +1,39 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+function resolveApiUrl() {
+  const fromEnv = String(import.meta.env.VITE_API_URL || "")
+    .trim()
+    .replace(/\/+$/, "");
+
+  if (fromEnv) return fromEnv;
+
+  if (typeof window !== "undefined") {
+    try {
+      const saved = String(window.localStorage.getItem("uy_api_url") || "")
+        .trim()
+        .replace(/\/+$/, "");
+      if (saved) return saved;
+    } catch {
+      // localStorage может быть недоступен
+    }
+
+    const { hostname, protocol, origin } = window.location;
+    const isLocal =
+      protocol === "file:" ||
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0";
+
+    if (!isLocal) {
+      // На хостинге без VITE_API_URL используем тот же домен.
+      return origin.replace(/\/+$/, "");
+    }
+  }
+
+  return "http://localhost:8000";
+}
+
+export const API_BASE = resolveApiUrl();
+
+const API_URL = API_BASE;
 
 async function request(path) {
   const response = await fetch(`${API_URL}${path}`);

@@ -1,6 +1,8 @@
+import base64
 import hashlib
 import hmac
 import json
+import secrets
 import time
 from urllib.parse import parse_qsl
 
@@ -81,25 +83,56 @@ def admin_telegram_ids() -> set[int]:
     return ids
 
 
+def password_matches(authorization: str | None) -> bool:
+    """
+    Проверяет Basic Auth (admin:<пароль>) для входа в админку из браузера.
+    Пароль берётся из ADMIN_PASSWORD.
+    """
+    expected = settings.ADMIN_PASSWORD or ""
+
+    if not expected or not authorization:
+        return False
+
+    scheme, _, encoded = authorization.partition(" ")
+
+    if scheme.lower() != "basic" or not encoded:
+        return False
+
+    try:
+        decoded = base64.b64decode(encoded, validate=True).decode("utf-8")
+    except Exception:
+        return False
+
+    _, _, password = decoded.partition(":")
+
+    return secrets.compare_digest(password.encode("utf-8"), expected.encode("utf-8"))
+
+
 def require_admin(
     x_telegram_init_data: str | None = Header(
         default=None,
         alias="X-Telegram-Init-Data",
     ),
+    authorization: str | None = Header(default=None),
 ) -> int:
     """
-    Закрывает /api/admin/*: доступ только владельцу из ADMIN_TELEGRAM_ID.
+    Закрывает /api/admin/*.
 
-    В разработке (APP_ENV != production) можно включить ADMIN_DEV_BYPASS,
-    чтобы открывать админку в обычном браузере без Telegram.
+    Доступ разрешён, если выполнено хотя бы одно условие:
+    - передан корректный Basic Auth с паролем ADMIN_PASSWORD (вход из браузера);
+    - передан корректный Telegram initData владельца из ADMIN_TELEGRAM_ID;
+    - включён ADMIN_DEV_BYPASS вне production.
     """
+    if password_matches(authorization):
+        return 0
+
     if not x_telegram_init_data:
         if settings.ADMIN_DEV_BYPASS and settings.APP_ENV != "production":
             return 0
 
         raise HTTPException(
             status_code=401,
-            detail="Требуется вход через Telegram",
+            detail="Требуется пароль администратора или вход через Telegram",
         )
 
     user = verify_telegram_init_data(x_telegram_init_data)

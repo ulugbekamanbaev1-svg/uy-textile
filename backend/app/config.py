@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     BOT_TOKEN: str = ""
     ADMIN_TELEGRAM_ID: str = ""
 
+    # Пароль для входа в админку через браузер (Basic Auth).
+    # В production обязательно задайте свой пароль в переменных окружения.
+    ADMIN_PASSWORD: str = "admin123"
+
     FRONTEND_URL: str = "http://localhost:5173"
     ADMIN_URL: str = "http://localhost:5174"
 

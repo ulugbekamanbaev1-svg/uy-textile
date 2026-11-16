@@ -1,10 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
-import os
-import secrets
 
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
@@ -17,24 +14,6 @@ from app.seed import seed_data
 
 # ВАЖНО: __file__ с двумя подчеркиваниями!
 STATIC_DIR = Path(__file__).resolve().parent / "static"
-
-# --- НАСТРОЙКА БЕЗОПАСНОСТИ ---
-security = HTTPBasic()
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
-
-def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
-    is_correct_password = secrets.compare_digest(
-        credentials.password.encode("utf-8"),
-        ADMIN_PASSWORD.encode("utf-8")
-    )
-    if not is_correct_password:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный пароль администратора",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
-# -------------------------------
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -58,13 +37,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# ИСПРАВЛЕНО: Явно указываем разрешенные заголовки для работы пароля
+# Разрешаем заголовок авторизации и Telegram initData (нужен админке и Mini App)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["Authorization", "Content-Type", "Accept"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Telegram-Init-Data"],
+    expose_headers=["Content-Disposition"],
 )
 
 app.include_router(auth.router)
@@ -72,8 +52,8 @@ app.include_router(catalog.router)
 app.include_router(orders.router)
 app.include_router(store.router)
 
-# Защищенный маршрут
-app.include_router(admin.router, dependencies=[Depends(verify_admin)])
+# Защищенный маршрут: пароль админки (Basic) ИЛИ Telegram initData владельца
+app.include_router(admin.router)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
