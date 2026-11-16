@@ -23,6 +23,7 @@
 | `FRONTEND_URL` | `https://ваш-frontend.onrender.com` |
 | `ADMIN_URL` | `https://ваш-admin.onrender.com` |
 | `WEBAPP_URL` | `https://ваш-frontend.onrender.com` (HTTPS, для кнопки Mini App) |
+| `PUBLIC_API_URL` | `https://uy-textile-bot.onrender.com` (публичный адрес backend, нужен чтобы фото товаров приходили в Telegram-уведомлениях). Пример для этого проекта: `https://uy-textile-bot.onrender.com` |
 | `CORS_ORIGINS` | `https://ваш-frontend.onrender.com,https://ваш-admin.onrender.com` |
 
 Важно: `CORS_ORIGINS` — это точные адреса сайтов, через запятую, без пробелов
@@ -73,3 +74,8 @@
   backend (`backend/app/static/uploads`). На бесплатном Render файлы могут
   пропадать после перезапуска. Для постоянного хранения нужно подключить
   внешнее хранилище (S3 / Cloudinary) — это отдельная доработка.
+- **В Telegram нет фото в заказе** — задайте `PUBLIC_API_URL` (публичный
+  HTTPS-адрес backend). Относительные фото (`/static/...`) Telegram сможет
+  загрузить только по публичному URL. Убедитесь, что backend задеплоен с
+  актуальным кодом и картинка доступна по
+  `https://ваш-backend.onrender.com/static/...`.

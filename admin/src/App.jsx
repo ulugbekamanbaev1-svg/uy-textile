@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   LayoutDashboard,
@@ -119,6 +119,9 @@ export default function App() {
   const [orderFilter, setOrderFilter] = useState("");
   const [orderSearch, setOrderSearch] = useState("");
   const [dataState, setDataState] = useState("loading");
+  const [newOrderNotice, setNewOrderNotice] = useState(null);
+  const knownOrderIdRef = useRef(0);
+  const noticeInitRef = useRef(false);
   const [search, setSearch] = useState("");
   const [formProduct, setFormProduct] = useState(undefined);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -172,6 +175,23 @@ export default function App() {
           setSummary(summaryData);
           setProducts(productList);
           setOrders(orderList);
+          const maxId = orderList.reduce(
+            (max, order) => Math.max(max, order.id || 0),
+            0
+          );
+          if (!noticeInitRef.current) {
+            knownOrderIdRef.current = maxId;
+            noticeInitRef.current = true;
+          } else if (maxId > knownOrderIdRef.current) {
+            const fresh = orderList.filter(
+              (order) => order.id > knownOrderIdRef.current
+            );
+            knownOrderIdRef.current = maxId;
+            setNewOrderNotice({
+              count: fresh.length,
+              number: fresh[0]?.number || ""
+            });
+          }
           setCategories(categoryList);
           setClients(clientList);
           setAnalytics(analyticsData);
@@ -212,6 +232,49 @@ export default function App() {
       .catch(() => setServer("offline"));
 
     loadData();
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
+    const poll = async () => {
+      try {
+        const [summaryData, orderList] = await Promise.all([
+          adminFetch("/api/admin/summary"),
+          adminFetch("/api/admin/orders")
+        ]);
+
+        setSummary(summaryData);
+        setOrders(orderList);
+
+        const maxId = orderList.reduce(
+          (max, order) => Math.max(max, order.id || 0),
+          0
+        );
+
+        if (!noticeInitRef.current) {
+          knownOrderIdRef.current = maxId;
+          noticeInitRef.current = true;
+          return;
+        }
+
+        if (maxId > knownOrderIdRef.current) {
+          const fresh = orderList.filter(
+            (order) => order.id > knownOrderIdRef.current
+          );
+          knownOrderIdRef.current = maxId;
+          setNewOrderNotice({
+            count: fresh.length,
+            number: fresh[0]?.number || ""
+          });
+        }
+      } catch {
+        // polling errors are non-fatal
+      }
+    };
+
+    const timer = setInterval(poll, 30000);
+    return () => clearInterval(timer);
   }, [isAuthenticated]);
 
   const visibleProducts = useMemo(() => {
@@ -483,18 +546,28 @@ export default function App() {
         </div>
 
         <nav>
-          {MENU.map(([Icon, key, value]) => (
-            <button
-              className={section === value ? "selected" : ""}
-              key={key}
-              type="button"
-              title={sidebarCollapsed ? t(key) : undefined}
-              onClick={() => setSection(value)}
-            >
-              <Icon size={19} />
-              <span className="nav-label">{t(key)}</span>
-            </button>
-          ))}
+          {MENU.map(([Icon, key, value]) => {
+            const badgeCount =
+              value === "orders" ? summary?.orders_new ?? 0 : 0;
+
+            return (
+              <button
+                className={section === value ? "selected" : ""}
+                key={key}
+                type="button"
+                title={sidebarCollapsed ? t(key) : undefined}
+                onClick={() => setSection(value)}
+              >
+                <span className="nav-icon-wrap">
+                  <Icon size={19} />
+                  {badgeCount > 0 && (
+                    <span className="nav-badge">{badgeCount}</span>
+                  )}
+                </span>
+                <span className="nav-label">{t(key)}</span>
+              </button>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">
@@ -561,6 +634,40 @@ export default function App() {
             <div className="admin-avatar">U</div>
           </div>
         </header>
+
+        {newOrderNotice && (
+          <div className="new-order-notice" role="status">
+            <div>
+              <strong>{t("newOrderNoticeTitle")}</strong>
+              <p>
+                {newOrderNotice.count > 1
+                  ? t("newOrdersNoticeText", { count: newOrderNotice.count })
+                  : t("newOrderNoticeText", {
+                      number: newOrderNotice.number || ""
+                    })}
+              </p>
+            </div>
+            <div className="new-order-notice-actions">
+              <button
+                type="button"
+                className="small-button"
+                onClick={() => {
+                  setSection("orders");
+                  setNewOrderNotice(null);
+                }}
+              >
+                {t("openOrders")}
+              </button>
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={() => setNewOrderNotice(null)}
+              >
+                {t("dismiss")}
+              </button>
+            </div>
+          </div>
+        )}
 
         {dataState === "denied" ? (
           <div className="admin-placeholder access-denied">
@@ -1106,21 +1213,40 @@ function OrderCard({ order, t, lang, onStatusChange }) {
 
           return (
             <div className="order-item-line" key={item.id}>
-              <span>
-                {isMeter
-                  ? `${Number(item.meters)} ${t("unitMeter")}`
-                  : isArea
-                    ? `${item.quantity} × ${item.width_cm}×${item.height_cm} ${t(
-                        "unitCm"
-                      )}`
-                    : `${item.quantity} ×`}{" "}
-                {localized(item, "name", lang)}
-                {!isArea && item.variant_label
-                  ? ` · ${item.variant_label}`
-                  : ""}
-                {isArea ? ` · ${area.toFixed(2)} ${t("unitM2")}` : ""}
-                {item.color_ru ? ` · ${localized(item, "color", lang)}` : ""}
-              </span>
+              <div className="order-item-main">
+                {item.image_url ? (
+                  <a
+                    href={assetUrl(item.image_url)}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={t("openPhoto") || "Открыть фото"}
+                  >
+                    <img
+                      className="order-item-thumb"
+                      src={assetUrl(item.image_url)}
+                      alt=""
+                      loading="lazy"
+                    />
+                  </a>
+                ) : (
+                  <div className="order-item-thumb placeholder" />
+                )}
+                <span>
+                  {isMeter
+                    ? `${Number(item.meters)} ${t("unitMeter")}`
+                    : isArea
+                      ? `${item.quantity} × ${item.width_cm}×${item.height_cm} ${t(
+                          "unitCm"
+                        )}`
+                      : `${item.quantity} ×`}{" "}
+                  {localized(item, "name", lang)}
+                  {!isArea && item.variant_label
+                    ? ` · ${item.variant_label}`
+                    : ""}
+                  {isArea ? ` · ${area.toFixed(2)} ${t("unitM2")}` : ""}
+                  {item.color_ru ? ` · ${localized(item, "color", lang)}` : ""}
+                </span>
+              </div>
               <strong>{formatPrice(item.line_total, lang)}</strong>
             </div>
           );
