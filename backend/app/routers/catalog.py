@@ -162,8 +162,8 @@ async def get_product(slug: str, db: AsyncSession = Depends(get_db)):
 
     base = to_list_item(product)
 
-    return ProductDetail(
-        **base.model_dump(),
+    data = base.model_dump()
+    data.update(
         description_ru=product.description_ru,
         description_uz=product.description_uz,
         description_uzc=product.description_uzc,
@@ -183,3 +183,5 @@ async def get_product(slug: str, db: AsyncSession = Depends(get_db)):
             PriceTierOut.model_validate(tier) for tier in product.price_tiers
         ],
     )
+
+    return ProductDetail(**data)
