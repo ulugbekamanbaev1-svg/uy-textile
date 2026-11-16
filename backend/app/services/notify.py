@@ -85,10 +85,16 @@ def build_order_message(order: Order) -> str:
         if item.color_ru:
             details.append(item.color_ru)
 
-        lines.append(
+        line = (
             f"• {escape(' · '.join(details))} — "
             f"{item.line_total:,} сум".replace(",", " ")
         )
+
+        photo_url = _public_image_url(getattr(item, "image_url", "") or "")
+        if photo_url:
+            line += f'\n  Фото: <a href="{html.escape(photo_url, quote=True)}">открыть</a>'
+
+        lines.append(line)
 
     lines.append("")
     lines.append(f"💰 <b>Итого: {order.total:,} сум</b>".replace(",", " "))

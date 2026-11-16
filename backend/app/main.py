@@ -26,6 +26,18 @@ async def lifespan(app: FastAPI):
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS banner_active BOOLEAN NOT NULL DEFAULT FALSE, ADD COLUMN IF NOT EXISTS banner_text_ru VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_text_uz VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_text_uzc VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_category VARCHAR(80) NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS logo_url VARCHAR(255) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS store_latitude DOUBLE PRECISION, ADD COLUMN IF NOT EXISTS store_longitude DOUBLE PRECISION"))
         await connection.execute(text("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS meters NUMERIC(10, 2), ADD COLUMN IF NOT EXISTS pricing_type VARCHAR(20) NOT NULL DEFAULT 'piece', ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) NOT NULL DEFAULT ''"))
+        await connection.execute(text("""
+            UPDATE order_items AS oi
+            SET image_url = COALESCE(NULLIF(p.image_url, ''), (
+                SELECT pi.url FROM product_images pi
+                WHERE pi.product_id = p.id
+                ORDER BY pi.sort_order, pi.id
+                LIMIT 1
+            ), '')
+            FROM products p
+            WHERE (oi.image_url IS NULL OR oi.image_url = '')
+              AND oi.product_id = p.id
+        """))
 
     await seed_data()
     yield
