@@ -556,7 +556,12 @@ export default function App() {
                 key={key}
                 type="button"
                 title={sidebarCollapsed ? t(key) : undefined}
-                onClick={() => setSection(value)}
+                onClick={() => {
+                  setSection(value);
+                  if (window.innerWidth <= 800) {
+                    setSidebarCollapsed(true);
+                  }
+                }}
               >
                 <span className="nav-icon-wrap">
                   <Icon size={19} />
@@ -586,6 +591,18 @@ export default function App() {
           </button>
         </div>
       </aside>
+
+      {sidebarCollapsed && (
+        <button
+          type="button"
+          className="sidebar-fab"
+          aria-label={t("expandSidebar") || "Развернуть меню"}
+          title={t("expandSidebar") || "Развернуть меню"}
+          onClick={() => setSidebarCollapsed(false)}
+        >
+          <Menu size={20} />
+        </button>
+      )}
 
       <main className="admin-content">
         <header className="admin-header">
