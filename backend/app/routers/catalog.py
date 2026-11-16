@@ -49,6 +49,13 @@ def to_list_item(product: Product) -> ProductListItem:
         is_active=product.is_active,
         in_stock=product.in_stock,
         sort_order=product.sort_order,
+        price_tiers=[
+            PriceTierOut.model_validate(tier)
+            for tier in sorted(
+                getattr(product, "price_tiers", []) or [],
+                key=lambda t: t.min_quantity,
+            )
+        ],
     )
 
 
@@ -87,6 +94,7 @@ async def list_products(
         .options(
             selectinload(Product.variants),
             selectinload(Product.category),
+            selectinload(Product.price_tiers),
         )
         .where(Product.is_active.is_(True))
     )

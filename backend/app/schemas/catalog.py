@@ -80,6 +80,7 @@ class ProductListItem(BaseModel):
     is_active: bool
     in_stock: bool = True
     sort_order: int = 0
+    price_tiers: list[PriceTierOut] = []
 
 
 class ProductDetail(ProductListItem):
