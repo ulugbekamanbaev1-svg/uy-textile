@@ -50,6 +50,26 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+import logging
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception(
+        "Unhandled exception: %s %s",
+        request.method,
+        request.url.path,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error"},
+    )
+
 # Разрешаем заголовок авторизации и Telegram initData (нужен админке и Mini App)
 app.add_middleware(
     CORSMiddleware,
