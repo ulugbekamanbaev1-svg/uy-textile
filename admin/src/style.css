@@ -1758,3 +1758,88 @@ a, button, input, textarea, select, .stat-card, .order-card, .map-order {
 @media (max-width: 800px) {
   .sidebar-toggle { width: 30px; height: 30px; }
 }
+
+/* --- Галерея фото и оптовые тарифы --- */
+.admin-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-gallery-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e4e4dc;
+  background: #f2f2ec;
+}
+
+.admin-gallery-item.cover {
+  border-color: #6f7b63;
+  box-shadow: inset 0 0 0 1px #6f7b63;
+}
+
+.admin-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-gallery-cover {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: #3d4438;
+  color: #fff;
+  font-size: 9.5px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.admin-gallery-actions {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: flex;
+  gap: 4px;
+}
+
+.gallery-action {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #3d4438;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.gallery-action.danger {
+  color: #b3564a;
+}
+
+.tier-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tier-editor-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr 32px;
+  gap: 8px;
+  align-items: end;
+}
+
+@media (max-width: 720px) {
+  .tier-editor-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}

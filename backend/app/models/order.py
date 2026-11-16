@@ -6,6 +6,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
     func,
@@ -85,6 +86,10 @@ class OrderItem(Base):
 
     width_cm: Mapped[int | None] = mapped_column(Integer, nullable=True)
     height_cm: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Метраж для товаров, которые продаются на метры.
+    meters: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    pricing_type: Mapped[str] = mapped_column(String(20), default="piece")
 
     unit_price: Mapped[int] = mapped_column(Integer, default=0)
     quantity: Mapped[int] = mapped_column(Integer, default=1)

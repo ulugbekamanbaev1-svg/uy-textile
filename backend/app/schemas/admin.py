@@ -25,6 +25,13 @@ class AdminColorIn(BaseModel):
     hex: str = Field(default="#ffffff", pattern=HEX_PATTERN)
 
 
+class AdminPriceTierIn(BaseModel):
+    id: int | None = None
+    min_quantity: float = Field(gt=0, le=1_000_000)
+    max_quantity: float | None = Field(default=None, gt=0, le=1_000_000)
+    price: int = Field(gt=0, le=1_000_000_000)
+
+
 class AdminProductIn(BaseModel):
     slug: str | None = Field(default=None, max_length=80)
     category_id: int
@@ -42,6 +49,7 @@ class AdminProductIn(BaseModel):
     material_uzc: str = Field(default="", max_length=120)
 
     image_url: str = Field(default="", max_length=255)
+    images: list[str] = Field(default_factory=list, max_length=12)
 
     pricing_type: PricingType = "piece"
     price_per_m2: int | None = Field(default=None, ge=0, le=1_000_000_000)
@@ -53,6 +61,9 @@ class AdminProductIn(BaseModel):
 
     variants: list[AdminVariantIn] = Field(default_factory=list, max_length=50)
     colors: list[AdminColorIn] = Field(default_factory=list, max_length=50)
+    price_tiers: list[AdminPriceTierIn] = Field(
+        default_factory=list, max_length=20
+    )
 
 
 class AdminVariantOut(BaseModel):
@@ -78,6 +89,24 @@ class AdminColorOut(BaseModel):
     sort_order: int
 
 
+class AdminImageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    url: str
+    sort_order: int
+
+
+class AdminPriceTierOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    min_quantity: float
+    max_quantity: float | None = None
+    price: int
+    sort_order: int
+
+
 class AdminProductOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -98,6 +127,7 @@ class AdminProductOut(BaseModel):
     material_uzc: str
 
     image_url: str
+    images: list[AdminImageOut] = []
     pricing_type: str
     price_per_m2: int | None = None
 
@@ -108,6 +138,7 @@ class AdminProductOut(BaseModel):
 
     variants: list[AdminVariantOut] = []
     colors: list[AdminColorOut] = []
+    price_tiers: list[AdminPriceTierOut] = []
 
 
 class UploadResult(BaseModel):

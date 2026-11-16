@@ -11,6 +11,7 @@ import LocationPicker from "../components/LocationPicker";
 
 import { createOrder } from "../services/api";
 import { formatPrice, localized } from "../utils/format";
+import { formatQuantity, itemLineTotal } from "../utils/pricing";
 
 const emptyErrors = {};
 
@@ -140,7 +141,8 @@ export default function CheckoutPage({
           color_id: item.colorId ?? null,
           width_cm: item.widthCm ?? null,
           height_cm: item.heightCm ?? null,
-          quantity: item.qty
+          meters: item.pricingType === "meter" ? item.meters ?? null : null,
+          quantity: item.pricingType === "meter" ? 1 : item.qty
         }))
       });
 
@@ -235,17 +237,29 @@ export default function CheckoutPage({
         </section>
 
         <section className="checkout-summary">
-          {items.map((item) => (
-            <div className="checkout-line" key={item.key}>
-              <span>
-                {item.qty} × {localized(item, "name", lang)}
-                {item.variantLabel
-                  ? ` · ${item.variantLabel.replace("см", t("cmShort"))}`
-                  : ""}
-              </span>
-              <strong>{formatPrice(item.unitPrice * item.qty, lang)}</strong>
-            </div>
-          ))}
+          {items.map((item) => {
+            const isMeter = item.pricingType === "meter";
+            const isArea = item.pricingType === "area";
+            const quantityLabel = isMeter
+              ? `${formatQuantity(item.meters)} ${t("meterUnit")}`
+              : isArea
+                ? `${item.qty} × ${formatQuantity(item.widthCm)}×${formatQuantity(
+                    item.heightCm
+                  )} ${t("cmShort")}`
+                : `${item.qty} ×`;
+
+            return (
+              <div className="checkout-line" key={item.key}>
+                <span>
+                  {quantityLabel} {localized(item, "name", lang)}
+                  {!isArea && item.variantLabel
+                    ? ` · ${item.variantLabel.replace("см", t("cmShort"))}`
+                    : ""}
+                </span>
+                <strong>{formatPrice(itemLineTotal(item), lang)}</strong>
+              </div>
+            );
+          })}
 
           <div className="summary-row">
             <span>{t("orderTotal")}</span>

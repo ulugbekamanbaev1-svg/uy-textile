@@ -35,7 +35,19 @@ def build_order_message(order: Order) -> str:
 
     for item in order.items:
         name = item.name_ru or item.name_uz or item.product_slug
-        details = [f"{item.quantity} × {name}"]
+
+        if item.pricing_type == "meter" and item.meters:
+            quantity_label = f"{float(item.meters):g} м"
+        elif item.pricing_type == "area" and item.width_cm and item.height_cm:
+            area = (item.width_cm * item.height_cm) / 10000
+            quantity_label = (
+                f"{item.quantity} шт · {item.width_cm}×{item.height_cm} см "
+                f"({area:.2f} м²)"
+            )
+        else:
+            quantity_label = f"{item.quantity} ×"
+
+        details = [quantity_label, name]
 
         if item.variant_label:
             details.append(item.variant_label)

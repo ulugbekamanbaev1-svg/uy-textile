@@ -5,6 +5,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
     func,
@@ -79,6 +80,50 @@ class Product(Base):
         cascade="all, delete-orphan",
         order_by="ProductColor.sort_order",
     )
+    images: Mapped[list["ProductImage"]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan",
+        order_by="ProductImage.sort_order",
+    )
+    price_tiers: Mapped[list["ProductPriceTier"]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan",
+        order_by="ProductPriceTier.min_quantity",
+    )
+
+
+class ProductImage(Base):
+    """Дополнительные фото товара (галерея)."""
+
+    __tablename__ = "product_images"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    product_id: Mapped[int] = mapped_column(
+        ForeignKey("products.id", ondelete="CASCADE"), index=True
+    )
+    url: Mapped[str] = mapped_column(String(255), nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+    product: Mapped["Product"] = relationship(back_populates="images")
+
+
+class ProductPriceTier(Base):
+    """Оптовая цена: действует от количества min_quantity в единицах товара."""
+
+    __tablename__ = "product_price_tiers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    product_id: Mapped[int] = mapped_column(
+        ForeignKey("products.id", ondelete="CASCADE"), index=True
+    )
+    min_quantity: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    max_quantity: Mapped[float | None] = mapped_column(
+        Numeric(10, 2), nullable=True
+    )
+    price: Mapped[int] = mapped_column(Integer, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+    product: Mapped["Product"] = relationship(back_populates="price_tiers")
 
 
 class ProductVariant(Base):

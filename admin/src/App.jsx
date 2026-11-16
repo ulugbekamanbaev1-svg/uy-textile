@@ -1094,18 +1094,37 @@ function OrderCard({ order, t, lang, onStatusChange }) {
       </div>
 
       <div className="order-items">
-        {order.items.map((item) => (
-          <div className="order-item-line" key={item.id}>
-            <span>
-              {item.quantity} × {localized(item, "name", lang)}
-              {item.variant_label
-                ? ` · ${item.variant_label}`
-                : ""}
-              {item.color_ru ? ` · ${localized(item, "color", lang)}` : ""}
-            </span>
-            <strong>{formatPrice(item.line_total, lang)}</strong>
-          </div>
-        ))}
+        {order.items.map((item) => {
+          const isMeter = item.pricing_type === "meter" && item.meters;
+          const isArea =
+            item.pricing_type === "area" &&
+            item.width_cm &&
+            item.height_cm;
+          const area = isArea
+            ? (item.width_cm * item.height_cm) / 10000
+            : 0;
+
+          return (
+            <div className="order-item-line" key={item.id}>
+              <span>
+                {isMeter
+                  ? `${Number(item.meters)} ${t("unitMeter")}`
+                  : isArea
+                    ? `${item.quantity} × ${item.width_cm}×${item.height_cm} ${t(
+                        "unitCm"
+                      )}`
+                    : `${item.quantity} ×`}{" "}
+                {localized(item, "name", lang)}
+                {!isArea && item.variant_label
+                  ? ` · ${item.variant_label}`
+                  : ""}
+                {isArea ? ` · ${area.toFixed(2)} ${t("unitM2")}` : ""}
+                {item.color_ru ? ` · ${localized(item, "color", lang)}` : ""}
+              </span>
+              <strong>{formatPrice(item.line_total, lang)}</strong>
+            </div>
+          );
+        })}
       </div>
 
       {order.comment && (

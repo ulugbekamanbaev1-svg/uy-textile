@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImagePlus, Plus, Trash2, X } from "lucide-react";
+import { ImagePlus, Plus, Star, Trash2, X } from "lucide-react";
 
 import { adminFetch, assetUrl } from "../services/adminApi";
 import { localized } from "../utils/format";
@@ -24,6 +24,14 @@ function emptyColor() {
   };
 }
 
+function emptyTier() {
+  return {
+    min_quantity: "",
+    max_quantity: "",
+    price: ""
+  };
+}
+
 function toText(value) {
   return value === null || value === undefined ? "" : String(value);
 }
@@ -38,8 +46,27 @@ function toNumber(value) {
   return Number.isFinite(number) ? Math.round(number) : null;
 }
 
+function toDecimal(value) {
+  if (value === null || value === undefined || String(value).trim() === "") {
+    return null;
+  }
+
+  const number = Number(String(value).replace(",", "."));
+
+  return Number.isFinite(number) ? Math.round(number * 100) / 100 : null;
+}
+
 function initialForm(product, categories) {
   if (product) {
+    const gallery = (product.images || [])
+      .map((image) => image.url)
+      .filter(Boolean);
+    const images = gallery.length
+      ? gallery
+      : product.image_url
+        ? [product.image_url]
+        : [];
+
     return {
       slug: product.slug,
       category_id: String(product.category_id),
@@ -53,6 +80,7 @@ function initialForm(product, categories) {
       material_uz: product.material_uz,
       material_uzc: product.material_uzc,
       image_url: product.image_url,
+      images,
       pricing_type: product.pricing_type,
       price_per_m2: toText(product.price_per_m2),
       custom_size_allowed: product.custom_size_allowed,
@@ -72,6 +100,11 @@ function initialForm(product, categories) {
         name_uz: color.name_uz,
         name_uzc: color.name_uzc,
         hex: color.hex
+      })),
+      price_tiers: (product.price_tiers || []).map((tier) => ({
+        min_quantity: toText(tier.min_quantity),
+        max_quantity: toText(tier.max_quantity),
+        price: toText(tier.price)
       }))
     };
   }
@@ -89,6 +122,7 @@ function initialForm(product, categories) {
     material_uz: "",
     material_uzc: "",
     image_url: "",
+    images: [],
     pricing_type: "piece",
     price_per_m2: "",
     custom_size_allowed: false,
@@ -96,7 +130,8 @@ function initialForm(product, categories) {
     is_featured: false,
     in_stock: true,
     variants: [emptyVariant()],
-    colors: []
+    colors: [],
+    price_tiers: []
   };
 }
 
@@ -111,6 +146,7 @@ export default function ProductForm({
   const [form, setForm] = useState(() => initialForm(product, categories));
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   const [error, setError] = useState("");
 
   const update = (field, value) => {
@@ -135,10 +171,53 @@ export default function ProductForm({
     }));
   };
 
-  const uploadImage = async (event) => {
-    const file = event.target.files?.[0];
+  const updateTier = (index, field, value) => {
+    setForm((current) => ({
+      ...current,
+      price_tiers: current.price_tiers.map((tier, itemIndex) =>
+        itemIndex === index ? { ...tier, [field]: value } : tier
+      )
+    }));
+  };
 
-    if (!file) {
+  const addImageUrl = (url) => {
+    const value = url.trim();
+
+    if (!value) {
+      return;
+    }
+
+    setForm((current) =>
+      current.images.includes(value)
+        ? current
+        : { ...current, images: [...current.images, value] }
+    );
+  };
+
+  const removeImage = (index) => {
+    setForm((current) => ({
+      ...current,
+      images: current.images.filter((_, itemIndex) => itemIndex !== index)
+    }));
+  };
+
+  const makeCover = (index) => {
+    setForm((current) => {
+      if (index === 0) {
+        return current;
+      }
+
+      const images = [...current.images];
+      const [cover] = images.splice(index, 1);
+
+      return { ...current, images: [cover, ...images] };
+    });
+  };
+
+  const uploadImages = async (event) => {
+    const files = Array.from(event.target.files || []);
+
+    if (files.length === 0) {
       return;
     }
 
@@ -146,15 +225,24 @@ export default function ProductForm({
     setError("");
 
     try {
-      const body = new FormData();
-      body.append("file", file);
+      const urls = [];
 
-      const result = await adminFetch("/api/admin/uploads", {
-        method: "POST",
-        body
-      });
+      for (const file of files) {
+        const body = new FormData();
+        body.append("file", file);
 
-      update("image_url", result.url);
+        const result = await adminFetch("/api/admin/uploads", {
+          method: "POST",
+          body
+        });
+
+        urls.push(result.url);
+      }
+
+      setForm((current) => ({
+        ...current,
+        images: [...current.images, ...urls.filter((url) => !current.images.includes(url))]
+      }));
     } catch (uploadError) {
       setError(uploadError.message || t("formError"));
     } finally {
@@ -196,7 +284,8 @@ export default function ProductForm({
       material_ru: form.material_ru.trim(),
       material_uz: form.material_uz.trim(),
       material_uzc: form.material_uzc.trim(),
-      image_url: form.image_url.trim(),
+      image_url: form.images[0] || form.image_url.trim(),
+      images: form.images,
       pricing_type: form.pricing_type,
       price_per_m2:
         form.pricing_type === "area"
@@ -220,6 +309,17 @@ export default function ProductForm({
           name_uz: color.name_uz.trim(),
           name_uzc: color.name_uzc.trim(),
           hex: color.hex
+        })),
+      price_tiers: form.price_tiers
+        .filter(
+          (tier) =>
+            toDecimal(tier.min_quantity) !== null &&
+            toNumber(tier.price) !== null
+        )
+        .map((tier) => ({
+          min_quantity: toDecimal(tier.min_quantity),
+          max_quantity: toDecimal(tier.max_quantity),
+          price: toNumber(tier.price)
         }))
     };
 
@@ -264,42 +364,90 @@ export default function ProductForm({
 
         <div className="product-form-body">
           <section className="form-section">
-            <h3>{t("fieldImage")}</h3>
-
-            <div className="image-upload">
-              <div className="image-preview">
-                {form.image_url ? (
-                  <img
-                    src={assetUrl(form.image_url)}
-                    alt={form.name_ru || t("fieldImage")}
-                  />
-                ) : (
-                  <ImagePlus size={26} />
-                )}
-              </div>
-
-              <div className="image-actions">
-                <label className="upload-button">
-                  <ImagePlus size={16} />
-                  {uploading ? t("uploading") : t("uploadImage")}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    hidden
-                    disabled={uploading}
-                    onChange={uploadImage}
-                  />
-                </label>
-
+            <div className="section-head">
+              <h3>{t("fieldImages")}</h3>
+              <label className="upload-button">
+                <ImagePlus size={16} />
+                {uploading ? t("uploading") : t("uploadImages")}
                 <input
-                  type="text"
-                  value={form.image_url}
-                  placeholder={t("imageUrlLabel")}
-                  onChange={(event) =>
-                    update("image_url", event.target.value)
-                  }
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  multiple
+                  hidden
+                  disabled={uploading}
+                  onChange={uploadImages}
                 />
+              </label>
+            </div>
+
+            <p className="admin-note">{t("imagesHint")}</p>
+
+            {form.images.length === 0 ? (
+              <div className="image-preview">
+                <ImagePlus size={26} />
               </div>
+            ) : (
+              <div className="admin-gallery">
+                {form.images.map((url, index) => (
+                  <div
+                    className={`admin-gallery-item${
+                      index === 0 ? " cover" : ""
+                    }`}
+                    key={`${url}-${index}`}
+                  >
+                    <img src={assetUrl(url)} alt="" />
+
+                    {index === 0 && (
+                      <span className="admin-gallery-cover">
+                        {t("coverBadge")}
+                      </span>
+                    )}
+
+                    <div className="admin-gallery-actions">
+                      {index !== 0 && (
+                        <button
+                          type="button"
+                          className="gallery-action"
+                          title={t("makeCover")}
+                          aria-label={t("makeCover")}
+                          onClick={() => makeCover(index)}
+                        >
+                          <Star size={13} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="gallery-action danger"
+                        title={t("remove")}
+                        aria-label={t("remove")}
+                        onClick={() => removeImage(index)}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="image-actions">
+              <input
+                type="text"
+                value={imageUrlInput}
+                placeholder={t("imageUrlLabel")}
+                onChange={(event) => setImageUrlInput(event.target.value)}
+              />
+              <button
+                type="button"
+                className="small-button"
+                onClick={() => {
+                  addImageUrl(imageUrlInput);
+                  setImageUrlInput("");
+                }}
+              >
+                <Plus size={14} />
+                {t("addImageUrl")}
+              </button>
             </div>
           </section>
 
@@ -486,6 +634,10 @@ export default function ProductForm({
                   </button>
                 </div>
 
+                {form.pricing_type === "meter" && (
+                  <p className="admin-note">{t("meterVariantsHint")}</p>
+                )}
+
                 <div className="variant-list">
                   {form.variants.map((variant, index) => (
                     <div className="variant-row" key={index}>
@@ -545,6 +697,95 @@ export default function ProductForm({
                 </div>
               </>
             )}
+          </section>
+
+          <section className="form-section">
+            <div className="section-head">
+              <h3>{t("wholesaleTitle")}</h3>
+              <button
+                type="button"
+                className="small-button"
+                onClick={() =>
+                  setForm((current) => ({
+                    ...current,
+                    price_tiers: [...current.price_tiers, emptyTier()]
+                  }))
+                }
+              >
+                <Plus size={14} />
+                {t("addTier")}
+              </button>
+            </div>
+
+            <p className="admin-note">{t("wholesaleAdminHint")}</p>
+
+            {form.price_tiers.length === 0 && (
+              <p className="admin-note">{t("noTiers")}</p>
+            )}
+
+            <div className="tier-editor">
+              {form.price_tiers.map((tier, index) => (
+                <div className="tier-editor-row" key={index}>
+                  <label className="admin-field">
+                    <span>{t("tierFrom")}</span>
+                    <input
+                      type="number"
+                      min="0.1"
+                      step="0.5"
+                      value={tier.min_quantity}
+                      onChange={(event) =>
+                        updateTier(index, "min_quantity", event.target.value)
+                      }
+                      required
+                    />
+                  </label>
+
+                  <label className="admin-field">
+                    <span>{t("tierTo")}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={tier.max_quantity}
+                      placeholder="—"
+                      onChange={(event) =>
+                        updateTier(index, "max_quantity", event.target.value)
+                      }
+                    />
+                  </label>
+
+                  <label className="admin-field">
+                    <span>{t("tierPrice")}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={tier.price}
+                      onChange={(event) =>
+                        updateTier(index, "price", event.target.value)
+                      }
+                      required
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    className="icon-button danger"
+                    aria-label={t("remove")}
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        price_tiers: current.price_tiers.filter(
+                          (_, itemIndex) => itemIndex !== index
+                        )
+                      }))
+                    }
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </section>
 
           <section className="form-section">

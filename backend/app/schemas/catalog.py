@@ -43,6 +43,24 @@ class ColorOut(BaseModel):
     sort_order: int = 0
 
 
+class ProductImageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    url: str
+    sort_order: int = 0
+
+
+class PriceTierOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    min_quantity: float
+    max_quantity: float | None = None
+    price: int
+    sort_order: int = 0
+
+
 class ProductListItem(BaseModel):
     id: int
     slug: str
@@ -73,6 +91,8 @@ class ProductDetail(ProductListItem):
     material_uzc: str
     variants: list[VariantOut] = []
     colors: list[ColorOut] = []
+    images: list[ProductImageOut] = []
+    price_tiers: list[PriceTierOut] = []
 
 
 class AdminSummary(BaseModel):

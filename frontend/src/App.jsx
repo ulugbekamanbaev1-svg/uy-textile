@@ -189,6 +189,7 @@ export default function App() {
         items={cart.items}
         count={cart.count}
         onSetQty={cart.setQty}
+        onSetMeters={cart.setMeters}
         onRemove={cart.remove}
         onClear={cart.clear}
         onGoShopping={() => navigate("catalog", { category: "" })}

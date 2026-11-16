@@ -12,6 +12,7 @@ class OrderItemIn(BaseModel):
     color_id: int | None = None
     width_cm: int | None = Field(default=None, ge=20, le=400)
     height_cm: int | None = Field(default=None, ge=20, le=400)
+    meters: float | None = Field(default=None, ge=0.1, le=100000)
     quantity: int = Field(default=1, ge=1, le=99)
 
 
@@ -45,6 +46,8 @@ class OrderItemOut(BaseModel):
     color_hex: str
     width_cm: int | None = None
     height_cm: int | None = None
+    meters: float | None = None
+    pricing_type: str = "piece"
     unit_price: int
     quantity: int
     line_total: int

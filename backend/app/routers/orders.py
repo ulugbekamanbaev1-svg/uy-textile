@@ -14,6 +14,11 @@ from app.schemas.order import (
     OrderStatusUpdate,
 )
 from app.services.notify import notify_admin_about_order
+from app.services.pricing import (
+    effective_unit_price,
+    normalize_meters,
+    round_money,
+)
 
 router = APIRouter(prefix="/api/orders", tags=["Orders"])
 
@@ -109,6 +114,7 @@ async def create_order(
             .options(
                 selectinload(Product.variants),
                 selectinload(Product.colors),
+                selectinload(Product.price_tiers),
             )
             .where(
                 Product.slug == item.slug,
@@ -131,8 +137,10 @@ async def create_order(
 
         width_cm = None
         height_cm = None
+        meters = None
         variant_label = ""
         unit_price = 0
+        line_amount = float(item.quantity)
 
         if product.pricing_type == "area":
             if not item.width_cm or not item.height_cm:
@@ -144,8 +152,49 @@ async def create_order(
             width_cm = item.width_cm
             height_cm = item.height_cm
             area = (width_cm * height_cm) / 10000
-            unit_price = round(area * (product.price_per_m2 or 0))
+            base_price = product.price_per_m2 or 0
+            line_amount = area * item.quantity
+            unit_price = effective_unit_price(
+                product.price_tiers, line_amount, base_price
+            )
             variant_label = f"{width_cm}×{height_cm} см"
+
+        elif product.pricing_type == "meter":
+            if not item.meters or item.meters <= 0:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Укажите, сколько метров нужно",
+                )
+
+            meters = normalize_meters(item.meters)
+            active_variants = [
+                variant for variant in product.variants if variant.is_active
+            ]
+            variant = next(
+                (
+                    candidate
+                    for candidate in active_variants
+                    if candidate.id == item.variant_id
+                ),
+                None,
+            )
+
+            if variant is None and active_variants:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Выберите ширину ткани: {product.slug}",
+                )
+
+            base_price = (
+                variant.price
+                if variant is not None
+                else (product.price_per_m2 or 0)
+            )
+            unit_price = effective_unit_price(
+                product.price_tiers, meters, base_price
+            )
+            variant_label = variant.label if variant is not None else ""
+            line_amount = meters
 
         else:
             active_variants = [
@@ -166,11 +215,16 @@ async def create_order(
                     detail=f"Выберите размер товара: {product.slug}",
                 )
 
-            if variant is not None:
-                unit_price = variant.price
-                variant_label = variant.label
-            else:
-                unit_price = product.price_per_m2 or 0
+            base_price = (
+                variant.price
+                if variant is not None
+                else (product.price_per_m2 or 0)
+            )
+            unit_price = effective_unit_price(
+                product.price_tiers, float(item.quantity), base_price
+            )
+            variant_label = variant.label if variant is not None else ""
+            line_amount = float(item.quantity)
 
         if unit_price <= 0:
             raise HTTPException(
@@ -196,7 +250,7 @@ async def create_order(
                     detail=f"Цвет не найден: {product.slug}",
                 )
 
-        line_total = unit_price * item.quantity
+        line_total = round_money(unit_price * line_amount)
         total += line_total
 
         order.items.append(
@@ -213,8 +267,10 @@ async def create_order(
                 color_hex=color.hex if color else "",
                 width_cm=width_cm,
                 height_cm=height_cm,
+                meters=meters,
+                pricing_type=product.pricing_type,
                 unit_price=unit_price,
-                quantity=item.quantity,
+                quantity=1 if product.pricing_type == "meter" else item.quantity,
                 line_total=line_total,
             )
         )

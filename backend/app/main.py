@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI):
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS hero_title_ru VARCHAR(160) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS hero_title_uz VARCHAR(160) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS hero_title_uzc VARCHAR(160) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS hero_text_ru TEXT NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS hero_text_uz TEXT NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS hero_text_uzc TEXT NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS banner_active BOOLEAN NOT NULL DEFAULT FALSE, ADD COLUMN IF NOT EXISTS banner_text_ru VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_text_uz VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_text_uzc VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_category VARCHAR(80) NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS logo_url VARCHAR(255) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS store_latitude DOUBLE PRECISION, ADD COLUMN IF NOT EXISTS store_longitude DOUBLE PRECISION"))
+        await connection.execute(text("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS meters NUMERIC(10, 2), ADD COLUMN IF NOT EXISTS pricing_type VARCHAR(20) NOT NULL DEFAULT 'piece'"))
 
     await seed_data()
     yield

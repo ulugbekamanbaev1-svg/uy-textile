@@ -26,6 +26,8 @@ from app.models import (
     Order,
     Product,
     ProductColor,
+    ProductImage,
+    ProductPriceTier,
     ProductVariant,
     User,
 )
@@ -327,6 +329,8 @@ async def get_product_or_404(
         .options(
             selectinload(Product.variants),
             selectinload(Product.colors),
+            selectinload(Product.images),
+            selectinload(Product.price_tiers),
         )
         .where(Product.id == product_id)
     )
@@ -410,17 +414,47 @@ def apply_payload(product: Product, payload: AdminProductIn) -> None:
 
     image_url = payload.image_url.strip()
 
-    if image_url and not (
-        image_url.startswith("/static/")
-        or image_url.startswith("http://")
-        or image_url.startswith("https://")
-    ):
-        raise HTTPException(
-            status_code=422,
-            detail="Ссылка на изображение должна начинаться с /static/ или http(s)://",
-        )
+    def check_image(url: str) -> str:
+        if len(url) > 255:
+            raise HTTPException(
+                status_code=422,
+                detail="Ссылка на изображение слишком длинная",
+            )
 
-    product.image_url = image_url
+        if not (
+            url.startswith("/static/")
+            or url.startswith("http://")
+            or url.startswith("https://")
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Ссылка на изображение должна начинаться "
+                    "с /static/ или http(s)://"
+                ),
+            )
+
+        return url
+
+    ordered_images: list[ProductImage] = []
+    seen_images: set[str] = set()
+
+    for raw_url in payload.images:
+        url = raw_url.strip()
+
+        if not url or url in seen_images:
+            continue
+
+        seen_images.add(check_image(url))
+        ordered_images.append(ProductImage(url=url, sort_order=len(ordered_images)))
+
+    # Совместимость со старыми товарами: одно фото в image_url.
+    if not ordered_images and image_url:
+        check_image(image_url)
+        ordered_images.append(ProductImage(url=image_url, sort_order=0))
+
+    product.images = ordered_images
+    product.image_url = ordered_images[0].url if ordered_images else ""
 
     # --- размеры ---
     existing_variants = {
@@ -476,6 +510,32 @@ def apply_payload(product: Product, payload: AdminProductIn) -> None:
         ordered_colors.append(color)
 
     product.colors = ordered_colors
+
+    # --- оптовые цены ---
+    ordered_tiers: list[ProductPriceTier] = []
+
+    for index, item in enumerate(
+        sorted(payload.price_tiers, key=lambda tier: tier.min_quantity)
+    ):
+        if (
+            item.max_quantity is not None
+            and item.max_quantity < item.min_quantity
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail="Максимум оптового количества меньше минимума",
+            )
+
+        ordered_tiers.append(
+            ProductPriceTier(
+                min_quantity=item.min_quantity,
+                max_quantity=item.max_quantity,
+                price=item.price,
+                sort_order=index,
+            )
+        )
+
+    product.price_tiers = ordered_tiers
 
 
 def validate_pricing(payload: AdminProductIn) -> None:
@@ -552,7 +612,6 @@ async def update_product(
 
     validate_pricing(payload)
 
-    old_image_url = product.image_url
     slug = (payload.slug or "").strip().lower()
 
     if slug and slug != product.slug:
@@ -567,9 +626,6 @@ async def update_product(
 
     apply_payload(product, payload)
 
-    if old_image_url != product.image_url:
-        remove_uploaded_file(old_image_url)
-
     await db.commit()
 
     return await get_product_or_404(product.id, db)
@@ -582,7 +638,8 @@ async def delete_product(
 ):
     product = await get_product_or_404(product_id, db)
 
-    remove_uploaded_file(product.image_url)
+    for image_url in {product.image_url, *(image.url for image in product.images)}:
+        remove_uploaded_file(image_url)
 
     await db.delete(product)
     await db.commit()

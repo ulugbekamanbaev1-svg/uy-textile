@@ -8,7 +8,9 @@ from app.models import Category, Product, ProductVariant
 from app.schemas.catalog import (
     CategoryOut,
     ColorOut,
+    PriceTierOut,
     ProductDetail,
+    ProductImageOut,
     ProductListItem,
     VariantOut,
 )
@@ -139,6 +141,8 @@ async def get_product(slug: str, db: AsyncSession = Depends(get_db)):
         .options(
             selectinload(Product.variants),
             selectinload(Product.colors),
+            selectinload(Product.images),
+            selectinload(Product.price_tiers),
             selectinload(Product.category),
         )
         .where(Product.slug == slug, Product.is_active.is_(True))
@@ -164,4 +168,10 @@ async def get_product(slug: str, db: AsyncSession = Depends(get_db)):
             if variant.is_active
         ],
         colors=[ColorOut.model_validate(color) for color in product.colors],
+        images=[
+            ProductImageOut.model_validate(image) for image in product.images
+        ],
+        price_tiers=[
+            PriceTierOut.model_validate(tier) for tier in product.price_tiers
+        ],
     )
