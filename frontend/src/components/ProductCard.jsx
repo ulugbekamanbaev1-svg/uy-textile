@@ -41,12 +41,33 @@ export default function ProductCard({
         ? `${t("meterUnit")}²`
         : t("pieceUnit");
 
+  const handlePointerMove = (event) => {
+    if (event.pointerType && event.pointerType !== "mouse" && event.pointerType !== "pen") {
+      return;
+    }
+
+    const card = event.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    const rotateY = (x - 0.5) * 8;
+    const rotateX = (0.5 - y) * 8;
+
+    card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+  };
+
+  const handlePointerLeave = (event) => {
+    event.currentTarget.style.transform = "";
+  };
+
   return (
     <article
       className="product-card"
       role="button"
       tabIndex={0}
       onClick={() => onOpen(product.slug)}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
       onKeyDown={(event) => {
         if (event.key === "Enter") onOpen(product.slug);
       }}

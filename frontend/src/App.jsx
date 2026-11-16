@@ -87,6 +87,12 @@ export default function App() {
     if (tg) {
       tg.ready();
       tg.expand();
+      try {
+        tg.setHeaderColor?.("#f4efe6");
+        tg.setBackgroundColor?.("#f4efe6");
+      } catch {
+        // ignore
+      }
 
       const user = tg.initDataUnsafe?.user;
       if (user) {

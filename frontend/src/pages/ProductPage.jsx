@@ -236,6 +236,12 @@ export default function ProductPage({
       isMeter ? 1 : qty
     );
 
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.("success");
+    } catch {
+      // ignore
+    }
+
     setAdded(true);
   };
 

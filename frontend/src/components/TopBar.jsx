@@ -70,6 +70,11 @@ export function FavoriteButton({ active, onClick, label }) {
       aria-label={label}
       onClick={(event) => {
         event.stopPropagation();
+        try {
+          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.("light");
+        } catch {
+          // ignore
+        }
         onClick();
       }}
     >
