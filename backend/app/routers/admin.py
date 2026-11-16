@@ -1,9 +1,12 @@
 import csv
 import io
+import os
 import re
+import boto3
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from uuid import uuid4
+from botocore.config import Config as BotoConfig
 
 from fastapi import (
     APIRouter,
@@ -60,18 +63,41 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 MAX_IMAGE_BYTES = settings.MAX_UPLOAD_MB * 1024 * 1024
 
+# --- НАСТРОЙКА CLOUDFLARE R2 ---
+r2_client = boto3.client(
+    service_name="s3",
+    endpoint_url=f"https://{os.environ.get('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
+    aws_access_key_id=os.environ.get("R2_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.environ.get("R2_SECRET_ACCESS_KEY"),
+    region_name="auto",
+    config=BotoConfig(signature_version="s3v4"),
+)
+R2_BUCKET = os.environ.get("R2_BUCKET_NAME", "uy-textile-photos")
+R2_PUBLIC = os.environ.get("R2_PUBLIC_URL", "").rstrip("/")
+# -------------------------------
+
 
 def remove_uploaded_file(url: str) -> None:
-    """Удаляет только файлы, загруженные через админку."""
-    if not url or not url.startswith("/static/uploads/"):
+    """Удаляет файлы из Cloudflare R2 или из локальной папки (для старых фото)."""
+    if not url:
         return
 
-    path = UPLOAD_DIR / Path(url).name
+    # Если это ссылка из нашего облака R2
+    if R2_PUBLIC and url.startswith(R2_PUBLIC):
+        object_name = url.replace(f"{R2_PUBLIC}/", "")
+        try:
+            r2_client.delete_object(Bucket=R2_BUCKET, Key=object_name)
+        except Exception as e:
+            print(f"Ошибка при удалении из R2: {e}")
+            
+    # Если это старое локальное фото
+    elif url.startswith("/static/uploads/"):
+        path = UPLOAD_DIR / Path(url).name
+        try:
+            path.unlink(missing_ok=True)
+        except OSError:
+            pass
 
-    try:
-        path.unlink(missing_ok=True)
-    except OSError:
-        pass
 
 router = APIRouter(
     prefix="/api/admin",
@@ -675,11 +701,24 @@ async def upload_image(file: UploadFile = File(...)):
             detail="Поддерживаются JPG, PNG, WEBP и GIF",
         )
 
-    filename = f"{uuid4().hex}{extension}"
-    (UPLOAD_DIR / filename).write_bytes(content)
+    object_name = f"products/{uuid4().hex}{extension}"
+
+    # --- ЗАГРУЗКА В CLOUDFLARE R2 ---
+    try:
+        r2_client.put_object(
+            Bucket=R2_BUCKET,
+            Key=object_name,
+            Body=content,
+            ContentType=file.content_type
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка при загрузке в облако: {str(e)}")
+
+    # Формируем ссылку на публичный файл
+    public_url = f"{R2_PUBLIC}/{object_name}"
 
     return UploadResult(
-        url=f"/static/uploads/{filename}",
+        url=public_url,
         size=len(content),
     )
 
