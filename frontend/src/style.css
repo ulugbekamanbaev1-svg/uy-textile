@@ -986,7 +986,25 @@ main { animation: fadeUp .45s var(--ease); }
 .store-modal-map-wrap { margin-top: 10px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
 .store-modal-map-wrap .leaflet-container { height: 220px; width: 100%; }
 
-.location-picker, .location-map { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+.location-picker { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+.location-map {
+  height: 280px;
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.location-map .leaflet-container,
+.store-location-map-view,
+.store-location-map-view .leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+.store-location-map-view {
+  min-height: 220px;
+  border-radius: 14px;
+  overflow: hidden;
+}
 .leaflet-container { font-family: inherit; }
 .location-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .location-button, .location-chip {
