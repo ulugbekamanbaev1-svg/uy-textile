@@ -5,9 +5,6 @@ import { assetUrl } from "../services/api";
 import { formatPrice, localized } from "../utils/format";
 import {
   formatQuantity,
-  hasWholesaleDiscount,
-  itemAmount,
-  itemBasePrice,
   itemLineTotal,
   itemUnitPrice
 } from "../utils/pricing";
@@ -68,8 +65,6 @@ export default function CartPage({
           const isMeter = item.pricingType === "meter";
           const isArea = item.pricingType === "area";
           const unitPrice = itemUnitPrice(item);
-          const basePrice = itemBasePrice(item);
-          const discounted = hasWholesaleDiscount(item);
 
           return (
             <article className="cart-item" key={item.key}>
@@ -116,9 +111,6 @@ export default function CartPage({
                   {formatPrice(unitPrice, lang)}
                   {isMeter && ` / ${t("meterUnit")}`}
                   {isArea && ` / ${t("meterUnit")}²`}
-                  {discounted && (
-                    <s className="old-price">{formatPrice(basePrice, lang)}</s>
-                  )}
                 </p>
 
                 {isMeter ? (
@@ -168,17 +160,6 @@ export default function CartPage({
                   </div>
                 )}
 
-                {discounted && (
-                  <p className="wholesale-saved">
-                    {t("wholesaleBadge")} ·{" "}
-                    {t("wholesaleSaved", {
-                      amount: formatPrice(
-                        Math.round((basePrice - unitPrice) * itemAmount(item)),
-                        lang
-                      )
-                    })}
-                  </p>
-                )}
               </div>
             </article>
           );

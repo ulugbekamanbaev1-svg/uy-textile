@@ -52,8 +52,3 @@ export function itemUnitPrice(item) {
 export function itemLineTotal(item) {
   return Math.round(itemUnitPrice(item) * itemAmount(item));
 }
-
-export function hasWholesaleDiscount(item) {
-  const base = itemBasePrice(item);
-  return base > 0 && itemUnitPrice(item) < base;
-}
