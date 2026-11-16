@@ -352,6 +352,7 @@ async def admin_products(db: AsyncSession = Depends(get_db)):
         .options(
             selectinload(Product.variants),
             selectinload(Product.category),
+            selectinload(Product.price_tiers),
         )
         .order_by(Product.sort_order, Product.id)
     )
