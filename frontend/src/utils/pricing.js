@@ -25,32 +25,6 @@ export function pickPriceTier(tiers, amount) {
   );
 }
 
-export function firstWholesaleTier(tiers) {
-  const list = Array.isArray(tiers) ? tiers : [];
-  if (list.length === 0) return null;
-
-  return list.reduce((best, tier) =>
-    quantityValue(tier.min_quantity) < quantityValue(best.min_quantity)
-      ? tier
-      : best
-  );
-}
-
-export function nextWholesaleTier(tiers, amount) {
-  const value = quantityValue(amount);
-  const list = (Array.isArray(tiers) ? tiers : []).filter(
-    (tier) => quantityValue(tier.min_quantity) > value + 1e-9
-  );
-
-  if (list.length === 0) return null;
-
-  return list.reduce((best, tier) =>
-    quantityValue(tier.min_quantity) < quantityValue(best.min_quantity)
-      ? tier
-      : best
-  );
-}
-
 export function itemAmount(item) {
   if (!item) return 0;
 

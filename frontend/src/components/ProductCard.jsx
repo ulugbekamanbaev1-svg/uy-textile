@@ -2,7 +2,6 @@ import { ImageOff } from "lucide-react";
 
 import { assetUrl } from "../services/api";
 import { formatPrice, localized } from "../utils/format";
-import { formatQuantity, quantityValue } from "../utils/pricing";
 import { FavoriteButton } from "./TopBar";
 
 export default function ProductCard({
@@ -22,24 +21,6 @@ export default function ProductCard({
       : product.pricing_type === "meter"
         ? `${price} · ${t("perMeter")}`
         : t("fromPrice", { price });
-
-  const tiers = Array.isArray(product.price_tiers) ? product.price_tiers : [];
-  const firstTier = tiers.length
-    ? tiers.reduce((best, tier) =>
-        quantityValue(tier.min_quantity) < quantityValue(best.min_quantity)
-          ? tier
-          : best
-      )
-    : null;
-  const wholesaleBestPrice = tiers.length
-    ? Math.min(...tiers.map((tier) => quantityValue(tier.price)))
-    : null;
-  const unit =
-    product.pricing_type === "meter"
-      ? t("meterUnit")
-      : product.pricing_type === "area"
-        ? `${t("meterUnit")}²`
-        : t("pieceUnit");
 
   const handlePointerMove = (event) => {
     if (event.pointerType && event.pointerType !== "mouse" && event.pointerType !== "pen") {
@@ -78,19 +59,6 @@ export default function ProductCard({
         ) : (
           <ImageOff size={28} />
         )}
-        <div className="product-badges">
-          {product.is_featured && (
-            <span className="product-badge featured">{t("featuredBadge")}</span>
-          )}
-          {firstTier && (
-            <span className="product-badge wholesale">
-              {t("wholesaleFromBadge", {
-                quantity: formatQuantity(firstTier.min_quantity),
-                unit
-              })}
-            </span>
-          )}
-        </div>
         {product.in_stock === false && (
           <span className="out-of-stock-badge">{t("outOfStock")}</span>
         )}
@@ -107,15 +75,6 @@ export default function ProductCard({
         </span>
         <h3>{name}</h3>
         <p className="product-price">{priceLabel}</p>
-        {wholesaleBestPrice !== null &&
-          wholesaleBestPrice < quantityValue(product.min_price) && (
-            <p className="product-price wholesale">
-              {t("wholesalePriceFrom", {
-                price: formatPrice(wholesaleBestPrice, lang),
-                unit
-              })}
-            </p>
-          )}
       </div>
     </article>
   );

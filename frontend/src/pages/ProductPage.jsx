@@ -15,7 +15,6 @@ import { assetUrl, fetchProduct } from "../services/api";
 import { formatArea, formatPrice, localized, toNumber } from "../utils/format";
 import {
   formatQuantity,
-  nextWholesaleTier,
   pickPriceTier,
   quantityValue
 } from "../utils/pricing";
@@ -129,17 +128,6 @@ export default function ProductPage({
     ? quantityValue(activeTier.price)
     : quantityValue(basePrice);
   const lineTotal = Math.round(unitPrice * amount);
-  const hasDiscount = unitPrice > 0 && unitPrice < quantityValue(basePrice);
-  const savings = Math.max(0, Math.round((basePrice - unitPrice) * amount));
-  const nextTier = nextWholesaleTier(product?.price_tiers, amount);
-  const amountToNext =
-    nextTier && amount > 0
-      ? Math.max(0, quantityValue(nextTier.min_quantity) - amount)
-      : 0;
-  const nextTierTotal =
-    nextTier && amount > 0
-      ? Math.round(quantityValue(nextTier.min_quantity) * quantityValue(nextTier.price))
-      : 0;
 
   if (state === "loading") {
     return (
@@ -365,40 +353,10 @@ export default function ProductPage({
               <strong>{area > 0 ? `${formatArea(width, height)} м²` : "—"}</strong>
             </div>
             <div>
-              <span>{t("retailPriceLabel")}</span>
-              <strong>{formatPrice(basePrice, lang)} / {t("meterUnit")}²</strong>
-            </div>
-            {hasDiscount && (
-              <div>
-                <span>{t("yourPriceLabel")}</span>
-                <strong>
-                  {formatPrice(unitPrice, lang)} / {t("meterUnit")}²
-                </strong>
-              </div>
-            )}
-            <div>
               <span>{t("calcPrice")}</span>
               <strong>{formatPrice(lineTotal, lang)}</strong>
             </div>
           </div>
-
-          {hasDiscount && (
-            <p className="wholesale-saved">
-              {t("wholesaleBadge")} · {t("wholesaleSaved", {
-                amount: formatPrice(savings, lang)
-              })}
-            </p>
-          )}
-
-          {nextTier && amount > 0 && !hasDiscount && amountToNext > 1e-9 && (
-            <p className="wholesale-hint-next">
-              {t("wholesaleNextHint", {
-                amount: formatQuantity(amountToNext),
-                unit: `${t("meterUnit")}²`,
-                price: formatPrice(quantityValue(nextTier.price), lang)
-              })}
-            </p>
-          )}
 
           {!customValid && (
             <p className="form-error">
@@ -493,38 +451,10 @@ export default function ProductPage({
               </strong>
             </div>
             <div>
-              <span>{t("retailPriceLabel")}</span>
-              <strong>{formatPrice(basePrice, lang)} / {t("meterUnit")}</strong>
-            </div>
-            {hasDiscount && (
-              <div>
-                <span>{t("yourPriceLabel")}</span>
-                <strong>{formatPrice(unitPrice, lang)} / {t("meterUnit")}</strong>
-              </div>
-            )}
-            <div>
               <span>{t("calcPrice")}</span>
               <strong>{formatPrice(lineTotal, lang)}</strong>
             </div>
           </div>
-
-          {hasDiscount && (
-            <p className="wholesale-saved">
-              {t("wholesaleBadge")} · {t("wholesaleSaved", {
-                amount: formatPrice(savings, lang)
-              })}
-            </p>
-          )}
-
-          {nextTier && amount > 0 && !hasDiscount && amountToNext > 1e-9 && (
-            <p className="wholesale-hint-next">
-              {t("wholesaleNextHint", {
-                amount: formatQuantity(amountToNext),
-                unit: t("meterUnit"),
-                price: formatPrice(quantityValue(nextTier.price), lang)
-              })}
-            </p>
-          )}
 
           {!metersValid && (
             <p className="form-error">
@@ -615,24 +545,6 @@ export default function ProductPage({
             <strong>{formatPrice(lineTotal, lang)}</strong>
           </div>
         </div>
-
-        {isPiece && hasDiscount && (
-          <p className="wholesale-saved">
-            {t("wholesaleBadge")} · {t("wholesaleSaved", {
-              amount: formatPrice(savings, lang)
-            })}
-          </p>
-        )}
-
-        {isPiece && nextTier && !hasDiscount && amountToNext > 1e-9 && (
-          <p className="wholesale-hint-next">
-            {t("wholesaleNextHint", {
-              amount: formatQuantity(amountToNext),
-              unit: t("pieceUnit"),
-              price: formatPrice(quantityValue(nextTier.price), lang)
-            })}
-          </p>
-        )}
 
         <button
           className={`add-button${added ? " added" : ""}`}
