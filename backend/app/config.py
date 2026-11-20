@@ -12,7 +12,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     BOT_TOKEN: str = ""
-    ADMIN_TELEGRAM_ID: str = ""
+    
+    # ИЗМЕНЕНО: Теперь переменная поддерживает список ID через запятую
+    ADMIN_TELEGRAM_IDS: str = ""
 
     # Пароль для входа в админку через браузер (Basic Auth).
     # В production обязательно задайте свой пароль в переменных окружения.
@@ -51,6 +53,15 @@ class Settings(BaseSettings):
             origin.strip()
             for origin in self.CORS_ORIGINS.split(",")
             if origin.strip()
+        ]
+
+    # ДОБАВЛЕНО: Свойство для получения списка ID администраторов
+    @property
+    def admin_ids_list(self) -> list[str]:
+        return [
+            admin_id.strip()
+            for admin_id in self.ADMIN_TELEGRAM_IDS.split(",")
+            if admin_id.strip()
         ]
 
 

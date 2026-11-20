@@ -71,12 +71,14 @@ def verify_telegram_init_data(init_data: str) -> dict:
 
 
 def admin_telegram_ids() -> set[int]:
-    """ADMIN_TELEGRAM_ID может содержать несколько ID через запятую."""
+    """
+    Возвращает множество ID администраторов.
+    Использует новую переменную settings.admin_ids_list из config.py.
+    """
     ids: set[int] = set()
 
-    for chunk in settings.ADMIN_TELEGRAM_ID.replace(";", ",").split(","):
-        value = chunk.strip()
-
+    # settings.admin_ids_list возвращает список строк, разделенных запятыми
+    for value in settings.admin_ids_list:
         if value.isdigit():
             ids.add(int(value))
 
@@ -120,7 +122,7 @@ def require_admin(
 
     Доступ разрешён, если выполнено хотя бы одно условие:
     - передан корректный Basic Auth с паролем ADMIN_PASSWORD (вход из браузера);
-    - передан корректный Telegram initData владельца из ADMIN_TELEGRAM_ID;
+    - передан корректный Telegram initData владельца из ADMIN_TELEGRAM_IDS;
     - включён ADMIN_DEV_BYPASS вне production.
     """
     if password_matches(authorization):
@@ -129,7 +131,6 @@ def require_admin(
     if not x_telegram_init_data:
         if settings.ADMIN_DEV_BYPASS and settings.APP_ENV != "production":
             return 0
-
         raise HTTPException(
             status_code=401,
             detail="Требуется пароль администратора или вход через Telegram",
