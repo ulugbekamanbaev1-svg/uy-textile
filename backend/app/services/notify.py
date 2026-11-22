@@ -212,7 +212,12 @@ async def notify_customer_about_status(order: Order) -> bool:
             f"Сумма: {order.total:,} сум".replace(",", " ")
         )
 
-        if order.status == "done":
+        if order.status == "confirmed":
+            text += (
+                "\n\n✅ <b>Заказ принят!</b> Магазин начал обработку вашего заказа. "
+                "Ориентируемся на доставку."
+            )
+        elif order.status == "done":
             text += "\n\nСпасибо вам за покупку!"
         elif order.status == "cancelled":
             text += "\n\nЕсли есть вопросы — свяжитесь с нами."

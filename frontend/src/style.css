@@ -956,6 +956,36 @@ main { animation: fadeUp .45s var(--ease); }
 .status-pill.done { background: #e7f7ea; color: #1f7a3a; }
 .status-pill.cancelled { background: #fdecec; color: #9a3b35; }
 
+/* ---------- Order status tracker (customer) ---------- */
+.order-tracker { display: flex; flex-direction: column; gap: 10px; }
+.order-tracker-card { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: rgba(255,255,255,0.72); box-shadow: 0 10px 30px rgba(37, 52, 41, 0.08); }
+.order-tracker-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px dashed var(--line); }
+.order-tracker-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.order-tracker-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f4efe6, #e9e2d2); color: #5a4a33; flex: 0 0 auto; }
+.order-tracker-label { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); font-weight: 700; }
+.order-tracker-number { display: block; font-size: 15px; color: var(--text); }
+.order-tracker-steps { display: flex; flex-direction: column; padding: 14px 0 6px; gap: 0; }
+.order-step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; position: relative; padding-bottom: 16px; }
+.order-step:last-child { padding-bottom: 0; }
+.order-step-line { position: absolute; left: 13px; top: 26px; bottom: 0; width: 2px; background: var(--line); }
+.order-step.done .order-step-line { background: #8fbf9b; }
+.order-step-marker { position: relative; z-index: 1; }
+.order-step-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--line); background: #fff; color: var(--muted); }
+.order-step.done .order-step-icon { border-color: #8fbf9b; background: #eaf6ee; color: #2f6b45; }
+.order-step.active .order-step-icon { border-color: #6d7f63; background: #f2f6ef; color: #4a5f43; box-shadow: 0 0 0 5px rgba(109, 127, 99, 0.16); animation: orderPulse 1.8s ease-in-out infinite; }
+.order-step.cancelled .order-step-icon { border-color: #f0c6c0; background: #fdecec; color: #b3564a; }
+@keyframes orderPulse { 0%, 100% { box-shadow: 0 0 0 4px rgba(109,127,99,0.22);} 50% { box-shadow: 0 0 0 8px rgba(109,127,99,0.10);} }
+.order-step-content { display: flex; flex-direction: column; gap: 2px; padding-top: 3px; }
+.order-step-label { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.order-step.todo .order-step-label { color: var(--muted); font-weight: 600; }
+.order-step-state { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
+.order-step.done .order-step-state { color: #2f6b45; }
+.order-step.active .order-step-state { color: #4a5f43; }
+.order-step.cancelled .order-step-label { color: #b3564a; }
+.order-step.cancelled { opacity: .85; }
+.order-tracker-success { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #eaf6ee; color: #2f6b45; font-size: 13px; font-weight: 700; }
+.order-tracker-cancelled { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 12px; border-radius: 12px; background: #fdecec; color: #9a3b35; font-size: 13px; font-weight: 700; }
+
 /* States */
 .empty-state { text-align: center; padding: 30px 16px; color: var(--muted); }
 .empty-state .primary-button { width: auto; margin-top: 10px; }

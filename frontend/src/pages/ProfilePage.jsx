@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { LANGUAGES } from "../i18n";
+import OrderStatusTracker from "../components/OrderStatusTracker";
 import { fetchStoreSettings, trackOrders } from "../services/api";
 import { formatPrice } from "../utils/format";
 import { openExternalLink } from "../utils/telegram";
@@ -363,21 +364,7 @@ const openInBrowser = () => {
           <div className="tracked-orders">
             {trackedOrders.map((order) => (
               <div className="tracked-order" key={order.id}>
-                <div className="tracked-order-head">
-                  <strong>{order.number}</strong>
-
-                  <span className={`status-pill ${order.status}`}>
-                    {t(STATUS_KEYS[order.status] || "orderStatus")}
-                  </span>
-                </div>
-
-                <div className="tracked-order-meta">
-                  <span>
-                    {new Date(order.created_at).toLocaleDateString()}
-                  </span>
-
-                  <strong>{formatPrice(order.total, lang)}</strong>
-                </div>
+                <OrderStatusTracker status={order.status} order={order} t={t} lang={lang} />
               </div>
             ))}
           </div>
