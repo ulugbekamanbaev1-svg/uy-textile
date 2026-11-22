@@ -72,6 +72,7 @@ async def _send_one(
                 "chat_id": chat_id,
                 "photo": media_url,
                 "caption": text[:1024],
+                "parse_mode": "HTML",
             }
             if keyboard:
                 payload["reply_markup"] = keyboard
@@ -83,6 +84,7 @@ async def _send_one(
                 "chat_id": chat_id,
                 "video": media_url,
                 "caption": text[:1024],
+                "parse_mode": "HTML",
             }
             if keyboard:
                 payload["reply_markup"] = keyboard
@@ -94,6 +96,7 @@ async def _send_one(
                 "chat_id": chat_id,
                 "text": text[:4096],
                 "disable_web_page_preview": False,
+                "parse_mode": "HTML",
             }
             if keyboard:
                 payload["reply_markup"] = keyboard
@@ -122,47 +125,73 @@ async def _send_one(
 
 
 async def run_broadcast(broadcast_id: int) -> None:
-    if not settings.BOT_TOKEN:
-        return
-
     async with AsyncSessionLocal() as db:
         broadcast = await db.get(Broadcast, broadcast_id)
         if broadcast is None:
             return
 
-        result = await db.execute(
-            select(User.telegram_id).where(User.telegram_id.is_not(None))
-        )
-        chat_ids = [int(row[0]) for row in result.all() if row[0]]
+        if not settings.BOT_TOKEN:
+            broadcast.status = "failed"
+            broadcast.error_log = "BOT_TOKEN не настроен на сервере"
+            broadcast.completed_at = datetime.now(timezone.utc)
+            await db.commit()
+            return
 
-        broadcast.status = "sending"
-        broadcast.total_recipients = len(chat_ids)
-        broadcast.sent_count = 0
-        broadcast.failed_count = 0
-        broadcast.error_log = ""
-        await db.commit()
+        try:
+            result = await db.execute(
+                select(User.telegram_id).where(User.telegram_id.is_not(None))
+            )
+            chat_ids = [int(row[0]) for row in result.all() if row[0]]
 
-        errors: list[str] = []
-        async with httpx.AsyncClient(timeout=30) as client:
-            for index, chat_id in enumerate(chat_ids, start=1):
-                ok, err = await _send_one(client, chat_id, broadcast)
-                if not ok and err and err.startswith("429"):
+            broadcast.status = "sending"
+            broadcast.total_recipients = len(chat_ids)
+            broadcast.sent_count = 0
+            broadcast.failed_count = 0
+            broadcast.error_log = ""
+            await db.commit()
+
+            if not chat_ids:
+                broadcast.status = "failed"
+                broadcast.error_log = "Нет подписчиков: пользователи ещё не запускали бота"
+                broadcast.completed_at = datetime.now(timezone.utc)
+                await db.commit()
+                return
+
+            media_url = _public_media_url(broadcast.media_url)
+            if broadcast.media_type in {"photo", "video"} and broadcast.media_url and not media_url:
+                broadcast.error_log = "Медиа недоступно по публичному URL; отправлен только текст.\n"
+
+            errors: list[str] = []
+            async with httpx.AsyncClient(timeout=30) as client:
+                for index, chat_id in enumerate(chat_ids, start=1):
                     ok, err = await _send_one(client, chat_id, broadcast)
+                    if not ok and err and err.startswith("429"):
+                        ok, err = await _send_one(client, chat_id, broadcast)
 
-                if ok:
-                    broadcast.sent_count += 1
-                else:
-                    broadcast.failed_count += 1
-                    if err and len(errors) < 20:
-                        errors.append(f"{chat_id}: {err}")
+                    if ok:
+                        broadcast.sent_count += 1
+                    else:
+                        broadcast.failed_count += 1
+                        if err and len(errors) < 20:
+                            errors.append(f"{chat_id}: {err}")
 
-                if index % 20 == 0:
-                    broadcast.error_log = "\n".join(errors)[-4000:]
-                    await db.commit()
+                    if index % 20 == 0:
+                        broadcast.error_log = ((broadcast.error_log or "") + "\n".join(errors))[-4000:]
+                        await db.commit()
 
-                await asyncio.sleep(0.05)
+                    await asyncio.sleep(0.05)
 
-        broadcast.status = "completed" if broadcast.sent_count > 0 or broadcast.total_recipients == 0 else "failed"
-        broadcast.error_log = "\n".join(errors)[-4000:]
-        broadcast.completed_at = datetime.now(timezone.utc)
-        await db.commit()
+            base_log = ""
+            if broadcast.media_type in {"photo", "video"} and broadcast.media_url and not media_url:
+                base_log = "Медиа недоступно по публичному URL; отправлен только текст.\n"
+            broadcast.error_log = (base_log + "\n".join(errors))[-4000:]
+            broadcast.status = "completed" if broadcast.sent_count > 0 else "failed"
+            broadcast.completed_at = datetime.now(timezone.utc)
+            await db.commit()
+        except Exception as exc:
+            logger.exception("Broadcast %s failed", broadcast_id)
+            broadcast.status = "failed"
+            broadcast.error_log = (broadcast.error_log or "") + f"\nОшибка: {exc}"
+            broadcast.error_log = broadcast.error_log[-4000:]
+            broadcast.completed_at = datetime.now(timezone.utc)
+            await db.commit()

@@ -1138,7 +1138,7 @@ export default function App() {
                     t={t}
                     lang={lang}
                     products={products}
-                    webappUrl={import.meta.env.VITE_WEBAPP_URL || storeSettings?.webapp_url || ""}
+                    webappUrl={import.meta.env.VITE_WEBAPP_URL || import.meta.env.VITE_FRONTEND_URL || ""}
                   />
                 )}
               </>

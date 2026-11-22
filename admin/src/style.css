@@ -2146,3 +2146,7 @@ a, button, input, textarea, select, .stat-card, .order-card, .map-order {
   .analytics-export { align-items: stretch; width: 100%; }
   .export-buttons { justify-content: flex-start; }
 }
+
+.broadcast-error-log { margin-top: 12px; border-top: 1px solid #efefe8; padding-top: 10px; }
+.broadcast-error-log h4 { margin: 0 0 8px; font-size: 13px; color: #5d6458; }
+.broadcast-error-log p { margin: 0 0 6px; font-size: 12px; color: #9a3b35; }

@@ -22,7 +22,7 @@ function statusLabel(status, t) {
       pending: t("broadcastPending"),
       sending: t("broadcastSending"),
       completed: t("broadcastCompleted"),
-      failed: t("broadcastFailed")
+      failed: t("broadcastFailedStatus")
     }[status] || status
   );
 }
@@ -297,6 +297,15 @@ export default function BroadcastPanel({ t, lang, products, webappUrl }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {items.length > 0 && (
+          <div className="broadcast-error-log">
+            <h4>{t("broadcastErrors")}</h4>
+            {items.map((item) => (
+              <p key={`error-${item.id}`}>{`#${item.id}: ${(item.error_log || "").slice(0, 300)}`}</p>
+            ))}
           </div>
         )}
       </section>
