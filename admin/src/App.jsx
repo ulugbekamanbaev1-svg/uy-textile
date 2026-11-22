@@ -111,7 +111,10 @@ export default function App() {
   const [server, setServer] = useState("checking");
   const [lang, setLang] = useState(detectLanguage);
   const [section, setSection] = useState("home");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
+  // ИЗМЕНЕНО: На телефонах меню изначально свернуто для экономии места
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth <= 768);
+  
   const [summary, setSummary] = useState(null);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -201,7 +204,7 @@ export default function App() {
       )
       .catch((error) => {
         if (error?.status === 401 || error?.status === 403) {
-          handleLogout(); // Если пароль неверный, выкидываем на экран входа
+          handleLogout();
         } else {
           setDataState("error");
         }
@@ -277,6 +280,14 @@ export default function App() {
     return () => clearInterval(timer);
   }, [isAuthenticated]);
 
+  // ДОБАВЛЕНО: Функция для закрытия меню на телефоне после клика
+  const handleMenuClick = (value) => {
+    setSection(value);
+    if (window.innerWidth <= 768) {
+      setSidebarCollapsed(true);
+    }
+  };
+
   const visibleProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
 
@@ -294,7 +305,7 @@ export default function App() {
   const statCards = [
     ["statOrdersToday", summary?.orders_today ?? 0, ShoppingBag],
     ["statNewOrders", summary?.orders_new ?? 0, TrendingUp],
-    ["statBuyers", summary?.users ?? 0, Users],
+    ["statBuyers", summary?.users ?? 0, Users], // Это и есть счетчик пользователей
     ["statProducts", summary?.products ?? 0, Package],
     ["statCategories", summary?.categories ?? 0, LayoutDashboard]
   ];
@@ -536,6 +547,14 @@ export default function App() {
 
   return (
     <div className="admin">
+      {/* ДОБАВЛЕНО: Затемнение фона для мобилок */}
+      {!sidebarCollapsed && (
+        <div 
+          className="sidebar-backdrop" 
+          onClick={() => setSidebarCollapsed(true)}
+        />
+      )}
+
       <aside className={`sidebar${sidebarCollapsed ? " collapsed" : ""}`}>
         <div className="admin-brand">
           <div className="admin-logo">U</div>
@@ -556,7 +575,7 @@ export default function App() {
                 key={key}
                 type="button"
                 title={sidebarCollapsed ? t(key) : undefined}
-                onClick={() => setSection(value)}
+                onClick={() => handleMenuClick(value)} // ИЗМЕНЕНО: Используем handleMenuClick
               >
                 <span className="nav-icon-wrap">
                   <Icon size={19} />
@@ -621,7 +640,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Кнопка выхода */}
             <button 
               type="button" 
               onClick={handleLogout} 

@@ -32,7 +32,7 @@ export const translations = {
       "Здесь ты будешь управлять товарами, заказами, покупателями и доставкой.",
     statOrdersToday: "Заказы сегодня",
     statNewOrders: "Новые заказы",
-    statBuyers: "Покупатели",
+    statBuyers: "Пользователи",
     statProducts: "Товары",
     systemStatus: "Состояние системы",
     backendOnline: "Backend подключён",

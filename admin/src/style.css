@@ -1924,3 +1924,44 @@ a, button, input, textarea, select, .stat-card, .order-card, .map-order {
     align-items: flex-start;
   }
 }
+/* --- АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ --- */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out;
+    width: 260px !important; 
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+
+  .admin-content {
+    margin-left: 0 !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+  }
+
+  .sidebar-toggle {
+    display: none !important;
+  }
+
+  /* Карточки статистики в один столбец на телефоне */
+  .stats {
+    grid-template-columns: 1fr !important;
+  }
+}

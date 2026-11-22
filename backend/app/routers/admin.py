@@ -23,6 +23,7 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import Response
+from starlette.concurrency import run_in_threadpool # ДОБАВЛЕНО для асинхронности
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -88,7 +89,7 @@ if boto3 and BotoConfig and R2_ACCOUNT_ID and R2_ACCESS_KEY_ID and R2_SECRET_ACC
 # -------------------------------
 
 
-def remove_uploaded_file(url: str) -> None:
+async def remove_uploaded_file(url: str) -> None:
     """Удаляет файлы из Cloudflare R2 или из локальной папки (для старых фото)."""
     if not url:
         return
@@ -99,7 +100,12 @@ def remove_uploaded_file(url: str) -> None:
             return
         object_name = url.replace(f"{R2_PUBLIC}/", "")
         try:
-            r2_client.delete_object(Bucket=R2_BUCKET, Key=object_name)
+            # Выполняем синхронный boto3 в отдельном потоке, чтобы не вешать сервер
+            await run_in_threadpool(
+                r2_client.delete_object, 
+                Bucket=R2_BUCKET, 
+                Key=object_name
+            )
         except Exception as e:
             print(f"Ошибка при удалении из R2: {e}")
             
@@ -144,7 +150,7 @@ async def summary(db: AsyncSession = Depends(get_db)):
     return AdminSummary(
         products=products or 0,
         categories=categories or 0,
-        users=users or 0,
+        users=users or 0, # Это значение показывается в карточке "Покупатели" (или "Пользователи")
         orders_today=orders_today or 0,
         orders_new=orders_new or 0,
     )
@@ -679,7 +685,7 @@ async def delete_product(
     product = await get_product_or_404(product_id, db)
 
     for image_url in {product.image_url, *(image.url for image in product.images)}:
-        remove_uploaded_file(image_url)
+        await remove_uploaded_file(image_url) # ДОБАВЛЕНО await
 
     await db.delete(product)
     await db.commit()
@@ -721,7 +727,9 @@ async def upload_image(file: UploadFile = File(...)):
     if r2_client and R2_PUBLIC:
         object_name = f"products/{filename}"
         try:
-            r2_client.put_object(
+            # Выполняем синхронный boto3 в отдельном потоке, чтобы не вешать сервер
+            await run_in_threadpool(
+                r2_client.put_object,
                 Bucket=R2_BUCKET,
                 Key=object_name,
                 Body=content,
