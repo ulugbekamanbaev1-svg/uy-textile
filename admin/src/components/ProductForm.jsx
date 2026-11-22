@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ImagePlus, Plus, Star, Trash2, X } from "lucide-react";
 
@@ -42,7 +43,6 @@ function toNumber(value) {
   }
 
   const number = Number(String(value).replace(",", "."));
-
   return Number.isFinite(number) ? Math.round(number) : null;
 }
 
@@ -52,15 +52,15 @@ function toDecimal(value) {
   }
 
   const number = Number(String(value).replace(",", "."));
-
   return Number.isFinite(number) ? Math.round(number * 100) / 100 : null;
 }
 
-function initialForm(product, categories) {
+function initialForm(product, categories, isDuplicate) {
   if (product) {
     const gallery = (product.images || [])
       .map((image) => image.url)
       .filter(Boolean);
+
     const images = gallery.length
       ? gallery
       : product.image_url
@@ -68,7 +68,7 @@ function initialForm(product, categories) {
         : [];
 
     return {
-      slug: product.slug,
+      slug: isDuplicate ? "" : product.slug,
       category_id: String(product.category_id),
       name_ru: product.name_ru,
       name_uz: product.name_uz,
@@ -84,18 +84,18 @@ function initialForm(product, categories) {
       pricing_type: product.pricing_type,
       price_per_m2: toText(product.price_per_m2),
       custom_size_allowed: product.custom_size_allowed,
-      is_active: product.is_active,
-      is_featured: product.is_featured,
+      is_active: isDuplicate ? false : product.is_active,
+      is_featured: isDuplicate ? false : product.is_featured,
       in_stock: product.in_stock !== false,
       variants: (product.variants || []).map((variant) => ({
-        id: variant.id,
+        id: isDuplicate ? null : variant.id,
         label: variant.label,
         width_cm: toText(variant.width_cm),
         height_cm: toText(variant.height_cm),
         price: toText(variant.price)
       })),
       colors: (product.colors || []).map((color) => ({
-        id: color.id,
+        id: isDuplicate ? null : color.id,
         name_ru: color.name_ru,
         name_uz: color.name_uz,
         name_uzc: color.name_uzc,
@@ -141,9 +141,12 @@ export default function ProductForm({
   t,
   lang,
   onClose,
-  onSaved
+  onSaved,
+  isDuplicate = false
 }) {
-  const [form, setForm] = useState(() => initialForm(product, categories));
+  const [form, setForm] = useState(() =>
+    initialForm(product, categories, isDuplicate)
+  );
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
@@ -183,9 +186,7 @@ export default function ProductForm({
   const addImageUrl = (url) => {
     const value = url.trim();
 
-    if (!value) {
-      return;
-    }
+    if (!value) return;
 
     setForm((current) =>
       current.images.includes(value)
@@ -203,9 +204,7 @@ export default function ProductForm({
 
   const makeCover = (index) => {
     setForm((current) => {
-      if (index === 0) {
-        return current;
-      }
+      if (index === 0) return current;
 
       const images = [...current.images];
       const [cover] = images.splice(index, 1);
@@ -217,9 +216,7 @@ export default function ProductForm({
   const uploadImages = async (event) => {
     const files = Array.from(event.target.files || []);
 
-    if (files.length === 0) {
-      return;
-    }
+    if (files.length === 0) return;
 
     setUploading(true);
     setError("");
@@ -241,7 +238,10 @@ export default function ProductForm({
 
       setForm((current) => ({
         ...current,
-        images: [...current.images, ...urls.filter((url) => !current.images.includes(url))]
+        images: [
+          ...current.images,
+          ...urls.filter((url) => !current.images.includes(url))
+        ]
       }));
     } catch (uploadError) {
       setError(uploadError.message || t("formError"));
@@ -254,9 +254,7 @@ export default function ProductForm({
   const submit = async (event) => {
     event.preventDefault();
 
-    if (saving) {
-      return;
-    }
+    if (saving) return;
 
     setSaving(true);
     setError("");
@@ -264,7 +262,7 @@ export default function ProductForm({
     const variants = form.variants
       .filter((variant) => variant.label.trim())
       .map((variant) => ({
-        id: variant.id,
+        id: isDuplicate ? null : variant.id,
         label: variant.label.trim(),
         width_cm: toNumber(variant.width_cm),
         height_cm: toNumber(variant.height_cm),
@@ -304,7 +302,7 @@ export default function ProductForm({
             color.name_uzc.trim()
         )
         .map((color) => ({
-          id: color.id,
+          id: isDuplicate ? null : color.id,
           name_ru: color.name_ru.trim(),
           name_uz: color.name_uz.trim(),
           name_uzc: color.name_uzc.trim(),
@@ -324,12 +322,14 @@ export default function ProductForm({
     };
 
     try {
+      const isEditing = Boolean(product) && !isDuplicate;
+
       const saved = await adminFetch(
-        product
+        isEditing
           ? `/api/admin/products/${product.id}`
           : "/api/admin/products",
         {
-          method: product ? "PATCH" : "POST",
+          method: isEditing ? "PATCH" : "POST",
           body: JSON.stringify(payload)
         }
       );
@@ -348,10 +348,21 @@ export default function ProductForm({
         <header className="product-modal-head">
           <div>
             <h2>
-              {product ? t("editProductTitle") : t("newProductTitle")}
+              {isDuplicate
+                ? "Дублирование товара"
+                : product
+                  ? t("editProductTitle")
+                  : t("newProductTitle")}
             </h2>
-            <p>{product ? product.slug : t("slugHint")}</p>
+            <p>
+              {isDuplicate
+                ? "Проверьте данные копии и сохраните новый товар"
+                : product
+                  ? product.slug
+                  : t("slugHint")}
+            </p>
           </div>
+
           <button
             type="button"
             className="icon-button"
@@ -390,9 +401,7 @@ export default function ProductForm({
               <div className="admin-gallery">
                 {form.images.map((url, index) => (
                   <div
-                    className={`admin-gallery-item${
-                      index === 0 ? " cover" : ""
-                    }`}
+                    className={`admin-gallery-item${index === 0 ? " cover" : ""}`}
                     key={`${url}-${index}`}
                   >
                     <img src={assetUrl(url)} alt="" />
@@ -415,6 +424,7 @@ export default function ProductForm({
                           <Star size={13} />
                         </button>
                       )}
+
                       <button
                         type="button"
                         className="gallery-action danger"
@@ -459,9 +469,7 @@ export default function ProductForm({
                 <span>{t("fieldCategory")}</span>
                 <select
                   value={form.category_id}
-                  onChange={(event) =>
-                    update("category_id", event.target.value)
-                  }
+                  onChange={(event) => update("category_id", event.target.value)}
                   required
                 >
                   {categories.map((category) => (
@@ -519,9 +527,7 @@ export default function ProductForm({
                 <input
                   type="text"
                   value={form.material_ru}
-                  onChange={(event) =>
-                    update("material_ru", event.target.value)
-                  }
+                  onChange={(event) => update("material_ru", event.target.value)}
                 />
               </label>
               <label className="admin-field">
@@ -529,9 +535,7 @@ export default function ProductForm({
                 <input
                   type="text"
                   value={form.material_uz}
-                  onChange={(event) =>
-                    update("material_uz", event.target.value)
-                  }
+                  onChange={(event) => update("material_uz", event.target.value)}
                 />
               </label>
               <label className="admin-field">
@@ -539,9 +543,7 @@ export default function ProductForm({
                 <input
                   type="text"
                   value={form.material_uzc}
-                  onChange={(event) =>
-                    update("material_uzc", event.target.value)
-                  }
+                  onChange={(event) => update("material_uzc", event.target.value)}
                 />
               </label>
             </div>
@@ -552,9 +554,7 @@ export default function ProductForm({
                 <textarea
                   rows={3}
                   value={form.description_ru}
-                  onChange={(event) =>
-                    update("description_ru", event.target.value)
-                  }
+                  onChange={(event) => update("description_ru", event.target.value)}
                 />
               </label>
               <label className="admin-field">
@@ -562,9 +562,7 @@ export default function ProductForm({
                 <textarea
                   rows={3}
                   value={form.description_uz}
-                  onChange={(event) =>
-                    update("description_uz", event.target.value)
-                  }
+                  onChange={(event) => update("description_uz", event.target.value)}
                 />
               </label>
               <label className="admin-field">
@@ -572,9 +570,7 @@ export default function ProductForm({
                 <textarea
                   rows={3}
                   value={form.description_uzc}
-                  onChange={(event) =>
-                    update("description_uzc", event.target.value)
-                  }
+                  onChange={(event) => update("description_uzc", event.target.value)}
                 />
               </label>
             </div>
@@ -588,9 +584,7 @@ export default function ProductForm({
                 <span>{t("pricingType")}</span>
                 <select
                   value={form.pricing_type}
-                  onChange={(event) =>
-                    update("pricing_type", event.target.value)
-                  }
+                  onChange={(event) => update("pricing_type", event.target.value)}
                 >
                   <option value="piece">{t("pricingPiece")}</option>
                   <option value="meter">{t("pricingMeter")}</option>
@@ -606,9 +600,7 @@ export default function ProductForm({
                     min="0"
                     step="1000"
                     value={form.price_per_m2}
-                    onChange={(event) =>
-                      update("price_per_m2", event.target.value)
-                    }
+                    onChange={(event) => update("price_per_m2", event.target.value)}
                     required
                   />
                 </label>
@@ -761,9 +753,7 @@ export default function ProductForm({
                       min="0"
                       step="1000"
                       value={tier.price}
-                      onChange={(event) =>
-                        updateTier(index, "price", event.target.value)
-                      }
+                      onChange={(event) => updateTier(index, "price", event.target.value)}
                       required
                     />
                   </label>
@@ -816,9 +806,7 @@ export default function ProductForm({
                   <input
                     type="color"
                     value={color.hex}
-                    onChange={(event) =>
-                      updateColor(index, "hex", event.target.value)
-                    }
+                    onChange={(event) => updateColor(index, "hex", event.target.value)}
                   />
                   <input
                     type="text"
@@ -872,9 +860,7 @@ export default function ProductForm({
                 <input
                   type="checkbox"
                   checked={form.is_active}
-                  onChange={(event) =>
-                    update("is_active", event.target.checked)
-                  }
+                  onChange={(event) => update("is_active", event.target.checked)}
                 />
                 {t("flagActive")}
               </label>
@@ -882,9 +868,7 @@ export default function ProductForm({
                 <input
                   type="checkbox"
                   checked={form.is_featured}
-                  onChange={(event) =>
-                    update("is_featured", event.target.checked)
-                  }
+                  onChange={(event) => update("is_featured", event.target.checked)}
                 />
                 {t("flagFeatured")}
               </label>
@@ -892,9 +876,7 @@ export default function ProductForm({
                 <input
                   type="checkbox"
                   checked={form.in_stock}
-                  onChange={(event) =>
-                    update("in_stock", event.target.checked)
-                  }
+                  onChange={(event) => update("in_stock", event.target.checked)}
                 />
                 {t("flagInStock")}
               </label>
@@ -922,7 +904,7 @@ export default function ProductForm({
             className="primary-admin-button"
             disabled={saving || uploading}
           >
-            {saving ? t("saving") : t("save")}
+            {saving ? t("saving") : isDuplicate ? "Создать копию" : t("save")}
           </button>
         </footer>
       </form>

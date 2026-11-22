@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -17,6 +18,7 @@ import {
   Phone,
   ExternalLink,
   Pencil,
+  Copy,
   Plus,
   Trash2,
   ChevronUp,
@@ -33,7 +35,7 @@ import AnalyticsPanel from "./components/AnalyticsPanel";
 import ClientsTable from "./components/ClientsTable";
 import SettingsForm from "./components/SettingsForm";
 import { LANGUAGES, detectLanguage, translations } from "./i18n";
-import { API_BASE, adminDownload, adminFetch } from "./services/adminApi";
+import { adminDownload, adminFetch } from "./services/adminApi";
 import { assetUrl, formatPrice, localized, priceLabel } from "./utils/format";
 
 const STATUS_KEYS = {
@@ -111,10 +113,10 @@ export default function App() {
   const [server, setServer] = useState("checking");
   const [lang, setLang] = useState(detectLanguage);
   const [section, setSection] = useState("home");
-  
-  // ИЗМЕНЕНО: На телефонах меню изначально свернуто для экономии места
+
+  // На телефонах меню изначально свернуто
   const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth <= 768);
-  
+
   const [summary, setSummary] = useState(null);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -126,13 +128,19 @@ export default function App() {
   const knownOrderIdRef = useRef(0);
   const noticeInitRef = useRef(false);
   const [search, setSearch] = useState("");
+
   const [formProduct, setFormProduct] = useState(undefined);
+
+  // Новый режим: обычное редактирование или создание копии
+  const [isDuplicate, setIsDuplicate] = useState(false);
+
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteError, setDeleteError] = useState("");
   const [clients, setClients] = useState([]);
   const [clientSearch, setClientSearch] = useState("");
 
   const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
   const [analyticsDays, setAnalyticsDays] = useState(30);
   const [analytics, setAnalytics] = useState(null);
   const [settingsForm, setSettingsForm] = useState(null);
@@ -178,10 +186,12 @@ export default function App() {
           setSummary(summaryData);
           setProducts(productList);
           setOrders(orderList);
+
           const maxId = orderList.reduce(
             (max, order) => Math.max(max, order.id || 0),
             0
           );
+
           if (!noticeInitRef.current) {
             knownOrderIdRef.current = maxId;
             noticeInitRef.current = true;
@@ -195,6 +205,7 @@ export default function App() {
               number: fresh[0]?.number || ""
             });
           }
+
           setCategories(categoryList);
           setClients(clientList);
           setAnalytics(analyticsData);
@@ -272,7 +283,7 @@ export default function App() {
           });
         }
       } catch {
-        // polling errors are non-fatal
+        // Ошибки обновления не критичны
       }
     };
 
@@ -280,7 +291,6 @@ export default function App() {
     return () => clearInterval(timer);
   }, [isAuthenticated]);
 
-  // ДОБАВЛЕНО: Функция для закрытия меню на телефоне после клика
   const handleMenuClick = (value) => {
     setSection(value);
     if (window.innerWidth <= 768) {
@@ -305,7 +315,7 @@ export default function App() {
   const statCards = [
     ["statOrdersToday", summary?.orders_today ?? 0, ShoppingBag],
     ["statNewOrders", summary?.orders_new ?? 0, TrendingUp],
-    ["statBuyers", summary?.users ?? 0, Users], // Это и есть счетчик пользователей
+    ["statBuyers", summary?.users ?? 0, Users],
     ["statProducts", summary?.products ?? 0, Package],
     ["statCategories", summary?.categories ?? 0, LayoutDashboard]
   ];
@@ -330,15 +340,44 @@ export default function App() {
     }
   };
 
+  // Обычное редактирование товара
   const openEdit = async (product) => {
     try {
       const detail = await adminFetch(`/api/admin/products/${product.id}`);
+      setIsDuplicate(false);
       setFormProduct(detail);
     } catch (error) {
       if (error?.status === 401 || error?.status === 403) {
         handleLogout();
       }
     }
+  };
+
+  // Дублирование товара: загружаем полные данные оригинала
+  const openDuplicate = async (product) => {
+    try {
+      const detail = await adminFetch(`/api/admin/products/${product.id}`);
+
+      setIsDuplicate(true);
+      setFormProduct(detail);
+    } catch (error) {
+      if (error?.status === 401 || error?.status === 403) {
+        handleLogout();
+      } else {
+        alert(error.message || "Не удалось загрузить товар для копирования");
+      }
+    }
+  };
+
+  // Открытие формы нового товара
+  const openNewProduct = () => {
+    setIsDuplicate(false);
+    setFormProduct(null);
+  };
+
+  const closeProductForm = () => {
+    setFormProduct(undefined);
+    setIsDuplicate(false);
   };
 
   const confirmDelete = async () => {
@@ -366,7 +405,7 @@ export default function App() {
     try {
       setAnalytics(await adminFetch(`/api/admin/analytics?days=${days}`));
     } catch {
-      // оставляем предыдущие данные, если запрос не удался
+      // Оставляем предыдущие данные, если запрос не удался
     }
   };
 
@@ -405,6 +444,7 @@ export default function App() {
       : orders;
 
     const q = orderSearch.trim().toLowerCase();
+
     if (q) {
       const digits = q.replace(/\D/g, "");
       list = list.filter((order) => {
@@ -510,7 +550,7 @@ export default function App() {
         body: JSON.stringify({ ordered_ids: orderedIds })
       });
     } catch {
-      // если порядок не удалось сохранить — просто перечитаем данные
+      // Если порядок не удалось сохранить — перечитаем данные
     }
 
     loadData();
@@ -534,7 +574,7 @@ export default function App() {
         body: JSON.stringify({ ordered_ids: orderedIds })
       });
     } catch {
-      // если порядок не удалось сохранить — просто перечитаем данные
+      // Если порядок не удалось сохранить — перечитаем данные
     }
 
     loadData();
@@ -547,10 +587,9 @@ export default function App() {
 
   return (
     <div className="admin">
-      {/* ДОБАВЛЕНО: Затемнение фона для мобилок */}
       {!sidebarCollapsed && (
-        <div 
-          className="sidebar-backdrop" 
+        <div
+          className="sidebar-backdrop"
           onClick={() => setSidebarCollapsed(true)}
         />
       )}
@@ -575,7 +614,7 @@ export default function App() {
                 key={key}
                 type="button"
                 title={sidebarCollapsed ? t(key) : undefined}
-                onClick={() => handleMenuClick(value)} // ИЗМЕНЕНО: Используем handleMenuClick
+                onClick={() => handleMenuClick(value)}
               >
                 <span className="nav-icon-wrap">
                   <Icon size={19} />
@@ -598,8 +637,16 @@ export default function App() {
             type="button"
             className="sidebar-toggle"
             onClick={() => setSidebarCollapsed((v) => !v)}
-            aria-label={sidebarCollapsed ? t("expandSidebar") || "Развернуть меню" : t("collapseSidebar") || "Свернуть меню"}
-            title={sidebarCollapsed ? t("expandSidebar") || "Развернуть меню" : t("collapseSidebar") || "Свернуть меню"}
+            aria-label={
+              sidebarCollapsed
+                ? t("expandSidebar") || "Развернуть меню"
+                : t("collapseSidebar") || "Свернуть меню"
+            }
+            title={
+              sidebarCollapsed
+                ? t("expandSidebar") || "Развернуть меню"
+                : t("collapseSidebar") || "Свернуть меню"
+            }
           >
             {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </button>
@@ -616,6 +663,7 @@ export default function App() {
           >
             <Menu />
           </button>
+
           <div>
             <h1>{t((SECTION_META[section] || SECTION_META.home)[0])}</h1>
             <p>{t((SECTION_META[section] || SECTION_META.home)[1])}</p>
@@ -640,11 +688,19 @@ export default function App() {
               ))}
             </div>
 
-            <button 
-              type="button" 
-              onClick={handleLogout} 
+            <button
+              type="button"
+              onClick={handleLogout}
               title="Выйти"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', display: 'flex', alignItems: 'center', marginRight: '10px' }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#666",
+                display: "flex",
+                alignItems: "center",
+                marginRight: "10px"
+              }}
             >
               <LogOut size={20} />
             </button>
@@ -665,6 +721,7 @@ export default function App() {
                     })}
               </p>
             </div>
+
             <div className="new-order-notice-actions">
               <button
                 type="button"
@@ -696,419 +753,458 @@ export default function App() {
         ) : (
           <>
             {section === "home" && (
-          <>
-            <div className="welcome-card">
-              <span>{t("ownerPanel")}</span>
-              <h2>{t("welcomeTitle")}</h2>
-              <p>{t("welcomeText")}</p>
-            </div>
-
-            <section className="stats">
-              {statCards.map(([key, value, Icon]) => (
-                <div className="stat-card" key={key}>
-                  <Icon size={22} />
-                  <p>{t(key)}</p>
-                  <h2>{dataState === "ready" ? value : "—"}</h2>
-                </div>
-              ))}
-            </section>
-
-            <section className="connection-card">
-              <h3>{t("systemStatus")}</h3>
-
-              <div className="connection-status">
-                {server === "online" ? (
-                  <>
-                    <Wifi color="#16a34a" />
-                    <span>{t("backendOnline")}</span>
-                  </>
-                ) : server === "offline" ? (
-                  <>
-                    <WifiOff color="#dc2626" />
-                    <span>{t("backendOffline")}</span>
-                  </>
-                ) : (
-                  <span>{t("backendChecking")}</span>
-                )}
-              </div>
-
-              <p>{t("statsNote")}</p>
-            </section>
-
-            {dataState === "ready" && (
-              <ProductsTable
-                t={t}
-                lang={lang}
-                products={products.slice(0, 5)}
-                title={t("productsTitle")}
-                subtitle={null}
-                compact
-              />
-            )}
-          </>
-        )}
-
-        {section === "products" && (
-          <>
-            <div className="table-toolbar">
-              <div className="admin-search">
-                <Search size={17} />
-                <input
-                  type="search"
-                  value={search}
-                  placeholder={t("adminSearch")}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-              </div>
-              <span className="table-count">
-                {t("productsCount", { count: visibleProducts.length })}
-              </span>
-              <button
-                type="button"
-                className="primary-admin-button"
-                onClick={() => setFormProduct(null)}
-              >
-                <Plus size={16} />
-                {t("addProduct")}
-              </button>
-            </div>
-
-            {dataState === "loading" && <p className="admin-note">{t("loading")}</p>}
-
-            {dataState === "error" && (
-              <div className="admin-error">
-                <p>{t("errorLoading")}</p>
-                <button type="button" onClick={loadData}>
-                  {t("retry")}
-                </button>
-              </div>
-            )}
-
-            {dataState === "ready" && (
-              <ProductsTable
-                t={t}
-                lang={lang}
-                products={visibleProducts}
-                title={t("productsTitle")}
-                subtitle={t("productsSubtitle")}
-                onEdit={openEdit}
-                onDelete={(product) => {
-                  setDeleteError("");
-                  setDeleteTarget(product);
-                }}
-                onMove={moveProduct}
-              />
-            )}
-          </>
-        )}
-
-        {section === "categories" && (
-          <>
-            {dataState === "loading" && (
-              <p className="admin-note">{t("loading")}</p>
-            )}
-
-            {dataState === "error" && (
-              <div className="admin-error">
-                <p>{t("errorLoading")}</p>
-                <button type="button" onClick={loadData}>
-                  {t("retry")}
-                </button>
-              </div>
-            )}
-
-            {dataState === "ready" && !categoryDraft && (
-              <CategoriesCard
-                t={t}
-                lang={lang}
-                categories={categories}
-                onAdd={() => openCategoryCreate()}
-                onEdit={openCategoryEdit}
-                onDelete={(category) => {
-                  setCategoryError("");
-                  setCategoryDeleteTarget(category);
-                }}
-                onMove={moveCategory}
-              />
-            )}
-
-            {dataState === "ready" && categoryDraft && (
-              <section className="products-card">
-                <div className="products-card-head">
-                  <div>
-                    <h3>
-                      {categoryDraft.id ? t("categoryEdit") : t("categoryAdd")}
-                    </h3>
-                  </div>
+              <>
+                <div className="welcome-card">
+                  <span>{t("ownerPanel")}</span>
+                  <h2>{t("welcomeTitle")}</h2>
+                  <p>{t("welcomeText")}</p>
                 </div>
 
-                <form className="settings-card" onSubmit={saveCategory}>
-                  <div className="admin-field">
-                    <span>{t("categorySlug")}</span>
-                    <input
-                      type="text"
-                      value={categoryDraft.slug ?? ""}
-                      onChange={(event) =>
-                        setCategoryDraft({ ...categoryDraft, slug: event.target.value })
-                      }
-                    />
+                <section className="stats">
+                  {statCards.map(([key, value, Icon]) => (
+                    <div className="stat-card" key={key}>
+                      <Icon size={22} />
+                      <p>{t(key)}</p>
+                      <h2>{dataState === "ready" ? value : "—"}</h2>
+                    </div>
+                  ))}
+                </section>
+
+                <section className="connection-card">
+                  <h3>{t("systemStatus")}</h3>
+
+                  <div className="connection-status">
+                    {server === "online" ? (
+                      <>
+                        <Wifi color="#16a34a" />
+                        <span>{t("backendOnline")}</span>
+                      </>
+                    ) : server === "offline" ? (
+                      <>
+                        <WifiOff color="#dc2626" />
+                        <span>{t("backendOffline")}</span>
+                      </>
+                    ) : (
+                      <span>{t("backendChecking")}</span>
+                    )}
                   </div>
 
-                  <div className="admin-field">
-                    <span>{t("categoryNameRu")}</span>
-                    <input
-                      type="text"
-                      value={categoryDraft.name_ru ?? ""}
-                      onChange={(event) =>
-                        setCategoryDraft({ ...categoryDraft, name_ru: event.target.value })
-                      }
-                    />
-                  </div>
+                  <p>{t("statsNote")}</p>
+                </section>
 
-                  <div className="admin-field">
-                    <span>{t("categoryNameUz")}</span>
-                    <input
-                      type="text"
-                      value={categoryDraft.name_uz ?? ""}
-                      onChange={(event) =>
-                        setCategoryDraft({ ...categoryDraft, name_uz: event.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="admin-field">
-                    <span>{t("categoryNameUzc")}</span>
-                    <input
-                      type="text"
-                      value={categoryDraft.name_uzc ?? ""}
-                      onChange={(event) =>
-                        setCategoryDraft({ ...categoryDraft, name_uzc: event.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="admin-field">
-                    <span>{t("categorySort")}</span>
-                    <input
-                      type="number"
-                      value={categoryDraft.sort_order ?? 0}
-                      onChange={(event) =>
-                        setCategoryDraft({ ...categoryDraft, sort_order: Number(event.target.value) || 0 })
-                      }
-                    />
-                  </div>
-
-                  {categoryError && <p className="form-error">{categoryError}</p>}
-
-                  <footer className="settings-foot">
-                    <button
-                      type="button"
-                      className="ghost-button"
-                      onClick={() => setCategoryDraft(null)}
-                    >
-                      {t("cancel")}
-                    </button>
-                    <button type="submit" className="primary-admin-button">
-                      {t("categorySave")}
-                    </button>
-                  </footer>
-                </form>
-              </section>
-            )}
-          </>
-        )}
-
-        {section === "orders" && (
-          <>
-            <div className="table-toolbar" style={{ marginBottom: 12 }}>
-              <div className="admin-search">
-                <Search size={17} />
-                <input
-                  type="search"
-                  value={orderSearch}
-                  placeholder={t("clientSearch")}
-                  onChange={(event) => setOrderSearch(event.target.value)}
-                />
-              </div>
-            </div>
-            <div className="order-filters">
-              <button
-                type="button"
-                className={orderFilter === "" ? "active" : ""}
-                onClick={() => setOrderFilter("")}
-              >
-                {t("filterAll")} ({orders.length})
-              </button>
-              {STATUSES.map((status) => {
-                const count = orders.filter(
-                  (order) => order.status === status
-                ).length;
-
-                return (
-                  <button
-                    key={status}
-                    type="button"
-                    className={orderFilter === status ? "active" : ""}
-                    onClick={() => setOrderFilter(status)}
-                  >
-                    {t(STATUS_KEYS[status])} ({count})
-                  </button>
-                );
-              })}
-              <a
-                className="ghost-button"
-                href={`${API_BASE}/api/admin/orders/export`}
-                onClick={(event) => {
-                  event.preventDefault();
-                  adminDownload("/api/admin/orders/export", "orders.csv").catch(
-                    () => {}
-                  );
-                }}
-                style={{ marginLeft: "auto" }}
-              >
-                CSV
-              </a>
-            </div>
-
-            {dataState === "loading" && (
-              <p className="admin-note">{t("loading")}</p>
-            )}
-
-            {dataState === "error" && (
-              <div className="admin-error">
-                <p>{t("errorLoading")}</p>
-                <button type="button" onClick={loadData}>
-                  {t("retry")}
-                </button>
-              </div>
-            )}
-
-            {dataState === "ready" && visibleOrders.length === 0 && (
-              <div className="admin-placeholder">
-                <h2>{t("noOrders")}</h2>
-                <p>{t("ordersSubtitle")}</p>
-              </div>
-            )}
-
-            {dataState === "ready" && visibleOrders.length > 0 && (
-              <div className="orders-list">
-                {visibleOrders.map((order) => (
-                  <OrderCard
-                    key={order.id}
-                    order={order}
+                {dataState === "ready" && (
+                  <ProductsTable
                     t={t}
                     lang={lang}
-                    onStatusChange={changeStatus}
+                    products={products.slice(0, 5)}
+                    title={t("productsTitle")}
+                    subtitle={null}
+                    compact
                   />
-                ))}
+                )}
+              </>
+            )}
+
+            {section === "products" && (
+              <>
+                <div className="table-toolbar">
+                  <div className="admin-search">
+                    <Search size={17} />
+                    <input
+                      type="search"
+                      value={search}
+                      placeholder={t("adminSearch")}
+                      onChange={(event) => setSearch(event.target.value)}
+                    />
+                  </div>
+
+                  <span className="table-count">
+                    {t("productsCount", { count: visibleProducts.length })}
+                  </span>
+
+                  <button
+                    type="button"
+                    className="primary-admin-button"
+                    onClick={openNewProduct}
+                  >
+                    <Plus size={16} />
+                    {t("addProduct")}
+                  </button>
+                </div>
+
+                {dataState === "loading" && (
+                  <p className="admin-note">{t("loading")}</p>
+                )}
+
+                {dataState === "error" && (
+                  <div className="admin-error">
+                    <p>{t("errorLoading")}</p>
+                    <button type="button" onClick={loadData}>
+                      {t("retry")}
+                    </button>
+                  </div>
+                )}
+
+                {dataState === "ready" && (
+                  <ProductsTable
+                    t={t}
+                    lang={lang}
+                    products={visibleProducts}
+                    title={t("productsTitle")}
+                    subtitle={t("productsSubtitle")}
+                    onEdit={openEdit}
+                    onDuplicate={openDuplicate}
+                    onDelete={(product) => {
+                      setDeleteError("");
+                      setDeleteTarget(product);
+                    }}
+                    onMove={moveProduct}
+                  />
+                )}
+              </>
+            )}
+
+            {section === "categories" && (
+              <>
+                {dataState === "loading" && (
+                  <p className="admin-note">{t("loading")}</p>
+                )}
+
+                {dataState === "error" && (
+                  <div className="admin-error">
+                    <p>{t("errorLoading")}</p>
+                    <button type="button" onClick={loadData}>
+                      {t("retry")}
+                    </button>
+                  </div>
+                )}
+
+                {dataState === "ready" && !categoryDraft && (
+                  <CategoriesCard
+                    t={t}
+                    lang={lang}
+                    categories={categories}
+                    onAdd={() => openCategoryCreate()}
+                    onEdit={openCategoryEdit}
+                    onDelete={(category) => {
+                      setCategoryError("");
+                      setCategoryDeleteTarget(category);
+                    }}
+                    onMove={moveCategory}
+                  />
+                )}
+
+                {dataState === "ready" && categoryDraft && (
+                  <section className="products-card">
+                    <div className="products-card-head">
+                      <div>
+                        <h3>
+                          {categoryDraft.id ? t("categoryEdit") : t("categoryAdd")}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <form className="settings-card" onSubmit={saveCategory}>
+                      <div className="admin-field">
+                        <span>{t("categorySlug")}</span>
+                        <input
+                          type="text"
+                          value={categoryDraft.slug ?? ""}
+                          onChange={(event) =>
+                            setCategoryDraft({
+                              ...categoryDraft,
+                              slug: event.target.value
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="admin-field">
+                        <span>{t("categoryNameRu")}</span>
+                        <input
+                          type="text"
+                          value={categoryDraft.name_ru ?? ""}
+                          onChange={(event) =>
+                            setCategoryDraft({
+                              ...categoryDraft,
+                              name_ru: event.target.value
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="admin-field">
+                        <span>{t("categoryNameUz")}</span>
+                        <input
+                          type="text"
+                          value={categoryDraft.name_uz ?? ""}
+                          onChange={(event) =>
+                            setCategoryDraft({
+                              ...categoryDraft,
+                              name_uz: event.target.value
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="admin-field">
+                        <span>{t("categoryNameUzc")}</span>
+                        <input
+                          type="text"
+                          value={categoryDraft.name_uzc ?? ""}
+                          onChange={(event) =>
+                            setCategoryDraft({
+                              ...categoryDraft,
+                              name_uzc: event.target.value
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="admin-field">
+                        <span>{t("categorySort")}</span>
+                        <input
+                          type="number"
+                          value={categoryDraft.sort_order ?? 0}
+                          onChange={(event) =>
+                            setCategoryDraft({
+                              ...categoryDraft,
+                              sort_order: Number(event.target.value) || 0
+                            })
+                          }
+                        />
+                      </div>
+
+                      {categoryError && (
+                        <p className="form-error">{categoryError}</p>
+                      )}
+
+                      <footer className="settings-foot">
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          onClick={() => setCategoryDraft(null)}
+                        >
+                          {t("cancel")}
+                        </button>
+                        <button type="submit" className="primary-admin-button">
+                          {t("categorySave")}
+                        </button>
+                      </footer>
+                    </form>
+                  </section>
+                )}
+              </>
+            )}
+
+            {section === "orders" && (
+              <>
+                <div className="table-toolbar" style={{ marginBottom: 12 }}>
+                  <div className="admin-search">
+                    <Search size={17} />
+                    <input
+                      type="search"
+                      value={orderSearch}
+                      placeholder={t("clientSearch")}
+                      onChange={(event) => setOrderSearch(event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="order-filters">
+                  <button
+                    type="button"
+                    className={orderFilter === "" ? "active" : ""}
+                    onClick={() => setOrderFilter("")}
+                  >
+                    {t("filterAll")} ({orders.length})
+                  </button>
+
+                  {STATUSES.map((status) => {
+                    const count = orders.filter(
+                      (order) => order.status === status
+                    ).length;
+
+                    return (
+                      <button
+                        key={status}
+                        type="button"
+                        className={orderFilter === status ? "active" : ""}
+                        onClick={() => setOrderFilter(status)}
+                      >
+                        {t(STATUS_KEYS[status])} ({count})
+                      </button>
+                    );
+                  })}
+
+                  <a
+                    className="ghost-button"
+                    href={`${API_BASE}/api/admin/orders/export`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      adminDownload("/api/admin/orders/export", "orders.csv").catch(
+                        () => {}
+                      );
+                    }}
+                    style={{ marginLeft: "auto" }}
+                  >
+                    CSV
+                  </a>
+                </div>
+
+                {dataState === "loading" && (
+                  <p className="admin-note">{t("loading")}</p>
+                )}
+
+                {dataState === "error" && (
+                  <div className="admin-error">
+                    <p>{t("errorLoading")}</p>
+                    <button type="button" onClick={loadData}>
+                      {t("retry")}
+                    </button>
+                  </div>
+                )}
+
+                {dataState === "ready" && visibleOrders.length === 0 && (
+                  <div className="admin-placeholder">
+                    <h2>{t("noOrders")}</h2>
+                    <p>{t("ordersSubtitle")}</p>
+                  </div>
+                )}
+
+                {dataState === "ready" && visibleOrders.length > 0 && (
+                  <div className="orders-list">
+                    {visibleOrders.map((order) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        t={t}
+                        lang={lang}
+                        onStatusChange={changeStatus}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {section === "clients" && (
+              <>
+                {dataState === "loading" && (
+                  <p className="admin-note">{t("loading")}</p>
+                )}
+
+                {dataState === "error" && (
+                  <div className="admin-error">
+                    <p>{t("errorLoading")}</p>
+                    <button type="button" onClick={loadData}>
+                      {t("retry")}
+                    </button>
+                  </div>
+                )}
+
+                {dataState === "ready" && (
+                  <ClientsTable
+                    clients={clients}
+                    t={t}
+                    lang={lang}
+                    search={clientSearch}
+                    onSearchChange={setClientSearch}
+                    apiBase={API_BASE}
+                  />
+                )}
+              </>
+            )}
+
+            {section === "analytics" && (
+              <>
+                {dataState === "loading" && (
+                  <p className="admin-note">{t("loading")}</p>
+                )}
+
+                {dataState === "error" && (
+                  <div className="admin-error">
+                    <p>{t("errorLoading")}</p>
+                    <button type="button" onClick={loadData}>
+                      {t("retry")}
+                    </button>
+                  </div>
+                )}
+
+                {dataState === "ready" && (
+                  <AnalyticsPanel
+                    analytics={analytics}
+                    days={analyticsDays}
+                    onDaysChange={loadAnalytics}
+                    t={t}
+                    lang={lang}
+                  />
+                )}
+              </>
+            )}
+
+            {section === "settings" && (
+              <>
+                {dataState === "loading" && (
+                  <p className="admin-note">{t("loading")}</p>
+                )}
+
+                {dataState === "error" && (
+                  <div className="admin-error">
+                    <p>{t("errorLoading")}</p>
+                    <button type="button" onClick={loadData}>
+                      {t("retry")}
+                    </button>
+                  </div>
+                )}
+
+                {dataState === "ready" && (
+                  <SettingsForm
+                    form={settingsForm}
+                    t={t}
+                    state={settingsState}
+                    error={settingsError}
+                    onChange={updateSettingsField}
+                    onSubmit={saveSettings}
+                    categories={categories}
+                  />
+                )}
+              </>
+            )}
+
+            {section === "map" && dataState === "ready" && (
+              <DeliveryMap orders={orders} t={t} lang={lang} />
+            )}
+
+            {![
+              "home",
+              "products",
+              "orders",
+              "clients",
+              "map",
+              "analytics",
+              "settings",
+              "categories"
+            ].includes(section) && (
+              <div className="admin-placeholder">
+                <h2>{t("menuSoonTitle")}</h2>
+                <p>{t("menuSoon")}</p>
               </div>
             )}
-          </>
-        )}
-
-        {section === "clients" && (
-          <>
-            {dataState === "loading" && <p className="admin-note">{t("loading")}</p>}
-
-            {dataState === "error" && (
-              <div className="admin-error">
-                <p>{t("errorLoading")}</p>
-                <button type="button" onClick={loadData}>
-                  {t("retry")}
-                </button>
-              </div>
-            )}
-
-            {dataState === "ready" && (
-              <ClientsTable
-                clients={clients}
-                t={t}
-                lang={lang}
-                search={clientSearch}
-                onSearchChange={setClientSearch}
-                apiBase={API_BASE}
-              />
-            )}
-          </>
-        )}
-
-        {section === "analytics" && (
-          <>
-            {dataState === "loading" && <p className="admin-note">{t("loading")}</p>}
-
-            {dataState === "error" && (
-              <div className="admin-error">
-                <p>{t("errorLoading")}</p>
-                <button type="button" onClick={loadData}>
-                  {t("retry")}
-                </button>
-              </div>
-            )}
-
-            {dataState === "ready" && (
-              <AnalyticsPanel
-                analytics={analytics}
-                days={analyticsDays}
-                onDaysChange={loadAnalytics}
-                t={t}
-                lang={lang}
-              />
-            )}
-          </>
-        )}
-
-        {section === "settings" && (
-          <>
-            {dataState === "loading" && <p className="admin-note">{t("loading")}</p>}
-
-            {dataState === "error" && (
-              <div className="admin-error">
-                <p>{t("errorLoading")}</p>
-                <button type="button" onClick={loadData}>
-                  {t("retry")}
-                </button>
-              </div>
-            )}
-
-            {dataState === "ready" && (
-              <SettingsForm
-                form={settingsForm}
-                t={t}
-                state={settingsState}
-                error={settingsError}
-                onChange={updateSettingsField}
-                onSubmit={saveSettings}
-                categories={categories}
-              />
-            )}
-          </>
-        )}
-
-        {section === "map" && dataState === "ready" && (
-          <DeliveryMap orders={orders} t={t} lang={lang} />
-        )}
-
-        {!["home", "products", "orders", "clients", "map", "analytics", "settings", "categories"].includes(
-          section
-        ) && (
-          <div className="admin-placeholder">
-            <h2>{t("menuSoonTitle")}</h2>
-            <p>{t("menuSoon")}</p>
-          </div>
-        )}
           </>
         )}
 
         {formProduct !== undefined && (
           <ProductForm
-            key={formProduct?.id ?? "new"}
+            key={`${formProduct?.id ?? "new"}-${isDuplicate ? "duplicate" : "normal"}`}
             product={formProduct}
             categories={categories}
             t={t}
             lang={lang}
-            onClose={() => setFormProduct(undefined)}
+            isDuplicate={isDuplicate}
+            onClose={closeProductForm}
             onSaved={() => {
-              setFormProduct(undefined);
+              closeProductForm();
               loadData();
             }}
           />
@@ -1123,7 +1219,9 @@ export default function App() {
                   name: localized(deleteTarget, "name", lang)
                 })}
               </p>
+
               {deleteError && <p className="form-error">{deleteError}</p>}
+
               <div className="confirm-actions">
                 <button
                   type="button"
@@ -1135,6 +1233,7 @@ export default function App() {
                 >
                   {t("cancel")}
                 </button>
+
                 <button
                   type="button"
                   className="danger-button"
@@ -1193,6 +1292,7 @@ function OrderCard({ order, t, lang, onStatusChange }) {
           <span>{t("orderCustomer")}</span>
           <strong>{order.customer_name}</strong>
         </div>
+
         <div>
           <span>{t("orderPhone")}</span>
           <a href={`tel:${order.phone}`}>
@@ -1200,9 +1300,11 @@ function OrderCard({ order, t, lang, onStatusChange }) {
             {order.phone}
           </a>
         </div>
+
         <div className="order-address">
           <span>{t("orderAddress")}</span>
           <strong>{order.address || "—"}</strong>
+
           {order.latitude !== null && order.longitude !== null && (
             <a
               className="map-link"
@@ -1225,6 +1327,7 @@ function OrderCard({ order, t, lang, onStatusChange }) {
             item.pricing_type === "area" &&
             item.width_cm &&
             item.height_cm;
+
           const area = isArea
             ? (item.width_cm * item.height_cm) / 10000
             : 0;
@@ -1249,13 +1352,12 @@ function OrderCard({ order, t, lang, onStatusChange }) {
                 ) : (
                   <div className="order-item-thumb placeholder" />
                 )}
+
                 <span>
                   {isMeter
                     ? `${Number(item.meters)} ${t("unitMeter")}`
                     : isArea
-                      ? `${item.quantity} × ${item.width_cm}×${item.height_cm} ${t(
-                          "unitCm"
-                        )}`
+                      ? `${item.quantity} × ${item.width_cm}×${item.height_cm} ${t("unitCm")}`
                       : `${item.quantity} ×`}{" "}
                   {localized(item, "name", lang)}
                   {!isArea && item.variant_label
@@ -1265,6 +1367,7 @@ function OrderCard({ order, t, lang, onStatusChange }) {
                   {item.color_ru ? ` · ${localized(item, "color", lang)}` : ""}
                 </span>
               </div>
+
               <strong>{formatPrice(item.line_total, lang)}</strong>
             </div>
           );
@@ -1304,9 +1407,11 @@ function CategoriesCard({
           <h3>{t("categoriesTitle")}</h3>
           <p>{t("categoriesSubtitle")}</p>
         </div>
+
         <span className="table-count">
           {t("categoryProducts", { count: categories.length })}
         </span>
+
         <button
           type="button"
           className="primary-admin-button"
@@ -1330,6 +1435,7 @@ function CategoriesCard({
                 <th>{t("tableActions")}</th>
               </tr>
             </thead>
+
             <tbody>
               {categories.map((category, index) => (
                 <tr key={category.id}>
@@ -1345,6 +1451,7 @@ function CategoriesCard({
                       >
                         <ChevronUp size={15} />
                       </button>
+
                       <button
                         type="button"
                         className="icon-button"
@@ -1357,6 +1464,7 @@ function CategoriesCard({
                       </button>
                     </div>
                   </td>
+
                   <td>
                     <div className="table-product">
                       <div>
@@ -1365,7 +1473,9 @@ function CategoriesCard({
                       </div>
                     </div>
                   </td>
+
                   <td>{category.product_count}</td>
+
                   <td>
                     <div className="table-actions">
                       <button
@@ -1377,6 +1487,7 @@ function CategoriesCard({
                       >
                         <Pencil size={15} />
                       </button>
+
                       <button
                         type="button"
                         className="icon-button danger"
@@ -1406,6 +1517,7 @@ function ProductsTable({
   subtitle,
   compact,
   onEdit,
+  onDuplicate,
   onDelete,
   onMove
 }) {
@@ -1416,6 +1528,7 @@ function ProductsTable({
           <h3>{title}</h3>
           {subtitle && <p>{subtitle}</p>}
         </div>
+
         <span className="table-count">
           {t("productsCount", { count: products.length })}
         </span>
@@ -1435,6 +1548,7 @@ function ProductsTable({
                 {!compact && <th>{t("tableActions")}</th>}
               </tr>
             </thead>
+
             <tbody>
               {products.map((product, index) => (
                 <tr key={product.id}>
@@ -1450,8 +1564,10 @@ function ProductsTable({
                           <ImageOff size={18} />
                         )}
                       </div>
+
                       <div>
                         <strong>{localized(product, "name", lang)}</strong>
+
                         {product.is_featured && (
                           <span className="featured-badge">
                             {t("featuredBadge")}
@@ -1460,10 +1576,13 @@ function ProductsTable({
                       </div>
                     </div>
                   </td>
+
                   <td>{localized(product, "category_name", lang)}</td>
+
                   <td className="price-cell">
                     {priceLabel(product, t, lang)}
                   </td>
+
                   <td>
                     <span
                       className={`status-pill${
@@ -1481,6 +1600,7 @@ function ProductsTable({
                           : t("statusHidden")}
                     </span>
                   </td>
+
                   {!compact && (
                     <td>
                       <div className="table-actions">
@@ -1494,6 +1614,7 @@ function ProductsTable({
                         >
                           <ChevronUp size={15} />
                         </button>
+
                         <button
                           type="button"
                           className="icon-button"
@@ -1504,6 +1625,7 @@ function ProductsTable({
                         >
                           <ChevronDown size={15} />
                         </button>
+
                         <button
                           type="button"
                           className="icon-button"
@@ -1513,6 +1635,18 @@ function ProductsTable({
                         >
                           <Pencil size={15} />
                         </button>
+
+                        {/* Новая кнопка дублирования товара */}
+                        <button
+                          type="button"
+                          className="icon-button"
+                          title="Дублировать товар"
+                          aria-label="Дублировать товар"
+                          onClick={() => onDuplicate?.(product)}
+                        >
+                          <Copy size={15} />
+                        </button>
+
                         <button
                           type="button"
                           className="icon-button danger"
