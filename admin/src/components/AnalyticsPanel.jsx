@@ -12,7 +12,7 @@ import {
   Wallet
 } from "lucide-react";
 
-import { adminFetch } from "../services/adminApi";
+import { adminDownload, adminFetch } from "../services/adminApi";
 import { formatPrice, localized } from "../utils/format";
 
 const STATUS_KEYS = {
@@ -182,7 +182,40 @@ export default function AnalyticsPanel({
             </button>
           ))}
         </div>
-        <p className="admin-note">{t("analyticsHint")}</p>
+        <div className="analytics-export">
+          <span className="admin-note">{t("reportExport")}</span>
+          <div className="export-buttons">
+            {["day", "week", "month"].map((period) => (
+              <div className="export-group" key={period}>
+                <span>{t(`report${period[0].toUpperCase()}${period.slice(1)}`)}</span>
+                <button
+                  type="button"
+                  className="small-button"
+                  onClick={() =>
+                    adminDownload(
+                      `/api/admin/reports/export?period=${period}&format=xlsx&lang=${lang}`,
+                      `report-${period}.xlsx`
+                    )
+                  }
+                >
+                  Excel
+                </button>
+                <button
+                  type="button"
+                  className="small-button"
+                  onClick={() =>
+                    adminDownload(
+                      `/api/admin/reports/export?period=${period}&format=pdf&lang=${lang}`,
+                      `report-${period}.pdf`
+                    )
+                  }
+                >
+                  PDF
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <section className="stats analytics-stats">

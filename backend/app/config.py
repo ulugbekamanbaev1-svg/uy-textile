@@ -12,8 +12,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     BOT_TOKEN: str = ""
-    
-    # ИЗМЕНЕНО: Теперь переменная поддерживает список ID через запятую
+
+    # Поддерживаем и старое имя, и новое (список через запятую).
+    ADMIN_TELEGRAM_ID: str = ""
     ADMIN_TELEGRAM_IDS: str = ""
 
     # Пароль для входа в админку через браузер (Basic Auth).
@@ -35,6 +36,7 @@ class Settings(BaseSettings):
     ADMIN_DEV_BYPASS: bool = True
 
     MAX_UPLOAD_MB: int = 5
+    CART_REMINDER_DELAY_MINUTES: int = 60
 
     CORS_ORIGINS: str = (
         "http://localhost:5173,http://localhost:5174,"
@@ -55,14 +57,21 @@ class Settings(BaseSettings):
             if origin.strip()
         ]
 
-    # ДОБАВЛЕНО: Свойство для получения списка ID администраторов
     @property
     def admin_ids_list(self) -> list[str]:
+        raw = self.ADMIN_TELEGRAM_IDS or self.ADMIN_TELEGRAM_ID or ""
         return [
             admin_id.strip()
-            for admin_id in self.ADMIN_TELEGRAM_IDS.split(",")
+            for admin_id in raw.replace(";", ",").split(",")
             if admin_id.strip()
         ]
+
+    @property
+    def admin_telegram_id(self) -> int | None:
+        for value in self.admin_ids_list:
+            if value.lstrip("-").isdigit():
+                return int(value)
+        return None
 
 
 settings = Settings()

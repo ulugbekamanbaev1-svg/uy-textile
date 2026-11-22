@@ -9,3 +9,5 @@ httpx
 python-multipart
 psycopg[binary]
 boto3
+openpyxl
+reportlab

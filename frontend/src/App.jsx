@@ -115,6 +115,18 @@ export default function App() {
 
     loadCatalog();
 
+    const startParam =
+      tg?.initDataUnsafe?.start_param ||
+      new URLSearchParams(window.location.search).get("startapp") ||
+      "";
+    if (startParam === "cart") {
+      navigate("cart");
+    } else if (startParam.startsWith("product_")) {
+      navigate("product", { slug: startParam.slice("product_".length) });
+    } else if (startParam.startsWith("buy_")) {
+      navigate("product", { slug: startParam.slice("buy_".length) });
+    }
+
     fetchStoreSettings()
       .then(setStoreSettings)
       .catch(() => setStoreSettings(null));

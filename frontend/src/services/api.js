@@ -180,3 +180,38 @@ export async function updateOrderStatus(orderId, status) {
 
   return data;
 }
+
+export async function syncCart(items, total) {
+  const initData = window.Telegram?.WebApp?.initData || "";
+  if (!initData) return null;
+
+  const payload = {
+    initData,
+    total: Math.round(Number(total) || 0),
+    items: (items || []).map((item) => {
+      const qtyLabel =
+        item.pricingType === "meter"
+          ? `${item.meters || 0} m`
+          : item.widthCm && item.heightCm
+            ? `${item.qty || 1} x (${item.widthCm}x${item.heightCm})`
+            : String(item.qty || 1);
+      return {
+        name: item.name_ru || item.name_uz || item.name_uzc || item.slug || "Товар",
+        qty_label: qtyLabel,
+        line_total: Math.round(Number(item.lineTotal ?? item.total ?? 0) || 0)
+      };
+    })
+  };
+
+  try {
+    const response = await fetch(`${API_URL}/api/cart/sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
+}

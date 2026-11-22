@@ -25,13 +25,15 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Megaphone
 } from "lucide-react";
 
 import LoginScreen from "./components/LoginScreen";
 import DeliveryMap from "./components/DeliveryMap";
 import ProductForm from "./components/ProductForm";
 import AnalyticsPanel from "./components/AnalyticsPanel";
+import BroadcastPanel from "./components/BroadcastPanel";
 import ClientsTable from "./components/ClientsTable";
 import SettingsForm from "./components/SettingsForm";
 import { LANGUAGES, detectLanguage, translations } from "./i18n";
@@ -55,6 +57,7 @@ const MENU = [
   [Tag, "menuCategories", "categories"],
   [Users, "menuClients", "clients"],
   [MapPin, "menuMap", "map"],
+  [Megaphone, "menuBroadcast", "broadcast"],
   [TrendingUp, "menuAnalytics", "analytics"],
   [Settings, "menuSettings", "settings"]
 ];
@@ -65,6 +68,7 @@ const SECTION_META = {
   products: ["productsTitle", "productsSubtitle"],
   clients: ["clientsTitle", "clientsSubtitle"],
   map: ["mapTitle", "mapSubtitle"],
+  broadcast: ["broadcastMenuTitle", "broadcastMenuSubtitle"],
   analytics: ["analyticsTitle", "analyticsSubtitle"],
   settings: ["settingsTitle", "settingsSubtitle"],
   categories: ["categoriesTitle", "categoriesSubtitle"]
@@ -1111,6 +1115,30 @@ export default function App() {
                     search={clientSearch}
                     onSearchChange={setClientSearch}
                     apiBase={API_BASE}
+                  />
+                )}
+              </>
+            )}
+
+            {section === "broadcast" && (
+              <>
+                {dataState === "loading" && (
+                  <p className="admin-note">{t("loading")}</p>
+                )}
+                {dataState === "error" && (
+                  <div className="admin-error">
+                    <p>{t("errorLoading")}</p>
+                    <button type="button" onClick={loadData}>
+                      {t("retry")}
+                    </button>
+                  </div>
+                )}
+                {dataState === "ready" && (
+                  <BroadcastPanel
+                    t={t}
+                    lang={lang}
+                    products={products}
+                    webappUrl={import.meta.env.VITE_WEBAPP_URL || storeSettings?.webapp_url || ""}
                   />
                 )}
               </>

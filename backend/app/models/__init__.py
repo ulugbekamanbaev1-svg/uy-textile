@@ -1,3 +1,5 @@
+from app.models.broadcast import Broadcast
+from app.models.cart_reminder import CartReminder
 from app.models.catalog import (
     Category,
     Product,
@@ -22,5 +24,7 @@ __all__ = [
     "Order",
     "OrderItem",
     "Expense",
+    "Broadcast",
+    "CartReminder",
     "StoreSettings",
 ]

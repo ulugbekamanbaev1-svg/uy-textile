@@ -31,6 +31,7 @@ from sqlalchemy.orm import selectinload
 from app.config import settings
 from app.database import get_db
 from app.models import (
+    Broadcast,
     Category,
     Expense,
     Order,
@@ -50,6 +51,8 @@ from app.schemas.admin import (
     AdminProductListOut,
     AdminProductOut,
     AnalyticsOut,
+    BroadcastIn,
+    BroadcastOut,
     ClientOut,
     DailySalesOut,
     ExpenseCategoryOut,
@@ -65,6 +68,7 @@ from app.schemas.admin import (
 )
 from app.schemas.catalog import AdminSummary, CategoryIn, CategoryOut
 from app.schemas.order import OrderOut, OrderStatusUpdate
+from app.services.broadcasts import run_broadcast
 from app.services.notify import notify_customer_about_status
 from app.services.store_settings import get_store_settings
 from app.services.telegram_auth import require_admin
@@ -1061,11 +1065,7 @@ async def delete_expense(
     await db.commit()
 
 
-@router.get("/analytics", response_model=AnalyticsOut)
-async def admin_analytics(
-    days: int = Query(default=30, ge=1, le=365),
-    db: AsyncSession = Depends(get_db),
-):
+async def compute_analytics(days: int, db: AsyncSession) -> AnalyticsOut:
     start = datetime.combine(date.today(), time.min).astimezone() - timedelta(
         days=days - 1
     )
@@ -1241,6 +1241,142 @@ async def admin_analytics(
             for status, count in statuses.items()
         ],
     )
+
+
+@router.get("/analytics", response_model=AnalyticsOut)
+async def admin_analytics(
+    days: int = Query(default=30, ge=1, le=365),
+    db: AsyncSession = Depends(get_db),
+):
+    return await compute_analytics(days, db)
+
+
+@router.get("/reports/export")
+async def export_report(
+    period: str = Query(default="month", pattern="^(day|week|month)$"),
+    format: str = Query(default="xlsx", pattern="^(xlsx|pdf)$"),
+    lang: str = Query(default="ru", pattern="^(ru|uz|uzc)$"),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.services.reports import export_pdf, export_xlsx, period_days
+
+    days = period_days(period)
+    analytics = await compute_analytics(days, db)
+    data = analytics.model_dump()
+
+    if format == "pdf":
+        content = export_pdf(data, period, lang)
+        media_type = "application/pdf"
+        ext = "pdf"
+    else:
+        content = export_xlsx(data, period, lang)
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ext = "xlsx"
+
+    filename = f"farrux-report-{period}-{date.today().isoformat()}.{ext}"
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/broadcasts", response_model=list[BroadcastOut])
+async def list_broadcasts(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Broadcast).order_by(Broadcast.created_at.desc(), Broadcast.id.desc()).limit(100)
+    )
+    return list(result.scalars().all())
+
+
+@router.post("/broadcasts", response_model=BroadcastOut, status_code=201)
+async def create_broadcast(
+    payload: BroadcastIn,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    broadcast = Broadcast(
+        title=payload.title.strip(),
+        message=payload.message.strip(),
+        media_type=payload.media_type,
+        media_url=payload.media_url.strip(),
+        buy_text=payload.buy_text.strip(),
+        buy_url=payload.buy_url.strip(),
+        details_text=payload.details_text.strip(),
+        details_url=payload.details_url.strip(),
+        status="pending",
+    )
+    db.add(broadcast)
+    await db.commit()
+    await db.refresh(broadcast)
+    background_tasks.add_task(run_broadcast, broadcast.id)
+    return broadcast
+
+
+@router.get("/broadcasts/{broadcast_id}", response_model=BroadcastOut)
+async def get_broadcast(broadcast_id: int, db: AsyncSession = Depends(get_db)):
+    broadcast = await db.get(Broadcast, broadcast_id)
+    if broadcast is None:
+        raise HTTPException(status_code=404, detail="Рассылка не найдена")
+    return broadcast
+
+
+@router.post("/broadcasts/media", response_model=UploadResult)
+async def upload_broadcast_media(file: UploadFile = File(...)):
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=422, detail="Файл пустой")
+
+    max_bytes = 50 * 1024 * 1024
+    if len(content) > max_bytes:
+        raise HTTPException(status_code=413, detail="Файл больше 50 МБ")
+
+    content_type = (file.content_type or "").lower()
+    ext = None
+    if content[:4] == b"RIFF" and content[8:12] == b"WEBP":
+        ext = ".webp"
+        content_type = "image/webp"
+    elif content.startswith(b"\xff\xd8\xff"):
+        ext = ".jpg"
+        content_type = "image/jpeg"
+    elif content.startswith(b"\x89PNG\r\n\x1a\n"):
+        ext = ".png"
+        content_type = "image/png"
+    elif content.startswith((b"GIF87a", b"GIF89a")):
+        ext = ".gif"
+        content_type = "image/gif"
+    elif content[4:8] == b"ftyp" or content_type.startswith("video/"):
+        # mp4/mov/webm quick check; allow common video
+        name = (file.filename or "").lower()
+        if name.endswith(".webm"):
+            ext = ".webm"
+            content_type = content_type or "video/webm"
+        elif name.endswith(".mov"):
+            ext = ".mov"
+            content_type = content_type or "video/quicktime"
+        else:
+            ext = ".mp4"
+            content_type = content_type or "video/mp4"
+
+    if ext is None:
+        raise HTTPException(status_code=422, detail="Поддерживаются JPG, PNG, WEBP, GIF, MP4, MOV, WEBM")
+
+    filename = f"{uuid4().hex}{ext}"
+
+    if r2_client and R2_PUBLIC:
+        object_name = f"broadcasts/{filename}"
+        await run_in_threadpool(
+            r2_client.put_object,
+            Bucket=R2_BUCKET,
+            Key=object_name,
+            Body=content,
+            ContentType=content_type or "application/octet-stream",
+        )
+        return UploadResult(url=f"{R2_PUBLIC}/{object_name}", size=len(content))
+
+    dest = UPLOAD_DIR / filename
+    dest.write_bytes(content)
+    return UploadResult(url=f"/static/uploads/{filename}", size=len(content))
 
 
 @router.get("/settings", response_model=StoreSettingsOut)

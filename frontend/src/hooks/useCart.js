@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { syncCart } from "../services/api";
 import { itemLineTotal } from "../utils/pricing";
 
 const STORAGE_KEY = "uy_cart";
@@ -18,12 +19,34 @@ function readCart() {
 export function useCart() {
   const [items, setItems] = useState(readCart);
 
+  const syncTimer = useRef(null);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
       // localStorage может быть недоступен
     }
+
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => {
+      const totalValue = items.reduce((sum, entry) => sum + itemLineTotal(entry), 0);
+      const payload = items.map((item) => ({
+        name: item.name_ru || item.name_uz || item.name_uzc || item.slug || "Товар",
+        qty_label:
+          item.pricingType === "meter"
+            ? `${item.meters || 0} m`
+            : item.widthCm && item.heightCm
+              ? `${item.qty || 1} x (${item.widthCm}x${item.heightCm})`
+              : String(item.qty || 1),
+        line_total: Math.round(itemLineTotal(item) || 0)
+      }));
+      syncCart(payload, totalValue);
+    }, 800);
+
+    return () => {
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+    };
   }, [items]);
 
   const add = useCallback((item, qty = 1) => {

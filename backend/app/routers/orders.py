@@ -13,6 +13,7 @@ from app.schemas.order import (
     OrderOut,
     OrderStatusUpdate,
 )
+from app.services.cart_reminders import cancel_cart_reminder
 from app.services.notify import notify_admin_about_order
 from app.services.pricing import (
     effective_unit_price,
@@ -282,6 +283,9 @@ async def create_order(
         )
 
     order.total = total
+    if order.telegram_id:
+        await cancel_cart_reminder(db, order.telegram_id)
+
     db.add(order)
     await db.commit()
 

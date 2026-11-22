@@ -279,3 +279,35 @@ class StoreSettingsOut(StoreSettingsIn):
 
 class ReorderBody(BaseModel):
     ordered_ids: list[int] = Field(default_factory=list)
+
+
+class BroadcastIn(BaseModel):
+    title: str = Field(default="", max_length=160)
+    message: str = Field(min_length=1, max_length=4096)
+    media_type: Literal["none", "photo", "video"] = "none"
+    media_url: str = Field(default="", max_length=500)
+    buy_text: str = Field(default="", max_length=80)
+    buy_url: str = Field(default="", max_length=500)
+    details_text: str = Field(default="", max_length=80)
+    details_url: str = Field(default="", max_length=500)
+
+
+class BroadcastOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str = ""
+    message: str
+    media_type: str
+    media_url: str = ""
+    buy_text: str = ""
+    buy_url: str = ""
+    details_text: str = ""
+    details_url: str = ""
+    status: str
+    total_recipients: int = 0
+    sent_count: int = 0
+    failed_count: int = 0
+    error_log: str = ""
+    created_at: datetime
+    completed_at: datetime | None = None

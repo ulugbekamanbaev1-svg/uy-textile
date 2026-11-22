@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -9,8 +10,9 @@ from sqlalchemy import text
 from app import models  # noqa: F401
 from app.config import settings
 from app.database import Base, engine
-from app.routers import admin, auth, catalog, orders, store
+from app.routers import admin, auth, cart, catalog, orders, store
 from app.seed import seed_data
+from app.services.cart_reminders import cart_reminder_loop
 
 # ВАЖНО: __file__ с двумя подчеркиваниями!
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -41,8 +43,20 @@ async def lifespan(app: FastAPI):
         """))
 
     await seed_data()
-    yield
-    await engine.dispose()
+    stop_event = asyncio.Event()
+    reminder_task = asyncio.create_task(cart_reminder_loop(stop_event))
+    try:
+        yield
+    finally:
+        stop_event.set()
+        reminder_task.cancel()
+        try:
+            await reminder_task
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            pass
+        await engine.dispose()
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -83,6 +97,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(catalog.router)
+app.include_router(cart.router)
 app.include_router(orders.router)
 app.include_router(store.router)
 
