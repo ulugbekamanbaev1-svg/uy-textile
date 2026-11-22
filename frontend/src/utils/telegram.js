@@ -1,3 +1,4 @@
+
 export function getTelegramWebApp() {
   try {
     return window.Telegram?.WebApp || null;
@@ -13,16 +14,15 @@ export function openExternalLink(url) {
 
   try {
     if (tg?.openLink) {
-      if (/^https?:\/\/(t\.me|telegram\.me)\//i.test(url) && tg.openTelegramLink) {
-        tg.openTelegramLink(url);
-      } else {
-        tg.openLink(url);
-      }
+      tg.openLink(url, {
+        try_instant_view: false
+      });
       return;
     }
-  } catch {
-    // fallback below
+  } catch (error) {
+    console.error("Telegram openLink error:", error);
   }
 
-  window.open(url, "_blank", "noopener,noreferrer");
+  // Если магазин открыт не в Telegram
+  window.location.href = url;
 }

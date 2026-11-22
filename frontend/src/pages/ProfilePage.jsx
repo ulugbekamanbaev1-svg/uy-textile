@@ -134,9 +134,9 @@ export default function ProfilePage({
     }
   };
 
-  const openInBrowser = () => {
-    openExternalLink(window.location.href);
-  };
+const openInBrowser = () => {
+  openExternalLink("https://uy-textile-frontend.onrender.com");
+};
 
   const handleTrack = async () => {
     const phone = trackPhone.trim();
