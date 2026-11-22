@@ -1,7 +1,9 @@
+
 import { useEffect, useState } from "react";
 import {
   Clock,
   CreditCard,
+  Download,
   Heart,
   Instagram,
   MapPin,
@@ -9,9 +11,11 @@ import {
   Phone,
   Send,
   ShoppingBag,
+  Smartphone,
   Truck,
   Wifi,
-  WifiOff
+  WifiOff,
+  X
 } from "lucide-react";
 
 import { LANGUAGES } from "../i18n";
@@ -50,7 +54,12 @@ export default function ProfilePage({
   const [store, setStore] = useState(null);
   const [trackPhone, setTrackPhone] = useState("");
   const [trackedOrders, setTrackedOrders] = useState([]);
-  const [trackState, setTrackState] = useState("idle"); // idle | loading | done | error
+  const [trackState, setTrackState] = useState("idle");
+
+  // PWA установка
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
 
   useEffect(() => {
     fetchStoreSettings()
@@ -58,16 +67,90 @@ export default function ProfilePage({
       .catch(() => setStore(null));
   }, []);
 
+  // Проверяем возможность установки приложения
+  useEffect(() => {
+    const checkInstalled = () => {
+      const standalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true;
+
+      setIsInstalled(standalone);
+    };
+
+    checkInstalled();
+
+    const handleBeforeInstall = (event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+    };
+
+    const handleInstalled = () => {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+      setShowInstallHelp(false);
+    };
+
+    window.addEventListener(
+      "beforeinstallprompt",
+      handleBeforeInstall
+    );
+
+    window.addEventListener("appinstalled", handleInstalled);
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstall
+      );
+
+      window.removeEventListener(
+        "appinstalled",
+        handleInstalled
+      );
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (isInstalled) return;
+
+    if (!installPrompt) {
+      setShowInstallHelp(true);
+      return;
+    }
+
+    try {
+      await installPrompt.prompt();
+
+      const result = await installPrompt.userChoice;
+
+      if (result.outcome === "accepted") {
+        setShowInstallHelp(false);
+      }
+
+      setInstallPrompt(null);
+    } catch (error) {
+      console.error("PWA installation error:", error);
+      setShowInstallHelp(true);
+    }
+  };
+
+  const openInBrowser = () => {
+    openExternalLink(window.location.href);
+  };
+
   const handleTrack = async () => {
     const phone = trackPhone.trim();
+
     if (phone.replace(/\D/g, "").length < 7) {
       setTrackState("error");
       return;
     }
 
     setTrackState("loading");
+
     try {
       const orders = await trackOrders({ phone });
+
       setTrackedOrders(Array.isArray(orders) ? orders : []);
       setTrackState("done");
     } catch {
@@ -97,6 +180,7 @@ export default function ProfilePage({
         <div className="profile-avatar">
           {telegramUser?.first_name?.[0]?.toUpperCase() || "U"}
         </div>
+
         <div>
           <h3>
             {telegramUser
@@ -105,18 +189,56 @@ export default function ProfilePage({
                 }`.trim()
               : t("profileGuest")}
           </h3>
+
           <p>
             {telegramUser?.username
               ? `@${telegramUser.username}`
               : t("profileTelegram")}
           </p>
+
           {authState === "error" && <p>{t("authError")}</p>}
+
           {authState === "ok" && telegramUser && (
             <p>{t("greeting", { name: telegramUser.first_name })}</p>
           )}
         </div>
       </section>
 
+      {/* Установка Farrux Shop */}
+      <section className="profile-section pwa-install-card">
+        <div className="pwa-install-info">
+          <div className="pwa-install-icon">
+            <Smartphone size={25} />
+          </div>
+
+          <div>
+            <h3>Farrux Shop — приложение</h3>
+
+            <p className="option-hint">
+              Установите магазин на главный экран телефона
+              и открывайте его в любое время.
+            </p>
+          </div>
+        </div>
+
+        {isInstalled ? (
+          <div className="pwa-installed">
+            <Smartphone size={18} />
+            Приложение уже установлено
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="primary-button pwa-install-button"
+            onClick={handleInstallApp}
+          >
+            <Download size={18} />
+            Установить приложение
+          </button>
+        )}
+      </section>
+
+      {/* Контакты магазина */}
       {hasContacts && (
         <section className="profile-section">
           <h3>{t("contactsTitle")}</h3>
@@ -152,7 +274,9 @@ export default function ProfilePage({
                 href={`https://t.me/${socialHandle(store.telegram)}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  openExternalLink(`https://t.me/${socialHandle(store.telegram)}`);
+                  openExternalLink(
+                    `https://t.me/${socialHandle(store.telegram)}`
+                  );
                 }}
               >
                 <Send size={16} />
@@ -167,7 +291,9 @@ export default function ProfilePage({
                 href={`https://instagram.com/${socialHandle(store.instagram)}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  openExternalLink(`https://instagram.com/${socialHandle(store.instagram)}`);
+                  openExternalLink(
+                    `https://instagram.com/${socialHandle(store.instagram)}`
+                  );
                 }}
               >
                 <Instagram size={16} />
@@ -199,6 +325,7 @@ export default function ProfilePage({
         </section>
       )}
 
+      {/* Отслеживание заказов */}
       <section className="profile-section">
         <h3>{t("trackOrdersTitle")}</h3>
         <p className="option-hint">{t("trackOrdersHint")}</p>
@@ -210,6 +337,7 @@ export default function ProfilePage({
             placeholder={t("trackOrdersPlaceholder")}
             onChange={(event) => setTrackPhone(event.target.value)}
           />
+
           <button
             type="button"
             className="primary-button"
@@ -217,7 +345,9 @@ export default function ProfilePage({
             disabled={trackState === "loading"}
           >
             <PackageSearch size={16} />
-            {trackState === "loading" ? t("loading") : t("trackOrdersButton")}
+            {trackState === "loading"
+              ? t("loading")
+              : t("trackOrdersButton")}
           </button>
         </div>
 
@@ -235,12 +365,17 @@ export default function ProfilePage({
               <div className="tracked-order" key={order.id}>
                 <div className="tracked-order-head">
                   <strong>{order.number}</strong>
+
                   <span className={`status-pill ${order.status}`}>
                     {t(STATUS_KEYS[order.status] || "orderStatus")}
                   </span>
                 </div>
+
                 <div className="tracked-order-meta">
-                  <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                  <span>
+                    {new Date(order.created_at).toLocaleDateString()}
+                  </span>
+
                   <strong>{formatPrice(order.total, lang)}</strong>
                 </div>
               </div>
@@ -249,6 +384,7 @@ export default function ProfilePage({
         )}
       </section>
 
+      {/* Язык */}
       <section className="profile-section">
         <h3>{t("language")}</h3>
         <p className="option-hint">{t("languageHint")}</p>
@@ -268,12 +404,19 @@ export default function ProfilePage({
         </div>
       </section>
 
+      {/* Корзина и избранное */}
       <section className="profile-section">
-        <div className="profile-link" onClick={onCart} role="button" tabIndex={0}>
+        <div
+          className="profile-link"
+          onClick={onCart}
+          role="button"
+          tabIndex={0}
+        >
           <ShoppingBag size={18} />
           <span>{t("cartTitle")}</span>
           <strong>{t("itemsCount", { count: cartCount })}</strong>
         </div>
+
         <div className="profile-link-row">
           <span>{t("subtotal")}</span>
           <strong>{formatPrice(cartTotal, lang)}</strong>
@@ -291,8 +434,10 @@ export default function ProfilePage({
         </div>
       </section>
 
+      {/* Статус сервера */}
       <section className="profile-section">
         <h3>{t("serverStatus")}</h3>
+
         <div className="connection-status">
           {server === "online" ? (
             <>
@@ -309,6 +454,58 @@ export default function ProfilePage({
           )}
         </div>
       </section>
+
+      {/* Инструкция установки */}
+      {showInstallHelp && (
+        <div
+          className="pwa-help-overlay"
+          onClick={() => setShowInstallHelp(false)}
+        >
+          <div
+            className="pwa-help-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="pwa-help-close"
+              onClick={() => setShowInstallHelp(false)}
+            >
+              <X size={20} />
+            </button>
+
+            <Smartphone size={32} />
+
+            <h3>Установка Farrux Shop</h3>
+
+            <p>
+              <strong>Android:</strong> откройте магазин в Google Chrome,
+              нажмите меню ⋮ и выберите «Установить приложение»
+              или «Добавить на главный экран».
+            </p>
+
+            <p>
+              <strong>iPhone:</strong> откройте магазин в Safari,
+              нажмите «Поделиться», затем «На экран Домой».
+            </p>
+
+            <button
+              type="button"
+              className="primary-button"
+              onClick={openInBrowser}
+            >
+              Открыть магазин в браузере
+            </button>
+
+            <button
+              type="button"
+              className="pwa-help-secondary"
+              onClick={() => setShowInstallHelp(false)}
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
