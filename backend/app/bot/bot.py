@@ -1,3 +1,4 @@
+
 import asyncio
 
 from telegram import (
@@ -13,7 +14,17 @@ from telegram.ext import (
     ContextTypes,
 )
 
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+
 from app.config import settings
+from app.database import get_db
+from app.models import User
+
+
+# ==========================================
+# TRANSLATIONS
+# ==========================================
 
 MESSAGES = {
     "ru": {
@@ -40,6 +51,7 @@ MESSAGES = {
             "HTTPS-адрес витрины (WEBAPP_URL в backend/.env)."
         ),
     },
+
     "uz": {
         "start_admin": (
             "Assalomu alaykum! Siz Farrux shop (Hozoosp) administratori sifatida kirdingiz.\n\n"
@@ -65,6 +77,7 @@ MESSAGES = {
             "ochiq HTTPS manzil kerak (backend/.env da WEBAPP_URL)."
         ),
     },
+
     "uzc": {
         "start_admin": (
             "Ассалому алайкум! Сиз Farrux shop (Hozoosp) администратори сифатида кирдингиз.\n\n"
@@ -92,16 +105,22 @@ MESSAGES = {
     },
 }
 
+
+# ==========================================
+# USER LANGUAGES
+# ==========================================
+
 user_languages: dict[int, str] = {}
 
 
 def resolve_language(update: Update) -> str:
-    chat_id = update.effective_chat.id
+    chat = update.effective_chat
+    telegram_user = update.effective_user
 
-    if chat_id in user_languages:
-        return user_languages[chat_id]
+    if chat and chat.id in user_languages:
+        return user_languages[chat.id]
 
-    code = (update.effective_user.language_code or "").lower()
+    code = (telegram_user.language_code or "").lower()
 
     if code.startswith("uz"):
         return "uz"
@@ -109,29 +128,106 @@ def resolve_language(update: Update) -> str:
     return "ru"
 
 
+# ==========================================
+# ADMIN CHECK
+# ==========================================
+
 def is_admin(update: Update) -> bool:
+    telegram_user = update.effective_user
+
     return bool(
-        settings.ADMIN_TELEGRAM_ID
-        and str(update.effective_user.id) == settings.ADMIN_TELEGRAM_ID
+        telegram_user
+        and settings.ADMIN_TELEGRAM_ID
+        and str(telegram_user.id) == str(settings.ADMIN_TELEGRAM_ID)
     )
 
 
+# ==========================================
+# MINI APP URL
+# ==========================================
+
 def webapp_url() -> str:
-    return (settings.WEBAPP_URL or settings.FRONTEND_URL).rstrip("/")
+    return (
+        settings.WEBAPP_URL or settings.FRONTEND_URL
+    ).rstrip("/")
 
 
 def webapp_ready() -> bool:
-    """Telegram открывает Mini App только по HTTPS."""
     return webapp_url().startswith("https://")
 
 
-async def post_init(application) -> None:
+# ==========================================
+# REGISTER TELEGRAM USER
+# ==========================================
+
+async def register_user(telegram_user):
+    async for db in get_db():
+
+        try:
+            result = await db.execute(
+                select(User).where(
+                    User.telegram_id == telegram_user.id
+                )
+            )
+
+            user = result.scalar_one_or_none()
+
+            if user is None:
+
+                user = User(
+                    telegram_id=telegram_user.id,
+                    first_name=telegram_user.first_name or "",
+                    last_name=telegram_user.last_name or "",
+                    username=telegram_user.username,
+                    language_code=telegram_user.language_code,
+                )
+
+                db.add(user)
+
+                await db.commit()
+
+                print(
+                    f"NEW USER REGISTERED: {telegram_user.id}",
+                    flush=True,
+                )
+
+            else:
+
+                user.first_name = telegram_user.first_name or ""
+                user.last_name = telegram_user.last_name or ""
+                user.username = telegram_user.username
+                user.language_code = telegram_user.language_code
+
+                await db.commit()
+
+                print(
+                    f"EXISTING USER UPDATED: {telegram_user.id}",
+                    flush=True,
+                )
+
+        except IntegrityError:
+
+            await db.rollback()
+
+            print(
+                f"USER ALREADY REGISTERED: {telegram_user.id}",
+                flush=True,
+            )
+
+
+# ==========================================
+# MINI APP MENU BUTTON
+# ==========================================
+
+async def post_init(application):
+
     if not webapp_ready():
+
         print(
-            "Mini App menu button skipped: WEBAPP_URL/FRONTEND_URL "
-            "must use HTTPS.",
+            "Mini App menu button skipped: HTTPS URL required.",
             flush=True,
         )
+
         return
 
     await application.bot.set_chat_menu_button(
@@ -140,59 +236,113 @@ async def post_init(application) -> None:
             web_app=WebAppInfo(url=webapp_url()),
         )
     )
-    print(f"Mini App menu button set to {webapp_url()}", flush=True)
 
+    print(
+        f"Mini App menu button set: {webapp_url()}",
+        flush=True,
+    )
+
+
+# ==========================================
+# START COMMAND
+# ==========================================
 
 async def start(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
-    if update.message is None:
+
+    if update.message is None or update.effective_user is None:
+        return
+
+    try:
+
+        await register_user(update.effective_user)
+
+    except Exception as error:
+
+        print(
+            f"USER REGISTRATION ERROR: {error}",
+            flush=True,
+        )
+
+        await update.message.reply_text(
+            "Произошла ошибка регистрации. Попробуйте позже."
+        )
+
         return
 
     lang = resolve_language(update)
-    key = "start_admin" if is_admin(update) else "start_user"
 
-    await update.message.reply_text(MESSAGES[lang][key])
+    key = (
+        "start_admin"
+        if is_admin(update)
+        else "start_user"
+    )
 
+    await update.message.reply_text(
+        MESSAGES[lang][key]
+    )
+
+
+# ==========================================
+# SHOW TELEGRAM ID
+# ==========================================
 
 async def show_id(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
+
     if update.message is None:
         return
 
     lang = resolve_language(update)
 
     await update.message.reply_text(
-        MESSAGES[lang]["your_id"].format(user_id=update.effective_user.id)
+        MESSAGES[lang]["your_id"].format(
+            user_id=update.effective_user.id
+        )
     )
 
+
+# ==========================================
+# LANGUAGE HELP
+# ==========================================
 
 async def language_help(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
+
     if update.message is None:
         return
 
     lang = resolve_language(update)
 
-    await update.message.reply_text(MESSAGES[lang]["language_help"])
+    await update.message.reply_text(
+        MESSAGES[lang]["language_help"]
+    )
 
+
+# ==========================================
+# CHANGE LANGUAGE
+# ==========================================
 
 async def set_language(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
     lang: str,
 ):
+
     if update.message is None:
         return
 
     user_languages[update.effective_chat.id] = lang
 
-    await update.message.reply_text(MESSAGES[lang]["language_set"])
+    await update.message.reply_text(
+        MESSAGES[lang]["language_set"]
+    )
 
 
 async def set_ru(update, context):
@@ -207,27 +357,39 @@ async def set_uzc(update, context):
     await set_language(update, context, "uzc")
 
 
+# ==========================================
+# OPEN STORE
+# ==========================================
+
 async def open_store(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
+
     if update.message is None:
         return
 
     lang = resolve_language(update)
 
     if not webapp_ready():
-        await update.message.reply_text(MESSAGES[lang]["app_unavailable"])
+
+        await update.message.reply_text(
+            MESSAGES[lang]["app_unavailable"]
+        )
+
         return
 
     await update.message.reply_text(
         MESSAGES[lang]["open_app"],
+
         reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
                         MESSAGES[lang]["app_button"],
-                        web_app=WebAppInfo(url=webapp_url()),
+                        web_app=WebAppInfo(
+                            url=webapp_url()
+                        ),
                     )
                 ]
             ]
@@ -235,8 +397,14 @@ async def open_store(
     )
 
 
+# ==========================================
+# MAIN APPLICATION
+# ==========================================
+
 async def main():
+
     if not settings.BOT_TOKEN:
+
         raise RuntimeError(
             "BOT_TOKEN is missing in backend/.env"
         )
@@ -247,30 +415,65 @@ async def main():
         .build()
     )
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("app", open_store))
-    application.add_handler(CommandHandler("id", show_id))
-    application.add_handler(CommandHandler("lang", language_help))
-    application.add_handler(CommandHandler("ru", set_ru))
-    application.add_handler(CommandHandler("uz", set_uz))
-    application.add_handler(CommandHandler("uzc", set_uzc))
+    # Commands
+
+    application.add_handler(
+        CommandHandler("start", start)
+    )
+
+    application.add_handler(
+        CommandHandler("app", open_store)
+    )
+
+    application.add_handler(
+        CommandHandler("id", show_id)
+    )
+
+    application.add_handler(
+        CommandHandler("lang", language_help)
+    )
+
+    application.add_handler(
+        CommandHandler("ru", set_ru)
+    )
+
+    application.add_handler(
+        CommandHandler("uz", set_uz)
+    )
+
+    application.add_handler(
+        CommandHandler("uzc", set_uzc)
+    )
 
     await application.initialize()
-    # Application.initialize() не вызывает post_init при ручном запуске —
-    # вызываем сами, иначе кнопка Mini App не установится.
+
     await post_init(application)
+
     await application.start()
+
     await application.updater.start_polling()
 
-    print("Farrux shop (Hozoosp) Telegram Bot is running...", flush=True)
+    print(
+        "Farrux shop (Hozoosp) Telegram Bot is running...",
+        flush=True,
+    )
 
     try:
+
         await asyncio.Event().wait()
+
     finally:
+
         await application.updater.stop()
+
         await application.stop()
+
         await application.shutdown()
 
+
+# ==========================================
+# RUN BOT
+# ==========================================
 
 if __name__ == "__main__":
     asyncio.run(main())

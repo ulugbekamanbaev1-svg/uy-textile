@@ -276,7 +276,7 @@ export default function App() {
       }
     };
 
-    const timer = setInterval(poll, 30000);
+    const timer = setInterval(poll, 5000);
     return () => clearInterval(timer);
   }, [isAuthenticated]);
 
