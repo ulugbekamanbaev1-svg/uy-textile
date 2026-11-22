@@ -3,7 +3,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.catalog import ProductListItem
+
 PricingType = Literal["piece", "meter", "area"]
+ExpenseCategory = Literal["delivery", "packaging", "ads", "rent", "other"]
 
 HEX_PATTERN = r"^#[0-9a-fA-F]{6}$"
 
@@ -53,6 +56,7 @@ class AdminProductIn(BaseModel):
 
     pricing_type: PricingType = "piece"
     price_per_m2: int | None = Field(default=None, ge=0, le=1_000_000_000)
+    purchase_price: int = Field(default=0, ge=0, le=1_000_000_000)
 
     custom_size_allowed: bool = False
     is_active: bool = True
@@ -130,6 +134,7 @@ class AdminProductOut(BaseModel):
     images: list[AdminImageOut] = []
     pricing_type: str
     price_per_m2: int | None = None
+    purchase_price: int = 0
 
     custom_size_allowed: bool
     is_active: bool
@@ -139,6 +144,10 @@ class AdminProductOut(BaseModel):
     variants: list[AdminVariantOut] = []
     colors: list[AdminColorOut] = []
     price_tiers: list[AdminPriceTierOut] = []
+
+
+class AdminProductListOut(ProductListItem):
+    purchase_price: int = 0
 
 
 class UploadResult(BaseModel):
@@ -154,6 +163,45 @@ class ClientOut(BaseModel):
     orders_count: int
     total_spent: int
     last_order_at: datetime | None = None
+
+
+class ExpenseIn(BaseModel):
+    title: str = Field(min_length=1, max_length=160)
+    category: ExpenseCategory = "other"
+    amount: int = Field(gt=0, le=1_000_000_000)
+    comment: str = Field(default="", max_length=2000)
+    order_id: int | None = None
+    spent_at: datetime | None = None
+
+
+class ExpenseOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    category: str
+    amount: int
+    comment: str = ""
+    order_id: int | None = None
+    spent_at: datetime
+    created_at: datetime
+
+
+class ExpenseCategoryOut(BaseModel):
+    category: str
+    amount: int
+
+
+class ProductProfitOut(BaseModel):
+    product_id: int | None = None
+    name_ru: str
+    name_uz: str
+    name_uzc: str
+    quantity: float
+    revenue: int
+    unit_cost: int
+    cost: int
+    profit: int
 
 
 class DailySalesOut(BaseModel):
@@ -183,8 +231,15 @@ class AnalyticsOut(BaseModel):
     clients: int
     delivered: int
     cancelled: int
+    cost: int = 0
+    gross_profit: int = 0
+    expenses: int = 0
+    net_profit: int = 0
     daily: list[DailySalesOut] = []
     top_products: list[TopProductOut] = []
+    product_profits: list[ProductProfitOut] = []
+    expense_categories: list[ExpenseCategoryOut] = []
+    expense_history: list[ExpenseOut] = []
     statuses: list[StatusCountOut] = []
 
 

@@ -1136,6 +1136,7 @@ export default function App() {
                     analytics={analytics}
                     days={analyticsDays}
                     onDaysChange={loadAnalytics}
+                    onRefresh={() => loadAnalytics(analyticsDays)}
                     t={t}
                     lang={lang}
                   />
@@ -1544,6 +1545,7 @@ function ProductsTable({
                 <th>{t("colProduct")}</th>
                 <th>{t("colCategory")}</th>
                 <th>{t("colPrice")}</th>
+                <th>{t("colPurchasePrice")}</th>
                 <th>{t("colStatus")}</th>
                 {!compact && <th>{t("tableActions")}</th>}
               </tr>
@@ -1581,6 +1583,10 @@ function ProductsTable({
 
                   <td className="price-cell">
                     {priceLabel(product, t, lang)}
+                  </td>
+
+                  <td className="price-cell">
+                    {formatPrice(product.purchase_price, lang)}
                   </td>
 
                   <td>

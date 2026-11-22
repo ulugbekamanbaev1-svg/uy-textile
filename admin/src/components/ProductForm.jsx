@@ -83,6 +83,7 @@ function initialForm(product, categories, isDuplicate) {
       images,
       pricing_type: product.pricing_type,
       price_per_m2: toText(product.price_per_m2),
+      purchase_price: toText(product.purchase_price),
       custom_size_allowed: product.custom_size_allowed,
       is_active: isDuplicate ? false : product.is_active,
       is_featured: isDuplicate ? false : product.is_featured,
@@ -125,6 +126,7 @@ function initialForm(product, categories, isDuplicate) {
     images: [],
     pricing_type: "piece",
     price_per_m2: "",
+    purchase_price: "",
     custom_size_allowed: false,
     is_active: true,
     is_featured: false,
@@ -289,6 +291,7 @@ export default function ProductForm({
         form.pricing_type === "area"
           ? toNumber(form.price_per_m2)
           : null,
+      purchase_price: toNumber(form.purchase_price) ?? 0,
       custom_size_allowed: form.custom_size_allowed,
       is_active: form.is_active,
       is_featured: form.is_featured,
@@ -592,6 +595,19 @@ export default function ProductForm({
                 </select>
               </label>
 
+              <label className="admin-field">
+                <span>{t("fieldPurchasePrice")}</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={form.purchase_price}
+                  onChange={(event) =>
+                    update("purchase_price", event.target.value)
+                  }
+                />
+              </label>
+
               {form.pricing_type === "area" && (
                 <label className="admin-field">
                   <span>{t("pricePerM2")}</span>
@@ -606,6 +622,8 @@ export default function ProductForm({
                 </label>
               )}
             </div>
+
+            <p className="admin-note">{t("purchasePriceHint")}</p>
 
             {form.pricing_type !== "area" && (
               <>

@@ -59,6 +59,9 @@ class Product(Base):
     pricing_type: Mapped[str] = mapped_column(String(20), default="piece")
     price_per_m2: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
+    # Закупочная цена за единицу (штука / метр / м²) — для расчёта прибыли.
+    purchase_price: Mapped[int] = mapped_column(Integer, default=0)
+
     custom_size_allowed: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False)

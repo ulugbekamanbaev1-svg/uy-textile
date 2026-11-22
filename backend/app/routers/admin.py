@@ -32,6 +32,7 @@ from app.config import settings
 from app.database import get_db
 from app.models import (
     Category,
+    Expense,
     Order,
     Product,
     ProductColor,
@@ -40,15 +41,21 @@ from app.models import (
     ProductVariant,
     User,
 )
+from app.models.expense import EXPENSE_CATEGORIES
 from app.models.order import ORDER_STATUSES
 from app.routers.catalog import to_list_item
 from app.routers.orders import order_to_out
 from app.schemas.admin import (
     AdminProductIn,
+    AdminProductListOut,
     AdminProductOut,
     AnalyticsOut,
     ClientOut,
     DailySalesOut,
+    ExpenseCategoryOut,
+    ExpenseIn,
+    ExpenseOut,
+    ProductProfitOut,
     ReorderBody,
     StatusCountOut,
     StoreSettingsIn,
@@ -56,7 +63,7 @@ from app.schemas.admin import (
     TopProductOut,
     UploadResult,
 )
-from app.schemas.catalog import AdminSummary, CategoryIn, CategoryOut, ProductListItem
+from app.schemas.catalog import AdminSummary, CategoryIn, CategoryOut
 from app.schemas.order import OrderOut, OrderStatusUpdate
 from app.services.notify import notify_customer_about_status
 from app.services.store_settings import get_store_settings
@@ -351,7 +358,16 @@ async def reorder_categories(
     ]
 
 
-@router.get("/products", response_model=list[ProductListItem])
+def to_admin_list_item(product: Product) -> AdminProductListOut:
+    base = to_list_item(product)
+
+    return AdminProductListOut(
+        **base.model_dump(),
+        purchase_price=product.purchase_price or 0,
+    )
+
+
+@router.get("/products", response_model=list[AdminProductListOut])
 async def admin_products(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Product)
@@ -363,7 +379,9 @@ async def admin_products(db: AsyncSession = Depends(get_db)):
         .order_by(Product.sort_order, Product.id)
     )
 
-    return [to_list_item(product) for product in result.scalars().all()]
+    return [
+        to_admin_list_item(product) for product in result.scalars().all()
+    ]
 
 
 async def get_product_or_404(
@@ -452,6 +470,7 @@ def apply_payload(product: Product, payload: AdminProductIn) -> None:
     product.price_per_m2 = (
         payload.price_per_m2 if payload.pricing_type == "area" else None
     )
+    product.purchase_price = payload.purchase_price
 
     product.custom_size_allowed = payload.custom_size_allowed
     product.is_active = payload.is_active
@@ -968,6 +987,80 @@ def collect_clients(orders: list[Order]) -> list[dict]:
     return list(clients.values())
 
 
+def sold_units(item) -> float:
+    """Сколько единиц товара продано: штук, метров или м²."""
+    if item.pricing_type == "meter":
+        return float(item.meters) if item.meters else float(item.quantity)
+
+    if item.pricing_type == "area" and item.width_cm and item.height_cm:
+        area = (item.width_cm * item.height_cm) / 10000
+        return area * float(item.quantity)
+
+    return float(item.quantity)
+
+
+@router.get("/expenses", response_model=list[ExpenseOut])
+async def admin_expenses(
+    days: int | None = Query(default=None, ge=1, le=3650),
+    db: AsyncSession = Depends(get_db),
+):
+    """История расходов магазина (доставка, упаковка, реклама и т.д.)."""
+    stmt = select(Expense)
+
+    if days:
+        start = datetime.combine(date.today(), time.min).astimezone() - timedelta(
+            days=days - 1
+        )
+        stmt = stmt.where(Expense.spent_at >= start)
+
+    stmt = stmt.order_by(Expense.spent_at.desc(), Expense.id.desc()).limit(300)
+    result = await db.execute(stmt)
+
+    return list(result.scalars().all())
+
+
+@router.post("/expenses", response_model=ExpenseOut, status_code=201)
+async def create_expense(
+    payload: ExpenseIn,
+    db: AsyncSession = Depends(get_db),
+):
+    if payload.order_id is not None and await db.get(Order, payload.order_id) is None:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+
+    spent_at = payload.spent_at or datetime.now().astimezone()
+
+    if spent_at.tzinfo is None:
+        spent_at = spent_at.astimezone()
+
+    expense = Expense(
+        title=payload.title.strip(),
+        category=payload.category,
+        amount=payload.amount,
+        comment=payload.comment.strip(),
+        order_id=payload.order_id,
+        spent_at=spent_at,
+    )
+    db.add(expense)
+    await db.commit()
+    await db.refresh(expense)
+
+    return expense
+
+
+@router.delete("/expenses/{expense_id}", status_code=204)
+async def delete_expense(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    expense = await db.get(Expense, expense_id)
+
+    if expense is None:
+        raise HTTPException(status_code=404, detail="Расход не найден")
+
+    await db.delete(expense)
+    await db.commit()
+
+
 @router.get("/analytics", response_model=AnalyticsOut)
 async def admin_analytics(
     days: int = Query(default=30, ge=1, le=365),
@@ -986,6 +1079,34 @@ async def admin_analytics(
 
     orders = result.scalars().all()
 
+    # Закупочные цены нужны для расчёта себестоимости проданных товаров.
+    product_ids = {
+        item.product_id
+        for order in orders
+        for item in order.items
+        if item.product_id
+    }
+    purchase_prices: dict[int, int] = {}
+
+    if product_ids:
+        price_rows = await db.execute(
+            select(Product.id, Product.purchase_price).where(
+                Product.id.in_(product_ids)
+            )
+        )
+        purchase_prices = {
+            product_id: purchase_price or 0
+            for product_id, purchase_price in price_rows.all()
+        }
+
+    expense_result = await db.execute(
+        select(Expense)
+        .where(Expense.spent_at >= start)
+        .order_by(Expense.spent_at.desc(), Expense.id.desc())
+        .limit(300)
+    )
+    expenses = list(expense_result.scalars().all())
+
     daily = {
         (start + timedelta(days=index)).date().isoformat(): [0, 0]
         for index in range(days)
@@ -993,8 +1114,10 @@ async def admin_analytics(
     statuses = {status: 0 for status in ORDER_STATUSES}
     clients: set[str] = set()
     top: dict[str, dict] = {}
+    profits: dict[str, dict] = {}
 
     revenue = 0
+    cost_total = 0
     paid_orders = 0
     delivered = 0
     cancelled = 0
@@ -1038,9 +1161,49 @@ async def admin_analytics(
             product["quantity"] += item.quantity
             product["revenue"] += item.line_total
 
+            unit_cost = purchase_prices.get(item.product_id or 0, 0)
+            units = sold_units(item)
+            item_cost = round(unit_cost * units)
+            cost_total += item_cost
+
+            entry = profits.get(key)
+
+            if entry is None:
+                entry = {
+                    "product_id": item.product_id,
+                    "name_ru": item.name_ru,
+                    "name_uz": item.name_uz,
+                    "name_uzc": item.name_uzc,
+                    "quantity": 0.0,
+                    "revenue": 0,
+                    "unit_cost": unit_cost,
+                    "cost": 0,
+                    "profit": 0,
+                }
+                profits[key] = entry
+
+            entry["quantity"] += units
+            entry["revenue"] += item.line_total
+            entry["cost"] += item_cost
+            entry["profit"] += item.line_total - item_cost
+
     top_products = sorted(
         top.values(), key=lambda entry: entry["revenue"], reverse=True
     )[:5]
+
+    product_profits = sorted(
+        profits.values(), key=lambda entry: entry["profit"], reverse=True
+    )
+
+    expense_totals = {category: 0 for category in EXPENSE_CATEGORIES}
+
+    for expense in expenses:
+        expense_totals[expense.category] = (
+            expense_totals.get(expense.category, 0) + expense.amount
+        )
+
+    expenses_total = sum(expense.amount for expense in expenses)
+    gross_profit = revenue - cost_total
 
     return AnalyticsOut(
         days=days,
@@ -1050,11 +1213,29 @@ async def admin_analytics(
         clients=len(clients),
         delivered=delivered,
         cancelled=cancelled,
+        cost=cost_total,
+        gross_profit=gross_profit,
+        expenses=expenses_total,
+        net_profit=gross_profit - expenses_total,
         daily=[
             DailySalesOut(day=day, revenue=values[0], orders=values[1])
             for day, values in daily.items()
         ],
         top_products=[TopProductOut(**product) for product in top_products],
+        product_profits=[
+            ProductProfitOut(
+                **{
+                    **product,
+                    "quantity": round(product["quantity"], 2),
+                }
+            )
+            for product in product_profits
+        ],
+        expense_categories=[
+            ExpenseCategoryOut(category=category, amount=amount)
+            for category, amount in expense_totals.items()
+        ],
+        expense_history=[ExpenseOut.model_validate(expense) for expense in expenses],
         statuses=[
             StatusCountOut(status=status, count=count)
             for status, count in statuses.items()

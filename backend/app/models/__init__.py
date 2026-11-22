@@ -6,6 +6,7 @@ from app.models.catalog import (
     ProductPriceTier,
     ProductVariant,
 )
+from app.models.expense import Expense
 from app.models.order import Order, OrderItem
 from app.models.settings import StoreSettings
 from app.models.user import User
@@ -20,5 +21,6 @@ __all__ = [
     "ProductPriceTier",
     "Order",
     "OrderItem",
+    "Expense",
     "StoreSettings",
 ]
