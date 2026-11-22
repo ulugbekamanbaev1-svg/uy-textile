@@ -24,14 +24,6 @@ import { fetchStoreSettings, trackOrders } from "../services/api";
 import { formatPrice } from "../utils/format";
 import { openExternalLink } from "../utils/telegram";
 
-const STATUS_KEYS = {
-  new: "statusNew",
-  confirmed: "statusConfirmed",
-  delivering: "statusDelivering",
-  done: "statusDone",
-  cancelled: "statusCancelled"
-};
-
 function socialHandle(value) {
   return (value || "")
     .replace(/^@/, "")

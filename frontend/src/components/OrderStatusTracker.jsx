@@ -23,6 +23,9 @@ const STEP_INDEX = {
   done: 3
 };
 
+const statusKey = (status) =>
+  `status${status ? status.charAt(0).toUpperCase() + status.slice(1) : ""}`;
+
 function stepState(status, index) {
   if (status === "cancelled") return "cancelled";
 
@@ -56,7 +59,7 @@ export default function OrderStatusTracker({ status, order, t, lang }) {
           </div>
 
           <span className={`status-pill ${status}`}>
-            {t(`status${status}` || "statusNew")}
+            {t(statusKey(status))}
           </span>
         </div>
 
@@ -96,7 +99,7 @@ export default function OrderStatusTracker({ status, order, t, lang }) {
 
                   <div className="order-step-content">
                     <span className="order-step-label">
-                      {t(`status${step.key}` || `status${step.key}`)}
+                      {t(statusKey(step.key))}
                     </span>
                     <span className="order-step-state">
                       {state === "done"
