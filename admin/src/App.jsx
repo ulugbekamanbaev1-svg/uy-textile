@@ -1041,19 +1041,41 @@ export default function App() {
                     );
                   })}
 
-                  <a
-                    className="ghost-button"
-                    href={`${API_BASE}/api/admin/orders/export`}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      adminDownload("/api/admin/orders/export", "orders.csv").catch(
-                        () => {}
-                      );
-                    }}
-                    style={{ marginLeft: "auto" }}
-                  >
-                    CSV
-                  </a>
+                  <div style={{ marginLeft: "auto" }}>
+                    <button
+                      type="button"
+                      className="small-button"
+                      onClick={() =>
+                        adminDownload("/api/admin/orders/export?format=csv", "orders.csv").catch(
+                          () => {}
+                        )
+                      }
+                    >
+                      CSV
+                    </button>
+                    <button
+                      type="button"
+                      className="small-button"
+                      onClick={() =>
+                        adminDownload("/api/admin/orders/export?format=xlsx", "orders.xlsx").catch(
+                          () => {}
+                        )
+                      }
+                    >
+                      Excel
+                    </button>
+                    <button
+                      type="button"
+                      className="small-button"
+                      onClick={() =>
+                        adminDownload("/api/admin/orders/export?format=pdf", "orders.pdf").catch(
+                          () => {}
+                        )
+                      }
+                    >
+                      PDF
+                    </button>
+                  </div>
                 </div>
 
                 {dataState === "loading" && (

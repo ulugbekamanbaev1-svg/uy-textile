@@ -212,6 +212,18 @@ export default function AnalyticsPanel({
                 >
                   PDF
                 </button>
+                <button
+                  type="button"
+                  className="small-button"
+                  onClick={() =>
+                    adminDownload(
+                      `/api/admin/reports/export?period=${period}&format=csv&lang=${lang}`,
+                      `report-${period}.csv`
+                    )
+                  }
+                >
+                  CSV
+                </button>
               </div>
             ))}
           </div>

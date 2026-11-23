@@ -847,8 +847,16 @@ async def update_order_status(
 
 
 @router.get("/orders/export")
-async def export_orders(db: AsyncSession = Depends(get_db)):
-    """Экспорт заказов в CSV (для бэкапов и выгрузки)."""
+async def export_orders(
+    format: str = Query(default="csv", pattern="^(csv|xlsx|pdf)$"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Экспорт заказов: CSV (по умолчанию), Excel или PDF."""
+    from app.services.reports import (
+        export_orders_pdf,
+        export_orders_xlsx,
+    )
+
     result = await db.execute(
         select(Order)
         .options(selectinload(Order.items))
@@ -857,43 +865,59 @@ async def export_orders(db: AsyncSession = Depends(get_db)):
     )
     orders = result.scalars().all()
 
-    buffer = io.StringIO()
-    writer = csv.writer(buffer)
-    writer.writerow([
-        "id",
-        "number",
-        "status",
-        "customer_name",
-        "phone",
-        "address",
-        "comment",
-        "total",
-        "created_at",
-        "latitude",
-        "longitude",
-    ])
-
-    for order in orders:
+    if format == "xlsx":
+        content = export_orders_xlsx(orders)
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ext = "xlsx"
+    elif format == "pdf":
+        content = export_orders_pdf(orders)
+        media_type = "application/pdf"
+        ext = "pdf"
+    else:
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
         writer.writerow(
             [
-                order.id,
-                order.number,
-                order.status,
-                order.customer_name,
-                order.phone,
-                order.address,
-                order.comment,
-                order.total,
-                order.created_at.isoformat() if order.created_at else "",
-                order.latitude if order.latitude is not None else "",
-                order.longitude if order.longitude is not None else "",
+                "id",
+                "number",
+                "status",
+                "customer_name",
+                "phone",
+                "address",
+                "comment",
+                "total",
+                "created_at",
+                "latitude",
+                "longitude",
             ]
         )
 
+        for order in orders:
+            writer.writerow(
+                [
+                    order.id,
+                    order.number,
+                    order.status,
+                    order.customer_name,
+                    order.phone,
+                    order.address,
+                    order.comment,
+                    order.total,
+                    order.created_at.isoformat() if order.created_at else "",
+                    order.latitude if order.latitude is not None else "",
+                    order.longitude if order.longitude is not None else "",
+                ]
+            )
+
+        content = buffer.getvalue().encode("utf-8")
+        media_type = "text/csv; charset=utf-8"
+        ext = "csv"
+
+    filename = f"farrux-orders-{date.today().isoformat()}.{ext}"
     return Response(
-        content=buffer.getvalue(),
-        media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": 'attachment; filename="orders.csv"'},
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
@@ -1254,11 +1278,18 @@ async def admin_analytics(
 @router.get("/reports/export")
 async def export_report(
     period: str = Query(default="month", pattern="^(day|week|month)$"),
-    format: str = Query(default="xlsx", pattern="^(xlsx|pdf)$"),
+    format: str = Query(default="xlsx", pattern="^(xlsx|pdf|csv)$"),
     lang: str = Query(default="ru", pattern="^(ru|uz|uzc)$"),
     db: AsyncSession = Depends(get_db),
 ):
-    from app.services.reports import export_pdf, export_xlsx, period_days
+    from app.services.reports import (
+        export_analytics_csv,
+        export_orders_pdf,
+        export_orders_xlsx,
+        export_pdf,
+        export_xlsx,
+        period_days,
+    )
 
     days = period_days(period)
     analytics = await compute_analytics(days, db)
@@ -1268,6 +1299,10 @@ async def export_report(
         content = export_pdf(data, period, lang)
         media_type = "application/pdf"
         ext = "pdf"
+    elif format == "csv":
+        content = export_analytics_csv(data, period, lang)
+        media_type = "text/csv; charset=utf-8"
+        ext = "csv"
     else:
         content = export_xlsx(data, period, lang)
         media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

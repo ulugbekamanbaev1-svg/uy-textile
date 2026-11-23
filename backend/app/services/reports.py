@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import csv
 from datetime import date, datetime, timedelta
-from io import BytesIO
+from io import BytesIO, StringIO
 from pathlib import Path
 
 from openpyxl import Workbook
@@ -226,5 +227,158 @@ def export_pdf(analytics: dict, period: str, lang: str = "ru") -> bytes:
     ]))
     story.append(pt)
 
+    doc.build(story)
+    return buf.getvalue()
+
+
+def export_analytics_csv(analytics: dict, period: str, lang: str = "ru") -> bytes:
+    """Экспорт аналитики в CSV: метрики + топ товаров."""
+    data = build_report_data(analytics, period, lang)
+
+    buffer = StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([data["title"], ""])
+    writer.writerow(["Период", data["period"]])
+    writer.writerow(["Диапазон", data["range"]])
+    writer.writerow(["Сформирован", data["generated_at"]])
+    writer.writerow([])
+    writer.writerow(["Показатель", "Значение"])
+    for name, value in data["metrics"]:
+        writer.writerow([name, value])
+    writer.writerow([])
+    writer.writerow(
+        ["Товар", "Количество", "Выручка", "Прибыль"]
+    )
+    for p in data.get("product_profits", [])[:50]:
+        writer.writerow(
+            [
+                p.get(f"name_{lang}", p.get("name_ru", "")),
+                p.get("quantity", 0),
+                p.get("revenue", 0),
+                p.get("profit", 0),
+            ]
+        )
+
+    return buffer.getvalue().encode("utf-8")
+
+
+ORDER_HEADERS = {
+    "ru": ["Номер", "Статус", "Клиент", "Телефон", "Сумма", "Дата"],
+    "uz": ["Raqam", "Holat", "Mijoz", "Telefon", "Sum", "Sana"],
+    "uzc": ["Рақам", "Ҳолат", "Мижоз", "Телефон", "Ҷум", "Сана"],
+}
+
+
+def orders_to_rows(orders: list, lang: str = "ru") -> list[list]:
+    rows: list[list] = [ORDER_HEADERS.get(lang, ORDER_HEADERS["ru"])]
+
+    for order in orders:
+        rows.append(
+            [
+                order.number,
+                order.status,
+                order.customer_name or "",
+                order.phone or "",
+                int(order.total or 0),
+                order.created_at.isoformat() if order.created_at else "",
+            ]
+        )
+
+    return rows
+
+
+def export_orders_xlsx(orders: list, lang: str = "ru") -> bytes:
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Orders"
+
+    head_font = Font(bold=True, color="FFFFFF")
+    fill = PatternFill("solid", fgColor="2E3A2F")
+    light = PatternFill("solid", fgColor="F3F5EF")
+
+    ws.merge_cells("A1:F1")
+    cell = ws["A1"]
+    cell.value = "Заказы Farrux shop (Hozoosp)"
+    cell.font = Font(size=16, bold=True, color="FFFFFF")
+    cell.fill = fill
+    cell.alignment = Alignment(horizontal="center")
+
+    headers = ORDER_HEADERS.get(lang, ORDER_HEADERS["ru"])
+    ws.append(headers)
+    for c in ws[1]:
+        c.font = head_font
+        c.fill = fill
+
+    for row in orders_to_rows(orders, lang)[1:]:
+        ws.append(row)
+        if ws.max_row % 2 == 0:
+            for c in ws[ws.max_row]:
+                c.fill = light
+
+    for column, column_cells in enumerate(ws.columns, start=1):
+        width = max(len(str(c.value or "")) for c in column_cells) + 2 if next(column_cells, None) is not None else 10
+        ws.column_dimensions[get_column_letter(column)].width = min(width, 40)
+
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def export_orders_pdf(orders: list, lang: str = "ru") -> bytes:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=14 * mm, rightMargin=14 * mm, topMargin=14 * mm, bottomMargin=14 * mm)
+    styles = getSampleStyleSheet()
+    font_path = _find_font()
+    font_name = "Helvetica"
+    font_name_bold = "Helvetica-Bold"
+    if font_path:
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+
+        try:
+            pdfmetrics.registerFont(TTFont("AppSans", font_path))
+            bold_path = font_path.replace("arial.ttf", "arialbd.ttf").replace("DejaVuSans.ttf", "DejaVuSans-Bold.ttf")
+            if Path(bold_path).exists():
+                pdfmetrics.registerFont(TTFont("AppSansBold", bold_path))
+                font_name_bold = "AppSansBold"
+            font_name = "AppSans"
+        except Exception:
+            pass
+
+    title_style = ParagraphStyle("T", parent=styles["Title"], fontName=font_name_bold, fontSize=16, leading=20, textColor=colors.HexColor("#2E3A2F"))
+    normal = ParagraphStyle("N", parent=styles["Normal"], fontName=font_name, fontSize=9, leading=12)
+
+    story = [Paragraph("Заказы Farrux shop (Hozoosp)", title_style), Spacer(1, 4 * mm)]
+    headers = ORDER_HEADERS.get(lang, ORDER_HEADERS["ru"])
+    rows = [headers]
+    for row in orders_to_rows(orders, lang)[1:]:
+        rows.append([str(v) for v in row])
+
+    table = Table(rows, colWidths=[50 * mm, 30 * mm, 70 * mm, 40 * mm, 30 * mm, 40 * mm])
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2E3A2F")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, -1), font_name),
+                ("FONTNAME", (0, 0), (-1, -1), font_name_bold),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F3F5EF")]),
+                ("GRID", (0, 0), (-1, 0), 0.25, colors.HexColor("#D7DDD0")),
+                ("GRID", (0, 1), (-1, -1), 0.25, colors.HexColor("#D7DDD0")),
+                ("PADDING", (0, 0), (-1, -1), 4),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]
+        )
+    )
+    story.append(table)
     doc.build(story)
     return buf.getvalue()
