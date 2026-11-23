@@ -198,9 +198,14 @@ async def send_due_cart_reminders() -> int:
 
                 try:
                     if image_url:
-                        photo_payload = dict(payload)
-                        photo_payload["photo"] = image_url
-                        photo_payload["caption"] = text[:1020]
+                        photo_payload = {
+                            "chat_id": reminder.telegram_id,
+                            "photo": image_url,
+                            "caption": text[:1020],
+                            "parse_mode": "HTML",
+                        }
+                        if keyboard:
+                            photo_payload["reply_markup"] = keyboard
                         resp = await client.post(
                             f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPhoto",
                             json=photo_payload,

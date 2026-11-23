@@ -363,7 +363,7 @@ def export_orders_pdf(orders: list, lang: str = "ru") -> bytes:
     for row in orders_to_rows(orders, lang)[1:]:
         rows.append([str(v) for v in row])
 
-    table = Table(rows, colWidths=[50 * mm, 30 * mm, 70 * mm, 40 * mm, 30 * mm, 40 * mm])
+    table = Table(rows, colWidths=[35 * mm, 25 * mm, 45 * mm, 25 * mm, 20 * mm, 30 * mm])
     table.setStyle(
         TableStyle(
             [
