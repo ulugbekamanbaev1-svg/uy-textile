@@ -19,8 +19,7 @@ import {
 } from "lucide-react";
 
 import { LANGUAGES } from "../i18n";
-import OrderStatusTracker from "../components/OrderStatusTracker";
-import { fetchStoreSettings, trackOrders } from "../services/api";
+import { fetchStoreSettings } from "../services/api";
 import { formatPrice } from "../utils/format";
 import { openExternalLink } from "../utils/telegram";
 
@@ -42,13 +41,10 @@ export default function ProfilePage({
   cartTotal,
   favoritesCount,
   onCart,
-  onFavorites
+  onFavorites,
+  onOrders
 }) {
   const [store, setStore] = useState(null);
-  const [trackPhone, setTrackPhone] = useState("");
-  const [trackNick, setTrackNick] = useState("");
-  const [trackedOrders, setTrackedOrders] = useState([]);
-  const [trackState, setTrackState] = useState("idle");
 
   // PWA установка
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -131,31 +127,6 @@ export default function ProfilePage({
 const openInBrowser = () => {
   openExternalLink("https://uy-textile-frontend.onrender.com");
 };
-
-  const handleTrack = async () => {
-    const phone = trackPhone.trim();
-    const nick = trackNick.trim();
-
-    if (phone.replace(/\D/g, "").length < 7 && !nick.replace(/^@/, "").length) {
-      setTrackState("error");
-      return;
-    }
-
-    setTrackState("loading");
-
-    try {
-      const orders = await trackOrders({
-        phone: phone || undefined,
-        username: nick ? nick.replace(/^@/, "") : undefined
-      });
-
-      setTrackedOrders(Array.isArray(orders) ? orders : []);
-      setTrackState("done");
-    } catch {
-      setTrackState("error");
-      setTrackedOrders([]);
-    }
-  };
 
   const hasContacts =
     store &&
@@ -323,56 +294,18 @@ const openInBrowser = () => {
         </section>
       )}
 
-      {/* Отслеживание заказов */}
+      {/* Мои заказы */}
       <section className="profile-section">
-        <h3>{t("trackOrdersTitle")}</h3>
-        <p className="option-hint">{t("trackOrdersHint")}</p>
-
-        <div className="track-form">
-          <input
-            type="tel"
-            value={trackPhone}
-            placeholder={t("trackOrdersPlaceholder")}
-            onChange={(event) => setTrackPhone(event.target.value)}
-          />
-
-          <input
-            type="text"
-            value={trackNick}
-            placeholder={t("trackOrdersNickPlaceholder")}
-            onChange={(event) => setTrackNick(event.target.value)}
-          />
-
-          <button
-            type="button"
-            className="primary-button"
-            onClick={handleTrack}
-            disabled={trackState === "loading"}
-          >
-            <PackageSearch size={16} />
-            {trackState === "loading"
-              ? t("loading")
-              : t("trackOrdersButton")}
-          </button>
+        <div
+          className="profile-link"
+          onClick={onOrders}
+          role="button"
+          tabIndex={0}
+        >
+          <PackageSearch size={18} />
+          <span>{t("navOrders")}</span>
+          <strong>{t("trackOrdersButton")}</strong>
         </div>
-
-        {trackState === "error" && (
-          <p className="form-error">{t("trackOrdersError")}</p>
-        )}
-
-        {trackState === "done" && trackedOrders.length === 0 && (
-          <p className="option-hint">{t("trackOrdersEmpty")}</p>
-        )}
-
-        {trackState === "done" && trackedOrders.length > 0 && (
-          <div className="tracked-orders">
-            {trackedOrders.map((order) => (
-              <div className="tracked-order" key={order.id}>
-                <OrderStatusTracker status={order.status} order={order} t={t} lang={lang} />
-              </div>
-            ))}
-          </div>
-        )}
       </section>
 
       {/* Язык */}

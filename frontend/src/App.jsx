@@ -15,6 +15,7 @@ import FavoritesPage from "./pages/FavoritesPage";
 import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
 import ProfilePage from "./pages/ProfilePage";
+import OrdersPage from "./pages/OrdersPage";
 import {
   checkServer,
   fetchCategories,
@@ -241,6 +242,10 @@ export default function App() {
         onGoShopping={() => navigate("catalog", { category: "" })}
       />
     );
+  } else if (route.page === "orders") {
+    content = (
+      <OrdersPage t={t} lang={lang} />
+    );
   } else if (route.page === "profile") {
     content = (
       <ProfilePage
@@ -255,6 +260,7 @@ export default function App() {
         favoritesCount={favorites.items.length}
         onCart={() => navigate("cart")}
         onFavorites={() => navigate("favorites")}
+        onOrders={() => navigate("orders")}
       />
     );
   } else {

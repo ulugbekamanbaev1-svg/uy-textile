@@ -30,6 +30,7 @@ export const translations = {
     navHome: "Главная",
     navCatalog: "Каталог",
     navFavorites: "Избранное",
+    navOrders: "Мои заказы",
     navProfile: "Профиль",
     navCart: "Корзина",
 
@@ -206,6 +207,7 @@ export const translations = {
     navHome: "Asosiy",
     navCatalog: "Katalog",
     navFavorites: "Sevimlilar",
+    navOrders: "Buyurtmalarim",
     navProfile: "Profil",
     navCart: "Savat",
 
@@ -383,6 +385,7 @@ export const translations = {
     navHome: "Асосий",
     navCatalog: "Каталог",
     navFavorites: "Севимлилар",
+    navOrders: "Буюртмалар",
     navProfile: "Профиль",
     navCart: "Сават",
 

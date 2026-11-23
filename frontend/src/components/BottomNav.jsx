@@ -1,9 +1,10 @@
-import { House, LayoutGrid, Heart, UserRound } from "lucide-react";
+import { House, LayoutGrid, Heart, PackageSearch, UserRound } from "lucide-react";
 
 const TABS = [
   ["home", House, "navHome"],
   ["catalog", LayoutGrid, "navCatalog"],
   ["favorites", Heart, "navFavorites"],
+  ["orders", PackageSearch, "navOrders"],
   ["profile", UserRound, "navProfile"]
 ];
 
