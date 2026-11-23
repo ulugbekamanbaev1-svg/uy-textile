@@ -1170,7 +1170,7 @@ export default function App() {
               </>
             )}
 
-            {section === "qr" && <QrPanel t={t} />}
+            {section === "qr" && <QrPanel t={t} lang={lang} />}
 
             {section === "analytics" && (
               <>

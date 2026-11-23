@@ -44,8 +44,8 @@ function formatNumber(value) {
   return new Intl.NumberFormat("ru-RU").format(Number(value) || 0);
 }
 
-function formatMoney(value) {
-  return `${formatNumber(value)} so'm`;
+function formatMoney(value, t) {
+  return `${formatNumber(value)} ${t("currency") || "so'm"}`;
 }
 
 function LabelPreview({ layout, qrSrc, t }) {
@@ -55,9 +55,9 @@ function LabelPreview({ layout, qrSrc, t }) {
       <div className="qr-label-inner">
         {isHangtag && <div className="qr-label-hole" aria-hidden="true" />}
         <div className="qr-label-brand">FARRUX SHOP</div>
-        <div className="qr-label-sub">HOME TEXTILE</div>
+        <div className="qr-label-sub">{t("qrLabelHomeTextile")}</div>
         <div className="qr-label-line" />
-        <div className="qr-label-slogan">YOUR HOME — YOUR COMFORT</div>
+        <div className="qr-label-slogan">{t("qrLabelSlogan")}</div>
         <div className="qr-label-qrwrap">
           {qrSrc ? (
             <img src={qrSrc} alt="QR" className="qr-label-qrimg" />
@@ -65,14 +65,14 @@ function LabelPreview({ layout, qrSrc, t }) {
             <div className="qr-label-qrplaceholder">QR</div>
           )}
         </div>
-        <div className="qr-label-scan">SCAN TO VISIT OUR SHOP</div>
-        <div className="qr-label-thanks">Спасибо, что выбираете Farrux Shop!</div>
+        <div className="qr-label-scan">{t("qrLabelScan")}</div>
+        <div className="qr-label-thanks">{t("qrLabelThanks")}</div>
       </div>
     </div>
   );
 }
 
-export default function QrPanel({ t }) {
+export default function QrPanel({ t, lang = "ru" }) {
   const [info, setInfo] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -138,7 +138,7 @@ export default function QrPanel({ t }) {
       setDownloading(key);
       await adminDownload(path, filename);
     } catch (e) {
-      setError(e.message || "Не удалось скачать файл");
+      setError(e.message || t("qrDownloadError"));
     } finally {
       setDownloading("");
     }
@@ -146,12 +146,12 @@ export default function QrPanel({ t }) {
 
   const statCards = analytics
     ? [
-        [t("qrScans") || "Сканирования", formatNumber(analytics.scans), ScanLine],
-        [t("qrUniqueVisitors") || "Уникальные посетители", formatNumber(analytics.unique_visitors), Users],
-        [t("qrMiniAppOpens") || "Запуски Mini App", formatNumber(analytics.miniapp_opens), Smartphone],
-        [t("qrOrders") || "Заказы через QR", formatNumber(analytics.orders), ShoppingBag],
-        [t("qrCompletedOrders") || "Завершённые QR-заказы", formatNumber(analytics.completed_orders), QrCode],
-        [t("qrConversion") || "Конверсия в заказ", `${analytics.conversion}%`, RefreshCw]
+        [t("qrScans"), formatNumber(analytics.scans), ScanLine],
+        [t("qrUniqueVisitors"), formatNumber(analytics.unique_visitors), Users],
+        [t("qrMiniAppOpens"), formatNumber(analytics.miniapp_opens), Smartphone],
+        [t("qrOrders"), formatNumber(analytics.orders), ShoppingBag],
+        [t("qrCompletedOrders"), formatNumber(analytics.completed_orders), QrCode],
+        [t("qrConversion"), `${analytics.conversion}%`, RefreshCw]
       ]
     : [];
 
@@ -160,18 +160,18 @@ export default function QrPanel({ t }) {
       <div className="analytics-toolbar qr-toolbar">
         <div className="qr-date-filter">
           <label className="qr-date-field">
-            <span>{t("qrDateFrom") || "С"}</span>
+            <span>{t("qrDateFrom")}</span>
             <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
           </label>
           <label className="qr-date-field">
-            <span>{t("qrDateTo") || "По"}</span>
+            <span>{t("qrDateTo")}</span>
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
           </label>
           <button type="button" className="small-button" onClick={refreshAnalytics}>
-            {t("qrApplyFilter") || "Применить"}
+            {t("qrApplyFilter")}
           </button>
           <button type="button" className="small-button" onClick={load}>
-            <RefreshCw size={14} /> {t("refresh") || "Обновить"}
+            <RefreshCw size={14} /> {t("qrRefresh")}
           </button>
         </div>
       </div>
@@ -192,17 +192,17 @@ export default function QrPanel({ t }) {
           <div className="qr-top-grid">
             <section className="products-card analytics-card qr-main-card">
               <div className="products-card-head">
-                <h3>{t("qrPermanentTitle") || "Постоянный QR Farrux Shop"}</h3>
+                <h3>{t("qrPermanentTitle")}</h3>
               </div>
               <div className="qr-main-layout">
                 <div className="qr-preview-box">
                   {qrSrc ? <img src={qrSrc} alt="Farrux Shop QR" className="qr-preview-img" /> : <div className="qr-label-qrplaceholder">QR</div>}
                 </div>
                 <div className="qr-main-meta">
-                  <p className="admin-note">{t("qrPermanentHint") || "Один постоянный QR для всех товаров. Меняйте Telegram-ссылку на сервере — QR перепечатывать не нужно."}</p>
-                  <div className="qr-meta-row"><span>QR URL</span><code>{info.qr_url}</code></div>
-                  <div className="qr-meta-row"><span>Telegram</span><code>{info.telegram_url || "—"}</code></div>
-                  <div className="qr-meta-row"><span>startapp</span><code>{info.start_param}</code></div>
+                  <p className="admin-note">{t("qrPermanentHint")}</p>
+                  <div className="qr-meta-row"><span>{t("qrUrlLabel")}</span><code>{info.qr_url}</code></div>
+                  <div className="qr-meta-row"><span>{t("qrTelegramLabel")}</span><code>{info.telegram_url || "—"}</code></div>
+                  <div className="qr-meta-row"><span>{t("qrStartParamLabel")}</span><code>{info.start_param}</code></div>
                   <div className="qr-downloads">
                     <button type="button" className="small-button" disabled={downloading === "png"} onClick={() => download("/api/admin/qr/download/png?box_size=20", "farrux-shop-qr.png", "png")}>
                       <Download size={14} /> PNG
@@ -210,16 +210,16 @@ export default function QrPanel({ t }) {
                     <button type="button" className="small-button" disabled={downloading === "svg"} onClick={() => download("/api/admin/qr/download/svg", "farrux-shop-qr.svg", "svg")}>
                       <Download size={14} /> SVG
                     </button>
-                    <button type="button" className="small-button" disabled={downloading === "hangtag"} onClick={() => download("/api/admin/qr/download/pdf?layout=hangtag&sheet=true", "farrux-hangtag-sheet.pdf", "hangtag")}>
-                      <Download size={14} /> {t("qrHangtagPdf") || "PDF бирки (A4)"}
+                    <button type="button" className="small-button" disabled={downloading === "hangtag"} onClick={() => download(`/api/admin/qr/download/pdf?layout=hangtag&sheet=true&lang=${lang}`, `farrux-hangtag-sheet-${lang}.pdf`, "hangtag")}>
+                      <Download size={14} /> {t("qrHangtagPdf")}
                     </button>
-                    <button type="button" className="small-button" disabled={downloading === "sticker"} onClick={() => download("/api/admin/qr/download/pdf?layout=sticker&sheet=true", "farrux-sticker-sheet.pdf", "sticker")}>
-                      <Download size={14} /> {t("qrStickerPdf") || "PDF наклейки (A4)"}
+                    <button type="button" className="small-button" disabled={downloading === "sticker"} onClick={() => download(`/api/admin/qr/download/pdf?layout=sticker&sheet=true&lang=${lang}`, `farrux-sticker-sheet-${lang}.pdf`, "sticker")}>
+                      <Download size={14} /> {t("qrStickerPdf")}
                     </button>
                   </div>
                   {info.telegram_url && (
                     <a className="small-button qr-link-button" href={info.telegram_url} target="_blank" rel="noreferrer">
-                      <ExternalLink size={14} /> {t("qrOpenTelegram") || "Открыть Telegram-ссылку"}
+                      <ExternalLink size={14} /> {t("qrOpenTelegram")}
                     </a>
                   )}
                 </div>
@@ -240,20 +240,19 @@ export default function QrPanel({ t }) {
           {analytics && (
             <section className="products-card analytics-card">
               <div className="products-card-head">
-                <h3>{t("qrRevenue") || "Выручка по QR-заказам"}</h3>
-                <span className="table-count">{formatMoney(analytics.revenue)}</span>
+                <h3>{t("qrRevenue")}</h3>
+                <span className="table-count">{formatMoney(analytics.revenue, t)}</span>
               </div>
               <p className="admin-note">
-                {(t("qrNotesUnique") || analytics.notes?.unique_visitors) + " "}
-                {(t("qrNotesOpen") || analytics.notes?.miniapp_open)}
+                {t("qrNotesUnique")} {t("qrNotesOpen")}
               </p>
               <div className="qr-daily-list">
                 {analytics.daily.map((day) => (
                   <div className="qr-daily-row" key={day.day}>
                     <span className="qr-daily-date">{day.day}</span>
-                    <span>{t("qrScansShort") || "Сканы"}: {day.scans}</span>
-                    <span>Mini App: {day.miniapp_opens}</span>
-                    <span>{t("qrOrdersShort") || "Заказы"}: {day.orders}</span>
+                    <span>{t("qrScansShort")}: {day.scans}</span>
+                    <span>{t("qrMiniAppShort")}: {day.miniapp_opens}</span>
+                    <span>{t("qrOrdersShort")}: {day.orders}</span>
                   </div>
                 ))}
               </div>
@@ -263,8 +262,8 @@ export default function QrPanel({ t }) {
           <div className="qr-labels-grid">
             <section className="products-card analytics-card">
               <div className="products-card-head">
-                <h3>{t("qrHangtagPreview") || "Подвесная бирка 50×80 мм"}</h3>
-                <button type="button" className="small-button" onClick={() => download("/api/admin/qr/download/pdf?layout=hangtag", "farrux-hangtag.pdf", "hangtag-single")}>
+                <h3>{t("qrHangtagPreview")}</h3>
+                <button type="button" className="small-button" onClick={() => download(`/api/admin/qr/download/pdf?layout=hangtag&lang=${lang}`, `farrux-hangtag-${lang}.pdf`, "hangtag-single")}>
                   <Download size={14} /> PDF
                 </button>
               </div>
@@ -273,8 +272,8 @@ export default function QrPanel({ t }) {
 
             <section className="products-card analytics-card">
               <div className="products-card-head">
-                <h3>{t("qrStickerPreview") || "Наклейка 50×50 мм"}</h3>
-                <button type="button" className="small-button" onClick={() => download("/api/admin/qr/download/pdf?layout=sticker", "farrux-sticker.pdf", "sticker-single")}>
+                <h3>{t("qrStickerPreview")}</h3>
+                <button type="button" className="small-button" onClick={() => download(`/api/admin/qr/download/pdf?layout=sticker&lang=${lang}`, `farrux-sticker-${lang}.pdf`, "sticker-single")}>
                   <Download size={14} /> PDF
                 </button>
               </div>
@@ -284,14 +283,14 @@ export default function QrPanel({ t }) {
 
           <section className="products-card analytics-card">
             <div className="products-card-head">
-              <h3>{t("qrPrintGuideTitle") || "Инструкция по печати"}</h3>
+              <h3>{t("qrPrintGuideTitle")}</h3>
             </div>
             <ul className="qr-print-list">
-              <li>{t("qrPrint1") || "Печатайте PDF в масштабе 100% (Actual size), без «Fit to page»."}</li>
-              <li>{t("qrPrint2") || "Бирка: 50×80 мм, плотный картон 250–300 г/м², матовая ламинация."}</li>
-              <li>{t("qrPrint3") || "Наклейка: 50×50 мм, матовая самоклеящаяся бумага или винил."}</li>
-              <li>{t("qrPrint4") || "Не размещайте QR на сложном фоне и не уменьшайте белую зону вокруг него."}</li>
-              <li>{t("qrPrint5") || "Перед тиражом сделайте тест: отсканируйте QR камерой iPhone и Android."}</li>
+              <li>{t("qrPrint1")}</li>
+              <li>{t("qrPrint2")}</li>
+              <li>{t("qrPrint3")}</li>
+              <li>{t("qrPrint4")}</li>
+              <li>{t("qrPrint5")}</li>
             </ul>
           </section>
         </>

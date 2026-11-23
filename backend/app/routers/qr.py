@@ -456,6 +456,7 @@ async def download_qr_pdf(
     height_mm: float | None = Query(default=None, ge=20, le=200),
     margin_mm: float | None = Query(default=None, ge=1, le=20),
     sheet: bool = Query(default=False),
+    lang: str = Query(default="ru", pattern="^(ru|uz|uzc)$"),
 ):
     if not qr_download_limiter.allow(
         client_key(_host(request), f"pdf-{layout}-{sheet}")
@@ -470,6 +471,7 @@ async def download_qr_pdf(
         height_mm,
         margin_mm,
         sheet,
+        lang,
     )
 
     suffix = "sheet" if sheet else "label"

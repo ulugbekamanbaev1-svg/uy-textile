@@ -264,6 +264,32 @@ def _text_center(c, text, cx, y, font, size, color, char_space=0):
     _set_char_space(c, 0)
 
 
+LABEL_TEXTS = {
+    "ru": {
+        "home_textile": "HOME TEXTILE",
+        "slogan": "YOUR HOME — YOUR COMFORT",
+        "scan": "SCAN TO VISIT OUR SHOP",
+        "thanks": "Спасибо, что выбираете Farrux Shop!",
+    },
+    "uz": {
+        "home_textile": "UY TEKSTILI",
+        "slogan": "UYINGIZ — QULAYLIGINGIZ",
+        "scan": "DO'KONIMIZGA O'TISH UCHUN SKANERLANG",
+        "thanks": "Farrux Shopni tanlaganingiz uchun rahmat!",
+    },
+    "uzc": {
+        "home_textile": "УЙ ТЕКСТИЛИ",
+        "slogan": "УЙИНГИЗ — ҚУЛАЙЛИГИНГИЗ",
+        "scan": "ДЎКОНИМИЗГА ЎТИШ УЧУН СКАНЕРЛАНГ",
+        "thanks": "Farrux Shopни танлаганингиз учун раҳмат!",
+    },
+}
+
+
+def label_texts(lang: str | None) -> dict:
+    return LABEL_TEXTS.get((lang or "ru").lower(), LABEL_TEXTS["ru"])
+
+
 def _draw_qr_panel(c, x, y, size, qr_reader):
     from reportlab.lib.units import mm
 
@@ -294,9 +320,10 @@ def _draw_frame(c, x, y, w, h, margin_mm):
     c.roundRect(x + m, y + m, w - 2 * m, h - 2 * m, 2 * mm, stroke=1, fill=0)
 
 
-def _draw_hangtag(c, x, y, w, h, qr_reader, fonts, margin_mm):
+def _draw_hangtag(c, x, y, w, h, qr_reader, fonts, margin_mm, texts=None):
     from reportlab.lib.units import mm
 
+    texts = texts or label_texts("ru")
     regular, bold = fonts
 
     c.setFillColor(_hex(BLACK))
@@ -314,7 +341,7 @@ def _draw_hangtag(c, x, y, w, h, qr_reader, fonts, margin_mm):
 
     _text_center(c, "FARRUX SHOP", cx, y + h - 14.0 * mm, bold, 9.6, GOLD, 0.7)
     _text_center(
-        c, "HOME TEXTILE", cx, y + h - 18.0 * mm, regular, 5.0, WHITE, 1.3
+        c, texts["home_textile"], cx, y + h - 18.0 * mm, regular, 5.0, WHITE, 1.3
     )
 
     c.setStrokeColor(_hex(GOLD))
@@ -323,7 +350,7 @@ def _draw_hangtag(c, x, y, w, h, qr_reader, fonts, margin_mm):
 
     _text_center(
         c,
-        "YOUR HOME — YOUR COMFORT",
+        texts["slogan"],
         cx,
         y + h - 24.4 * mm,
         regular,
@@ -338,11 +365,11 @@ def _draw_hangtag(c, x, y, w, h, qr_reader, fonts, margin_mm):
     _draw_qr_panel(c, cx - qr_size / 2, qr_y, qr_size, qr_reader)
 
     _text_center(
-        c, "SCAN TO VISIT OUR SHOP", cx, y + 11.2 * mm, bold, 4.9, WHITE, 0.45
+        c, texts["scan"], cx, y + 11.2 * mm, bold, 4.9, WHITE, 0.45
     )
     _text_center(
         c,
-        "Спасибо, что выбираете Farrux Shop!",
+        texts["thanks"],
         cx,
         y + 6.6 * mm,
         regular,
@@ -352,9 +379,10 @@ def _draw_hangtag(c, x, y, w, h, qr_reader, fonts, margin_mm):
     )
 
 
-def _draw_sticker(c, x, y, w, h, qr_reader, fonts, margin_mm):
+def _draw_sticker(c, x, y, w, h, qr_reader, fonts, margin_mm, texts=None):
     from reportlab.lib.units import mm
 
+    texts = texts or label_texts("ru")
     regular, bold = fonts
 
     c.setFillColor(_hex(MATTE))
@@ -365,11 +393,11 @@ def _draw_sticker(c, x, y, w, h, qr_reader, fonts, margin_mm):
 
     _text_center(c, "FARRUX SHOP", cx, y + h - 5.6 * mm, bold, 8.0, GOLD, 0.55)
     _text_center(
-        c, "HOME TEXTILE", cx, y + h - 9.0 * mm, regular, 4.3, WHITE, 1.1
+        c, texts["home_textile"], cx, y + h - 9.0 * mm, regular, 4.3, WHITE, 1.1
     )
     _text_center(
         c,
-        "YOUR HOME — YOUR COMFORT",
+        texts["slogan"],
         cx,
         y + h - 12.0 * mm,
         regular,
@@ -384,11 +412,11 @@ def _draw_sticker(c, x, y, w, h, qr_reader, fonts, margin_mm):
     _draw_qr_panel(c, cx - qr_size / 2, qr_y, qr_size, qr_reader)
 
     _text_center(
-        c, "SCAN TO VISIT OUR SHOP", cx, y + 5.0 * mm, bold, 4.2, WHITE, 0.35
+        c, texts["scan"], cx, y + 5.0 * mm, bold, 4.2, WHITE, 0.35
     )
     _text_center(
         c,
-        "Спасибо, что выбираете Farrux Shop!",
+        texts["thanks"],
         cx,
         y + 2.6 * mm,
         regular,
@@ -423,6 +451,7 @@ def build_label_pdf(
     height_mm=None,
     margin_mm=None,
     sheet: bool = False,
+    lang: str = "ru",
 ) -> bytes:
     """PDF одной этикетки или листа A4 с сеткой этикеток."""
     from reportlab.lib.pagesizes import A4
@@ -437,12 +466,13 @@ def build_label_pdf(
 
     qr_reader = ImageReader(BytesIO(generate_qr_png(data, box_size=18)))
     fonts = _register_label_fonts()
+    texts = label_texts(lang)
 
     def draw_label(c, x, y, w, h):
         if layout == "sticker":
-            _draw_sticker(c, x, y, w, h, qr_reader, fonts, margin)
+            _draw_sticker(c, x, y, w, h, qr_reader, fonts, margin, texts)
         else:
-            _draw_hangtag(c, x, y, w, h, qr_reader, fonts, margin)
+            _draw_hangtag(c, x, y, w, h, qr_reader, fonts, margin, texts)
 
     buffer = BytesIO()
 
