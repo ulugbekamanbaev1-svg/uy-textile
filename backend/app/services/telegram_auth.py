@@ -146,3 +146,31 @@ def require_admin(
         )
 
     return telegram_id
+
+
+def require_telegram_user(
+    x_telegram_init_data: str | None = Header(
+        default=None,
+        alias="X-Telegram-Init-Data",
+    ),
+) -> dict:
+    """
+    Требует валидную Telegram Mini App авторизацию.
+    Возвращает проверенный user dict из initData.
+    Никакой dev-bypass: без валидного initData данные заказов не выдаём.
+    """
+    if not x_telegram_init_data:
+        raise HTTPException(
+            status_code=401,
+            detail="Требуется авторизация Telegram",
+        )
+
+    user = verify_telegram_init_data(x_telegram_init_data)
+    telegram_id = int(user.get("id") or 0)
+    if telegram_id <= 0:
+        raise HTTPException(
+            status_code=401,
+            detail="Некорректные данные Telegram",
+        )
+
+    return user

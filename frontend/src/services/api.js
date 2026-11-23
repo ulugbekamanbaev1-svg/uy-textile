@@ -119,11 +119,17 @@ export function fetchAdminProducts() {
 }
 
 export async function createOrder(payload) {
+  const initData = window.Telegram?.WebApp?.initData || "";
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (initData) {
+    headers["X-Telegram-Init-Data"] = initData;
+  }
+
   const response = await fetch(`${API_URL}/api/orders`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers,
     body: JSON.stringify(payload)
   });
 
@@ -141,23 +147,33 @@ export async function createOrder(payload) {
   return data;
 }
 
-export async function trackOrders({ phone, number, username } = {}) {
-  const params = new URLSearchParams();
-  if (phone) params.set("phone", phone);
-  if (number) params.set("number", number);
-  if (username) params.set("username", username);
-  const query = params.toString();
+export async function fetchMyOrders() {
+  const initData = window.Telegram?.WebApp?.initData || "";
+  if (!initData) {
+    throw new Error("Требуется авторизация Telegram");
+  }
 
-  const response = await fetch(
-    `${API_URL}/api/orders/track${query ? `?${query}` : ""}`
-  );
-  const data = await response.json();
+  const response = await fetch(`${API_URL}/api/orders/my`, {
+    headers: {
+      "X-Telegram-Init-Data": initData
+    }
+  });
+  const data = await response.json().catch(() => []);
 
   if (!response.ok) {
-    throw new Error(data.detail || "Не удалось найти заказы");
+    const detail =
+      typeof data.detail === "string"
+        ? data.detail
+        : "Не удалось загрузить заказы";
+    throw new Error(detail);
   }
 
   return data;
+}
+
+// Совместимость со старым именем: теперь возвращает только свои заказы.
+export async function trackOrders() {
+  return fetchMyOrders();
 }
 
 export function fetchAdminOrders() {

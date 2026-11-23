@@ -1,17 +1,17 @@
 import re
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from sqlalchemy import func, or_, select
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models import Order, OrderItem, Product, QrEvent
 from app.schemas.order import (
+    OrderClaim,
     OrderCreate,
     OrderCreated,
     OrderOut,
-    OrderStatusUpdate,
 )
 from app.services.cart_reminders import cancel_cart_reminder
 from app.services.notify import notify_admin_about_order
@@ -27,8 +27,28 @@ from app.services.qr import (
     qr_token,
 )
 from app.services.qr_events import log_qr_event
+from app.services.rate_limit import client_key, order_claim_limiter, order_read_limiter
+from app.services.telegram_auth import require_telegram_user
 
 router = APIRouter(prefix="/api/orders", tags=["Orders"])
+
+
+def _request_host(request: Request) -> str | None:
+    return request.client.host if request.client else None
+
+
+def _normalize_phone(value: str | None) -> str:
+    return re.sub(r"\D", "", value or "")
+
+
+def _parse_order_id(number: str | None) -> int | None:
+    match = re.search(r"(\d+)$", (number or "").strip())
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
 
 
 def order_to_out(order: Order) -> OrderOut:
@@ -51,57 +71,110 @@ def order_to_out(order: Order) -> OrderOut:
     )
 
 
-@router.get("/track", response_model=list[OrderOut])
-async def track_orders(
-    phone: str | None = Query(default=None, max_length=40),
-    number: str | None = Query(default=None, max_length=20),
-    username: str | None = Query(default=None, max_length=100),
-    db: AsyncSession = Depends(get_db),
-):
-    phone_digits = re.sub(r"\D", "", phone or "")
-    number_clean = (number or "").strip().upper()
-    username_clean = (username or "").strip().lstrip("@")
-
-    if len(phone_digits) < 7 and not number_clean and not username_clean:
-        raise HTTPException(
-            status_code=422,
-            detail="Укажите номер телефона, ник или номер заказа",
-        )
-
+async def _load_my_orders(db: AsyncSession, telegram_id: int) -> list[OrderOut]:
     stmt = (
         select(Order)
         .options(selectinload(Order.items))
+        .where(Order.telegram_id == telegram_id)
         .order_by(Order.created_at.desc(), Order.id.desc())
-        .limit(20)
+        .limit(50)
     )
-
-    if number_clean:
-        # UY-00012 / @john-00012 -> id 12
-        match = re.search(r"(\d+)$", number_clean)
-        if not match:
-            raise HTTPException(status_code=422, detail="Некорректный номер заказа")
-        order_id = int(match.group(1))
-        stmt = stmt.where(Order.id == order_id)
-    elif username_clean:
-        # Поиск заказа по нику Telegram-аккаунта: @john / john
-        stmt = stmt.where(
-            func.lower(Order.telegram_username) == username_clean.lower()
-        )
-    elif phone_digits:
-        tail = phone_digits[-9:]
-        stmt = stmt.where(
-            func.regexp_replace(Order.phone, r"\D", "", "g").like(f"%{tail}%")
-        )
-
     result = await db.execute(stmt)
     return [order_to_out(order) for order in result.scalars().all()]
+
+
+@router.get("/my", response_model=list[OrderOut])
+async def my_orders(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    tg_user: dict = Depends(require_telegram_user),
+):
+    telegram_id = int(tg_user.get("id") or 0)
+    if not order_read_limiter.allow(client_key(_request_host(request), f"orders:{telegram_id}")):
+        raise HTTPException(status_code=429, detail="Слишком много запросов")
+
+    return await _load_my_orders(db, telegram_id)
+
+
+@router.get("/track", response_model=list[OrderOut])
+async def track_orders(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    tg_user: dict = Depends(require_telegram_user),
+):
+    """
+    Совместимый endpoint. Раньше принимал phone/number/username и раскрывал чужие заказы.
+    Теперь требует Telegram авторизацию и возвращает ТОЛЬКО заказы текущего пользователя.
+    Любые переданные phone/number/username игнорируются.
+    """
+    telegram_id = int(tg_user.get("id") or 0)
+    if not order_read_limiter.allow(client_key(_request_host(request), f"orders:{telegram_id}")):
+        raise HTTPException(status_code=429, detail="Слишком много запросов")
+
+    return await _load_my_orders(db, telegram_id)
+
+
+@router.post("/claim", response_model=OrderOut)
+async def claim_order(
+    payload: OrderClaim,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    tg_user: dict = Depends(require_telegram_user),
+):
+    """
+    Безопасная привязка старого заказа без подтверждённого владельца.
+    Заказ показывается/привязывается только при строгом совпадении номера и телефона,
+    и только если у заказа ещё нет telegram_id.
+    """
+    telegram_id = int(tg_user.get("id") or 0)
+    if not order_claim_limiter.allow(client_key(_request_host(request), f"claim:{telegram_id}")):
+        raise HTTPException(status_code=429, detail="Слишком много запросов")
+
+    order_id = _parse_order_id(payload.number)
+    if order_id is None:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+
+    phone_digits = _normalize_phone(payload.phone)
+    if len(phone_digits) < 7:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+
+    result = await db.execute(
+        select(Order)
+        .options(selectinload(Order.items))
+        .where(Order.id == order_id)
+    )
+    order = result.scalar_one_or_none()
+    if order is None:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+
+    # Не раскрываем существование чужих/привязанных заказов.
+    if order.telegram_id is not None:
+        if order.telegram_id == telegram_id:
+            return order_to_out(order)
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+
+    order_phone = _normalize_phone(order.phone)
+    tail = phone_digits[-9:]
+    if not tail or not order_phone.endswith(tail):
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+
+    order.telegram_id = telegram_id
+    tg_username = (tg_user.get("username") or "").strip() or None
+    if tg_username:
+        order.telegram_username = tg_username
+
+    await db.commit()
+    await db.refresh(order, ["items"])
+    return order_to_out(order)
 
 
 @router.post("", response_model=OrderCreated, status_code=201)
 async def create_order(
     payload: OrderCreate,
     background_tasks: BackgroundTasks,
+    request: Request,
     db: AsyncSession = Depends(get_db),
+    tg_user: dict = Depends(require_telegram_user),
 ):
     digits = sum(character.isdigit() for character in payload.phone)
 
@@ -110,6 +183,9 @@ async def create_order(
             status_code=422,
             detail="Укажите корректный номер телефона",
         )
+
+    verified_telegram_id = int(tg_user.get("id") or 0)
+    verified_username = (tg_user.get("username") or "").strip() or None
 
     qr_label: str | None = None
     qr_visitor = (payload.qr_visitor_id or "").strip()
@@ -136,8 +212,8 @@ async def create_order(
         comment=payload.comment.strip(),
         latitude=payload.latitude,
         longitude=payload.longitude,
-        telegram_id=payload.telegram_id,
-        telegram_username=payload.telegram_username,
+        telegram_id=verified_telegram_id,
+        telegram_username=verified_username,
         qr_label=qr_label,
     )
 

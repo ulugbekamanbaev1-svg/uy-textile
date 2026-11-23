@@ -54,3 +54,6 @@ qr_scan_limiter = SlidingWindowLimiter(limit=90, window_seconds=60)
 qr_event_limiter = SlidingWindowLimiter(limit=60, window_seconds=60)
 # Админские выгрузки QR (PNG/SVG/PDF) — дорогие операции.
 qr_download_limiter = SlidingWindowLimiter(limit=60, window_seconds=60)
+# Пользовательские запросы заказов: защита от перебора/флуда.
+order_read_limiter = SlidingWindowLimiter(limit=60, window_seconds=60)
+order_claim_limiter = SlidingWindowLimiter(limit=10, window_seconds=600)

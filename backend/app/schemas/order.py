@@ -86,3 +86,9 @@ class OrderCreated(BaseModel):
     number: str
     status: str
     total: int
+
+
+class OrderClaim(BaseModel):
+    # Безопасная привязка старого заказа без telegram_id к подтверждённому аккаунту.
+    number: str = Field(min_length=3, max_length=40)
+    phone: str = Field(min_length=7, max_length=40)

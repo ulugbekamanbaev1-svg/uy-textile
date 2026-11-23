@@ -149,6 +149,8 @@ export const translations = {
 
     trackOrdersTitle: "Мои заказы",
     trackOrdersHint: "Введите номер телефона или ник, чтобы проверить статус заказа.",
+    myOrdersSecureHint: "Ваши заказы загружаются автоматически по вашему Telegram-аккаунту. Чужие заказы недоступны.",
+    refreshOrders: "Обновить",
     trackOrdersPlaceholder: "+998 90 000 00 00",
     trackOrdersNickPlaceholder: "@ник",
     trackOrdersButton: "Проверить",
@@ -327,6 +329,8 @@ export const translations = {
 
     trackOrdersTitle: "Buyurtmalarim",
     trackOrdersHint: "Buyurtma holatini tekshirish uchun telefon raqamini yoki nickni kiriting.",
+    myOrdersSecureHint: "Buyurtmalaringiz Telegram hisobingiz bo'yicha avtomatik yuklanadi. Boshqalarning buyurtmalari ko'rinmaydi.",
+    refreshOrders: "Yangilash",
     trackOrdersPlaceholder: "+998 90 000 00 00",
     trackOrdersNickPlaceholder: "@nick",
     trackOrdersButton: "Tekshirish",
@@ -505,6 +509,8 @@ export const translations = {
 
     trackOrdersTitle: "Буюртмаларим",
     trackOrdersHint: "Буюртма ҳолатини текшириш учун телефон рақамини ё ёзи киритинг.",
+    myOrdersSecureHint: "Буюртмаларингиз Telegram ҳисобингиз бўйича автоматик юкланади. Бошқаларнинг буюртмалари кўринмайди.",
+    refreshOrders: "Янгилаш",
     trackOrdersPlaceholder: "+998 90 000 00 00",
     trackOrdersNickPlaceholder: "@нок",
     trackOrdersButton: "Текшириш",
