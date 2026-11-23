@@ -270,6 +270,10 @@ class StoreSettingsIn(BaseModel):
     store_latitude: float | None = None
     store_longitude: float | None = None
 
+    cart_reminders_enabled: bool = True
+    cart_reminder_day_enabled: bool = True
+    cart_reminder_evening_enabled: bool = True
+
 
 class StoreSettingsOut(StoreSettingsIn):
     model_config = ConfigDict(from_attributes=True)

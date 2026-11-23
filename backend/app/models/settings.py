@@ -43,6 +43,10 @@ class StoreSettings(Base):
     store_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     store_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
 
+    cart_reminders_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    cart_reminder_day_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    cart_reminder_evening_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

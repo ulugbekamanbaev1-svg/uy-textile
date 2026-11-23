@@ -10,8 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import AsyncSessionLocal
 from app.models import CartReminder
+from app.models.settings import StoreSettings
 
 logger = logging.getLogger(__name__)
+
+TZ_TASHKENT = timezone(timedelta(hours=5))
 
 
 def _money(value: int | float) -> str:
@@ -41,20 +44,75 @@ def _reminder_image_url(url: str | None) -> str | None:
     return None
 
 
-def _format_cart_message(items: list[dict], total: int) -> str:
-    lines = ["🛒 <b>Вы забыли оформить заказ</b>", ""]
+def _slot_for_time(dt_utc: datetime) -> str:
+    local = dt_utc.astimezone(TZ_TASHKENT)
+    # 12:00 slot for morning/day, 18:00 slot for evening
+    return "evening" if local.hour >= 15 else "day"
+
+
+def _next_slot(now_utc: datetime) -> tuple[datetime, str]:
+    local = now_utc.astimezone(TZ_TASHKENT)
+    day_slot = local.replace(hour=12, minute=0, second=0, microsecond=0)
+    evening_slot = local.replace(hour=18, minute=0, second=0, microsecond=0)
+
+    if local < day_slot:
+        return day_slot.astimezone(timezone.utc), "day"
+    if local < evening_slot:
+        return evening_slot.astimezone(timezone.utc), "evening"
+
+    next_day = (local + timedelta(days=1)).replace(
+        hour=12, minute=0, second=0, microsecond=0
+    )
+    return next_day.astimezone(timezone.utc), "day"
+
+
+def _same_day_evening(now_utc: datetime) -> datetime:
+    local = now_utc.astimezone(TZ_TASHKENT)
+    evening = local.replace(hour=18, minute=0, second=0, microsecond=0)
+    if evening <= local:
+        evening = evening + timedelta(days=1)
+    return evening.astimezone(timezone.utc)
+
+
+def _format_cart_message(items: list[dict], total: int, slot: str) -> str:
+    if slot == "evening":
+        lines = [
+            "🌙 <b>Xaridingizni yakunlash vaqti keldi!</b>",
+            "",
+            "Savatingizda siz tanlagan mahsulotlar bor.",
+            "Farrux Shop sizni kutmoqda! ❤️",
+        ]
+    else:
+        lines = [
+            "🛍 <b>Savatingizda mahsulotlar qolib ketdi!</b>",
+            "",
+            "Sizga yoqqan mahsulotlar hali ham savatingizda kutmoqda ❤️",
+            "Xaridingizni yakunlashni unutmang!",
+        ]
+
+    lines.append("")
     for item in items[:10]:
-        name = item.get("name") or item.get("name_ru") or "Товар"
+        name = item.get("name") or item.get("name_ru") or "Mahsulot"
         qty = item.get("qty_label") or item.get("qty") or item.get("meters") or 1
         price = item.get("line_total") or item.get("total") or item.get("price") or 0
         lines.append(f"• {name} — {qty} — {_money(price)}")
     if len(items) > 10:
-        lines.append(f"• ... и ещё {len(items) - 10}")
+        lines.append(f"• ... yana {len(items) - 10} ta mahsulot")
     lines.append("")
-    lines.append(f"<b>Сумма: {_money(total)}</b>")
-    lines.append("")
-    lines.append("Нажмите кнопку ниже, чтобы вернуться в корзину и завершить заказ.")
+    lines.append(f"<b>Jami: {_money(total)}</b>")
     return "\n".join(lines)
+
+
+async def _get_reminder_settings(db: AsyncSession) -> tuple[bool, bool, bool]:
+    result = await db.execute(select(StoreSettings).where(StoreSettings.id == 1))
+    store = result.scalar_one_or_none()
+    if store is None:
+        return True, True, True
+    return (
+        bool(getattr(store, "cart_reminders_enabled", True)),
+        bool(getattr(store, "cart_reminder_day_enabled", True)),
+        bool(getattr(store, "cart_reminder_evening_enabled", True)),
+    )
 
 
 async def sync_cart_reminder(
@@ -64,7 +122,6 @@ async def sync_cart_reminder(
     total: int,
 ) -> None:
     now = datetime.now(timezone.utc)
-    delay = max(1, int(settings.CART_REMINDER_DELAY_MINUTES or 60))
     result = await db.execute(
         select(CartReminder).where(CartReminder.telegram_id == telegram_id)
     )
@@ -78,7 +135,7 @@ async def sync_cart_reminder(
             or item.get("name_ru")
             or item.get("name_uz")
             or item.get("title")
-            or "Товар"
+            or "Mahsulot"
         )
         qty_label = item.get("qty_label")
         if not qty_label:
@@ -108,7 +165,7 @@ async def sync_cart_reminder(
         return
 
     payload = json.dumps(normalized, ensure_ascii=False)
-    scheduled_at = now + timedelta(minutes=delay)
+    scheduled_at, _slot = _next_slot(now)
 
     if reminder is None:
         reminder = CartReminder(
@@ -150,12 +207,18 @@ async def send_due_cart_reminders() -> int:
     now = datetime.now(timezone.utc)
     sent = 0
     async with AsyncSessionLocal() as db:
+        enabled, day_enabled, evening_enabled = await _get_reminder_settings(db)
+        if not enabled:
+            return 0
+
         result = await db.execute(
-            select(CartReminder).where(
+            select(CartReminder)
+            .where(
                 CartReminder.status == "pending",
                 CartReminder.scheduled_at.is_not(None),
                 CartReminder.scheduled_at <= now,
-            ).limit(50)
+            )
+            .limit(50)
         )
         reminders = list(result.scalars().all())
 
@@ -174,25 +237,26 @@ async def send_due_cart_reminders() -> int:
                     reminder.cancelled_at = now
                     continue
 
-                text = _format_cart_message(items, reminder.total)
+                slot = _slot_for_time(reminder.scheduled_at or now)
+                if slot == "day" and not day_enabled:
+                    # Skip day slot, move to evening or next day
+                    if evening_enabled:
+                        reminder.scheduled_at = _same_day_evening(now)
+                    else:
+                        reminder.scheduled_at = _next_slot(now + timedelta(hours=1))[0]
+                    continue
+                if slot == "evening" and not evening_enabled:
+                    reminder.status = "sent"
+                    reminder.sent_at = now
+                    continue
+
+                text = _format_cart_message(items, reminder.total, slot)
                 keyboard = None
                 if url:
-                    keyboard = {
-                        "inline_keyboard": [[{"text": "Вернуться в корзину", "web_app": {"url": url}}]]
-                    }
-                    # web_app button requires private chat and https; also add fallback not possible in same button.
-                    # If not https, use url.
+                    button = {"text": "🛒 Savatga qaytish", "web_app": {"url": url}}
                     if not url.startswith("https://"):
-                        keyboard = {"inline_keyboard": [[{"text": "Вернуться в корзину", "url": url}]]}
-
-                payload = {
-                    "chat_id": reminder.telegram_id,
-                    "text": text,
-                    "parse_mode": "HTML",
-                    "disable_web_page_preview": True,
-                }
-                if keyboard:
-                    payload["reply_markup"] = keyboard
+                        button = {"text": "🛒 Savatga qaytish", "url": url}
+                    keyboard = {"inline_keyboard": [[button]]}
 
                 image_url = _reminder_image_url(items[0].get("image_url")) if items else None
 
@@ -211,9 +275,17 @@ async def send_due_cart_reminders() -> int:
                             json=photo_payload,
                         )
                     else:
+                        msg_payload = {
+                            "chat_id": reminder.telegram_id,
+                            "text": text,
+                            "parse_mode": "HTML",
+                            "disable_web_page_preview": True,
+                        }
+                        if keyboard:
+                            msg_payload["reply_markup"] = keyboard
                         resp = await client.post(
                             f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage",
-                            json=payload,
+                            json=msg_payload,
                         )
                     ok = resp.status_code == 200 and resp.json().get("ok")
                 except Exception as exc:
@@ -221,11 +293,14 @@ async def send_due_cart_reminders() -> int:
                     ok = False
 
                 if ok:
-                    reminder.status = "sent"
-                    reminder.sent_at = now
                     sent += 1
+                    reminder.sent_at = now
+                    if slot == "day" and evening_enabled:
+                        reminder.status = "pending"
+                        reminder.scheduled_at = _same_day_evening(now)
+                    else:
+                        reminder.status = "sent"
                 else:
-                    # don't hammer; reschedule 30 min later
                     reminder.scheduled_at = now + timedelta(minutes=30)
 
         await db.commit()

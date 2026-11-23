@@ -100,7 +100,10 @@ const EMPTY_SETTINGS = {
   banner_category: "",
   logo_url: "",
   store_latitude: null,
-  store_longitude: null
+  store_longitude: null,
+  cart_reminders_enabled: true,
+  cart_reminder_day_enabled: true,
+  cart_reminder_evening_enabled: true
 };
 
 function toSettingsForm(settings) {

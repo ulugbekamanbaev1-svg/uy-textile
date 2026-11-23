@@ -291,6 +291,38 @@ export default function SettingsForm({
         </label>
       </section>
 
+      <section className="form-section">
+        <h3>{t("cartRemindersTitle")}</h3>
+        <p className="admin-note">{t("cartRemindersHint")}</p>
+
+        <label className="flag" style={{ marginBottom: 12 }}>
+          <input
+            type="checkbox"
+            checked={Boolean(form["cart_reminders_enabled"])}
+            onChange={(event) => onChange("cart_reminders_enabled", event.target.checked)}
+          />
+          {t("cartRemindersEnabled")}
+        </label>
+
+        <label className="flag" style={{ marginBottom: 12 }}>
+          <input
+            type="checkbox"
+            checked={Boolean(form["cart_reminder_day_enabled"])}
+            onChange={(event) => onChange("cart_reminder_day_enabled", event.target.checked)}
+          />
+          {t("cartReminderDay")}
+        </label>
+
+        <label className="flag" style={{ marginBottom: 12 }}>
+          <input
+            type="checkbox"
+            checked={Boolean(form["cart_reminder_evening_enabled"])}
+            onChange={(event) => onChange("cart_reminder_evening_enabled", event.target.checked)}
+          />
+          {t("cartReminderEvening")}
+        </label>
+      </section>
+
       <footer className="settings-foot">
         {state === "saved" && (
           <span className="save-ok">{t("settingsSaved")}</span>
