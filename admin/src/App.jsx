@@ -27,7 +27,10 @@ import {
   ChevronRight,
   LogOut,
   Megaphone,
-  QrCode
+  QrCode,
+  Gift,
+  Crown,
+  CalendarDays
 } from "lucide-react";
 
 import LoginScreen from "./components/LoginScreen";
@@ -38,6 +41,9 @@ import BroadcastPanel from "./components/BroadcastPanel";
 import ClientsTable from "./components/ClientsTable";
 import SettingsForm from "./components/SettingsForm";
 import QrPanel from "./components/QrPanel";
+import ReferralPanel from "./components/ReferralPanel";
+import VipPanel from "./components/VipPanel";
+import CalendarPanel from "./components/CalendarPanel";
 import { LANGUAGES, detectLanguage, translations } from "./i18n";
 import { adminDownload, adminFetch } from "./services/adminApi";
 import { assetUrl, formatPrice, localized, priceLabel } from "./utils/format";
@@ -61,6 +67,9 @@ const MENU = [
   [MapPin, "menuMap", "map"],
   [Megaphone, "menuBroadcast", "broadcast"],
   [QrCode, "menuQrAnalytics", "qr"],
+  [Gift, "menuReferral", "referral"],
+  [Crown, "menuVip", "vip"],
+  [CalendarDays, "menuCalendar", "calendar"],
   [TrendingUp, "menuAnalytics", "analytics"],
   [Settings, "menuSettings", "settings"]
 ];
@@ -73,6 +82,9 @@ const SECTION_META = {
   map: ["mapTitle", "mapSubtitle"],
   broadcast: ["broadcastMenuTitle", "broadcastMenuSubtitle"],
   qr: ["qrAnalyticsTitle", "qrAnalyticsSubtitle"],
+  referral: ["referralTitle", "referralSubtitle"],
+  vip: ["vipTitle", "vipSubtitle"],
+  calendar: ["calendarTitle", "calendarSubtitle"],
   analytics: ["analyticsTitle", "analyticsSubtitle"],
   settings: ["settingsTitle", "settingsSubtitle"],
   categories: ["categoriesTitle", "categoriesSubtitle"]
@@ -103,7 +115,14 @@ const EMPTY_SETTINGS = {
   store_longitude: null,
   cart_reminders_enabled: true,
   cart_reminder_day_enabled: true,
-  cart_reminder_evening_enabled: true
+  cart_reminder_evening_enabled: true,
+  referral_enabled: true,
+  referral_reward_amount: 50000,
+  vip_criterion: "amount",
+  vip_silver_threshold: 0,
+  vip_gold_threshold: 1000000,
+  vip_platinum_threshold: 3000000,
+  vip_diamond_threshold: 7000000
 };
 
 function toSettingsForm(settings) {
@@ -1175,6 +1194,10 @@ export default function App() {
 
             {section === "qr" && <QrPanel t={t} lang={lang} />}
 
+            {section === "referral" && <ReferralPanel t={t} lang={lang} />}
+            {section === "vip" && <VipPanel t={t} lang={lang} />}
+            {section === "calendar" && <CalendarPanel t={t} lang={lang} onOpenOrders={() => setSection("orders")} />}
+
             {section === "analytics" && (
               <>
                 {dataState === "loading" && (
@@ -1244,6 +1267,9 @@ export default function App() {
               "map",
               "broadcast",
               "qr",
+              "referral",
+              "vip",
+              "calendar",
               "analytics",
               "settings",
               "categories"

@@ -11,8 +11,10 @@ from app.models.catalog import (
 from app.models.expense import Expense
 from app.models.order import Order, OrderItem
 from app.models.qr import QrEvent
+from app.models.referral import ReferralReward
 from app.models.settings import StoreSettings
 from app.models.user import User
+from app.models.vip import VipStatusHistory
 
 __all__ = [
     "User",
@@ -28,5 +30,7 @@ __all__ = [
     "Broadcast",
     "CartReminder",
     "QrEvent",
+    "ReferralReward",
+    "VipStatusHistory",
     "StoreSettings",
 ]

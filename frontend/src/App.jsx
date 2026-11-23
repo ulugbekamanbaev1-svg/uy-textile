@@ -17,6 +17,7 @@ import ProductPage from "./pages/ProductPage";
 import ProfilePage from "./pages/ProfilePage";
 import OrdersPage from "./pages/OrdersPage";
 import {
+  attachReferral,
   checkServer,
   fetchCategories,
   fetchProducts,
@@ -125,6 +126,9 @@ export default function App() {
       sendQrMiniAppOpen(startParam);
     } else {
       sendQrMiniAppOpen("");
+    }
+    if (startParam.startsWith("ref_")) {
+      attachReferral(startParam.slice(4)).catch(() => {});
     }
     if (startParam === "cart") {
       navigate("cart");

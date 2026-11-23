@@ -20,6 +20,7 @@ from sqlalchemy.exc import IntegrityError
 from app.config import settings
 from app.database import get_db
 from app.models import User
+from app.services.referral import attach_referral, ensure_user_referral_code, normalize_referral_code
 
 
 # ==========================================
@@ -247,6 +248,30 @@ async def post_init(application):
 # START COMMAND
 # ==========================================
 
+async def _attach_referral_from_start(telegram_user, arg: str) -> None:
+    code = (arg or "").strip()
+    if code.lower().startswith("ref_"):
+        code = code[4:]
+    code = normalize_referral_code(code)
+    if not code:
+        return
+
+    async for db in get_db():
+        try:
+            result = await db.execute(select(User).where(User.telegram_id == telegram_user.id))
+            user = result.scalar_one_or_none()
+            if user is None:
+                return
+            await ensure_user_referral_code(db, user)
+            await attach_referral(db, referred_user=user, referral_code=code)
+            await db.commit()
+        except Exception as e:
+            await db.rollback()
+            print(f"REFERRAL ATTACH ERROR: {e}", flush=True)
+        finally:
+            break
+
+
 async def start(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
@@ -271,6 +296,13 @@ async def start(
         )
 
         return
+
+    # Deep link: /start ref_CODE
+    if context.args:
+        try:
+            await _attach_referral_from_start(update.effective_user, context.args[0])
+        except Exception as e:
+            print(f"REFERRAL START ERROR: {e}", flush=True)
 
     lang = resolve_language(update)
 

@@ -72,8 +72,10 @@ from app.services.broadcasts import run_broadcast
 from app.services.notify import notify_customer_about_status
 from app.services.qr import qr_token
 from app.services.qr_events import log_qr_event
+from app.services.referral import maybe_award_referral_for_completed_order
 from app.services.store_settings import get_store_settings
 from app.services.telegram_auth import require_admin
+from app.services.vip import recalc_vip_for_telegram_id
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 UPLOAD_DIR = STATIC_DIR / "uploads"
@@ -839,6 +841,23 @@ async def update_order_status(
 
     previous_status = order.status
     order.status = payload.status
+
+    referral_rewarded = False
+    if previous_status != order.status and order.status == "done":
+        try:
+            reward = await maybe_award_referral_for_completed_order(db, order)
+            referral_rewarded = reward is not None
+        except Exception:
+            # Do not block status update because of referral side effects.
+            pass
+
+    vip_changed = None
+    if previous_status != order.status and (previous_status == "done" or order.status == "done"):
+        try:
+            vip_changed = await recalc_vip_for_telegram_id(db, order.telegram_id)
+        except Exception:
+            vip_changed = None
+
     await db.commit()
     await db.refresh(order, ["items"])
 
@@ -861,6 +880,7 @@ async def update_order_status(
         except Exception:
             await db.rollback()
 
+    # Referral/VIP notifications are handled in services; admin gets updated order.
     return order_to_out(order)
 
 

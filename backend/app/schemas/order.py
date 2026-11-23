@@ -73,6 +73,8 @@ class OrderOut(BaseModel):
     telegram_id: int | None = None
     telegram_username: str | None = None
     qr_label: str | None = None
+    planned_delivery_at: datetime | None = None
+    sewing_at: datetime | None = None
     created_at: datetime
     items: list[OrderItemOut] = []
 

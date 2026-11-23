@@ -274,6 +274,17 @@ class StoreSettingsIn(BaseModel):
     cart_reminder_day_enabled: bool = True
     cart_reminder_evening_enabled: bool = True
 
+    # Farrux QR Referral
+    referral_enabled: bool = True
+    referral_reward_amount: int = Field(default=50000, ge=0, le=100_000_000)
+
+    # Farrux VIP (visual-only statuses)
+    vip_criterion: Literal["amount", "count"] = "amount"
+    vip_silver_threshold: int = Field(default=0, ge=0, le=1_000_000_000)
+    vip_gold_threshold: int = Field(default=1_000_000, ge=0, le=1_000_000_000)
+    vip_platinum_threshold: int = Field(default=3_000_000, ge=0, le=1_000_000_000)
+    vip_diamond_threshold: int = Field(default=7_000_000, ge=0, le=1_000_000_000)
+
 
 class StoreSettingsOut(StoreSettingsIn):
     model_config = ConfigDict(from_attributes=True)

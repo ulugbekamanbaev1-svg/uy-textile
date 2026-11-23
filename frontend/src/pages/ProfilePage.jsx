@@ -22,6 +22,8 @@ import { LANGUAGES } from "../i18n";
 import { fetchStoreSettings } from "../services/api";
 import { formatPrice } from "../utils/format";
 import { openExternalLink } from "../utils/telegram";
+import ReferralSection from "../components/ReferralSection";
+import VipCard from "../components/VipCard";
 
 function socialHandle(value) {
   return (value || "")
@@ -307,6 +309,9 @@ const openInBrowser = () => {
           <strong>{t("trackOrdersButton")}</strong>
         </div>
       </section>
+
+      <ReferralSection t={t} lang={lang} />
+      <VipCard t={t} lang={lang} />
 
       {/* Язык */}
       <section className="profile-section">

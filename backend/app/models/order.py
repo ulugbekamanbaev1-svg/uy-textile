@@ -47,6 +47,14 @@ class Order(Base):
         String(64), nullable=True, index=True
     )
 
+    # Farrux Order Calendar: optional planning dates (do not replace created_at)
+    planned_delivery_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    sewing_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )

@@ -66,6 +66,8 @@ def order_to_out(order: Order) -> OrderOut:
         telegram_id=order.telegram_id,
         telegram_username=order.telegram_username,
         qr_label=order.qr_label,
+        planned_delivery_at=order.planned_delivery_at,
+        sewing_at=order.sewing_at,
         created_at=order.created_at,
         items=order.items,
     )

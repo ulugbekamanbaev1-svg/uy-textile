@@ -10,7 +10,7 @@ from sqlalchemy import text
 from app import models  # noqa: F401
 from app.config import settings
 from app.database import Base, engine
-from app.routers import admin, auth, cart, catalog, orders, qr, store
+from app.routers import admin, admin_calendar, admin_referral, admin_vip, auth, cart, catalog, orders, qr, referral, store, vip
 from app.seed import seed_data
 from app.services.cart_reminders import cart_reminder_loop
 
@@ -29,8 +29,22 @@ async def lifespan(app: FastAPI):
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS banner_active BOOLEAN NOT NULL DEFAULT FALSE, ADD COLUMN IF NOT EXISTS banner_text_ru VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_text_uz VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_text_uzc VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_category VARCHAR(80) NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS logo_url VARCHAR(255) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS store_latitude DOUBLE PRECISION, ADD COLUMN IF NOT EXISTS store_longitude DOUBLE PRECISION"))
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS cart_reminders_enabled BOOLEAN NOT NULL DEFAULT TRUE, ADD COLUMN IF NOT EXISTS cart_reminder_day_enabled BOOLEAN NOT NULL DEFAULT TRUE, ADD COLUMN IF NOT EXISTS cart_reminder_evening_enabled BOOLEAN NOT NULL DEFAULT TRUE"))
+        await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS referral_enabled BOOLEAN NOT NULL DEFAULT TRUE, ADD COLUMN IF NOT EXISTS referral_reward_amount INTEGER NOT NULL DEFAULT 50000"))
+        await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS vip_criterion VARCHAR(20) NOT NULL DEFAULT 'amount', ADD COLUMN IF NOT EXISTS vip_silver_threshold INTEGER NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS vip_gold_threshold INTEGER NOT NULL DEFAULT 1000000, ADD COLUMN IF NOT EXISTS vip_platinum_threshold INTEGER NOT NULL DEFAULT 3000000, ADD COLUMN IF NOT EXISTS vip_diamond_threshold INTEGER NOT NULL DEFAULT 7000000"))
+
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(32)"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by_user_id INTEGER"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_at TIMESTAMPTZ"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS vip_level VARCHAR(20) NOT NULL DEFAULT 'silver'"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS vip_updated_at TIMESTAMPTZ"))
+        await connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_referral_code ON users (referral_code)"))
+        await connection.execute(text("CREATE INDEX IF NOT EXISTS ix_users_referred_by_user_id ON users (referred_by_user_id)"))
+        await connection.execute(text("CREATE INDEX IF NOT EXISTS ix_users_vip_level ON users (vip_level)"))
+
         await connection.execute(text("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS meters NUMERIC(10, 2), ADD COLUMN IF NOT EXISTS pricing_type VARCHAR(20) NOT NULL DEFAULT 'piece', ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS qr_label VARCHAR(64)"))
+        await connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS planned_delivery_at TIMESTAMPTZ"))
+        await connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS sewing_at TIMESTAMPTZ"))
         await connection.execute(text("CREATE INDEX IF NOT EXISTS ix_orders_qr_label ON orders (qr_label)"))
         await connection.execute(text("""
             UPDATE order_items AS oi
@@ -104,10 +118,15 @@ app.include_router(cart.router)
 app.include_router(orders.router)
 app.include_router(store.router)
 app.include_router(qr.public_router)
+app.include_router(referral.router)
+app.include_router(vip.router)
 
 # Защищенный маршрут: пароль админки (Basic) ИЛИ Telegram initData владельца
 app.include_router(admin.router)
 app.include_router(qr.admin_router)
+app.include_router(admin_referral.router)
+app.include_router(admin_vip.router)
+app.include_router(admin_calendar.router)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

@@ -333,3 +333,71 @@ export async function sendQrMiniAppOpen(startParam) {
 
   return false;
 }
+
+// ---------------- Farrux QR Referral ----------------
+
+async function tgGet(path) {
+  const initData = window.Telegram?.WebApp?.initData || "";
+  if (!initData) throw new Error("Требуется авторизация Telegram");
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: { "X-Telegram-Init-Data": initData }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.detail || "Request failed");
+  return data;
+}
+
+async function tgPost(path, payload) {
+  const initData = window.Telegram?.WebApp?.initData || "";
+  if (!initData) throw new Error("Требуется авторизация Telegram");
+  const response = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Telegram-Init-Data": initData
+    },
+    body: JSON.stringify(payload || {})
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.detail || "Request failed");
+  return data;
+}
+
+export function fetchReferralMe() {
+  return tgGet("/api/referral/me");
+}
+
+export function attachReferral(code) {
+  return tgPost("/api/referral/attach", { code });
+}
+
+export function getReferralQrPngUrl() {
+  return `${API_URL}/api/referral/qr/png`;
+}
+
+export function getReferralQrPdfUrl() {
+  return `${API_URL}/api/referral/qr/pdf`;
+}
+
+export async function downloadReferralFile(kind = "png") {
+  const initData = window.Telegram?.WebApp?.initData || "";
+  if (!initData) throw new Error("Требуется авторизация Telegram");
+  const path = kind === "pdf" ? "/api/referral/qr/pdf" : "/api/referral/qr/png";
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: { "X-Telegram-Init-Data": initData }
+  });
+  if (!response.ok) throw new Error("Download failed");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = kind === "pdf" ? "farrux-referral.pdf" : "farrux-referral.png";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function fetchMyVip() {
+  return tgGet("/api/vip/me");
+}
