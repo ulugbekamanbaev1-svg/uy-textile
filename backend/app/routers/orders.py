@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models import Order, OrderItem, Product
+from app.models import Order, OrderItem, Product, QrEvent
 from app.schemas.order import (
     OrderCreate,
     OrderCreated,
@@ -20,6 +20,13 @@ from app.services.pricing import (
     normalize_meters,
     round_money,
 )
+from app.services.qr import (
+    attribution_cutoff,
+    is_valid_token,
+    is_valid_visitor_id,
+    qr_token,
+)
+from app.services.qr_events import log_qr_event
 
 router = APIRouter(prefix="/api/orders", tags=["Orders"])
 
@@ -38,6 +45,7 @@ def order_to_out(order: Order) -> OrderOut:
         total=order.total,
         telegram_id=order.telegram_id,
         telegram_username=order.telegram_username,
+        qr_label=order.qr_label,
         created_at=order.created_at,
         items=order.items,
     )
@@ -103,6 +111,24 @@ async def create_order(
             detail="Укажите корректный номер телефона",
         )
 
+    qr_label: str | None = None
+    qr_visitor = (payload.qr_visitor_id or "").strip()
+    if payload.qr_label and qr_visitor:
+        if is_valid_token(payload.qr_label) and is_valid_visitor_id(qr_visitor):
+            cutoff = attribution_cutoff()
+            has_open = await db.scalar(
+                select(QrEvent.id)
+                .where(
+                    QrEvent.event_type == "miniapp_open",
+                    QrEvent.token == qr_token(),
+                    QrEvent.visitor_id == qr_visitor,
+                    QrEvent.created_at >= cutoff,
+                )
+                .limit(1)
+            )
+            if has_open is not None:
+                qr_label = qr_token()
+
     order = Order(
         customer_name=payload.customer_name.strip(),
         phone=payload.phone.strip(),
@@ -112,6 +138,7 @@ async def create_order(
         longitude=payload.longitude,
         telegram_id=payload.telegram_id,
         telegram_username=payload.telegram_username,
+        qr_label=qr_label,
     )
 
     total = 0
@@ -295,6 +322,19 @@ async def create_order(
 
     db.add(order)
     await db.commit()
+
+    if order.qr_label:
+        try:
+            await log_qr_event(
+                db,
+                "order_created",
+                order.qr_label,
+                visitor_id=qr_visitor if is_valid_visitor_id(qr_visitor) else None,
+                order_id=order.id,
+                meta="order",
+            )
+        except Exception:
+            await db.rollback()
 
     background_tasks.add_task(notify_admin_about_order, order)
 

@@ -26,7 +26,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Megaphone
+  Megaphone,
+  QrCode
 } from "lucide-react";
 
 import LoginScreen from "./components/LoginScreen";
@@ -36,6 +37,7 @@ import AnalyticsPanel from "./components/AnalyticsPanel";
 import BroadcastPanel from "./components/BroadcastPanel";
 import ClientsTable from "./components/ClientsTable";
 import SettingsForm from "./components/SettingsForm";
+import QrPanel from "./components/QrPanel";
 import { LANGUAGES, detectLanguage, translations } from "./i18n";
 import { adminDownload, adminFetch } from "./services/adminApi";
 import { assetUrl, formatPrice, localized, priceLabel } from "./utils/format";
@@ -58,6 +60,7 @@ const MENU = [
   [Users, "menuClients", "clients"],
   [MapPin, "menuMap", "map"],
   [Megaphone, "menuBroadcast", "broadcast"],
+  [QrCode, "menuQrAnalytics", "qr"],
   [TrendingUp, "menuAnalytics", "analytics"],
   [Settings, "menuSettings", "settings"]
 ];
@@ -69,6 +72,7 @@ const SECTION_META = {
   clients: ["clientsTitle", "clientsSubtitle"],
   map: ["mapTitle", "mapSubtitle"],
   broadcast: ["broadcastMenuTitle", "broadcastMenuSubtitle"],
+  qr: ["qrAnalyticsTitle", "qrAnalyticsSubtitle"],
   analytics: ["analyticsTitle", "analyticsSubtitle"],
   settings: ["settingsTitle", "settingsSubtitle"],
   categories: ["categoriesTitle", "categoriesSubtitle"]
@@ -1166,6 +1170,8 @@ export default function App() {
               </>
             )}
 
+            {section === "qr" && <QrPanel t={t} />}
+
             {section === "analytics" && (
               <>
                 {dataState === "loading" && (
@@ -1233,6 +1239,8 @@ export default function App() {
               "orders",
               "clients",
               "map",
+              "broadcast",
+              "qr",
               "analytics",
               "settings",
               "categories"

@@ -10,6 +10,7 @@ from app.models.catalog import (
 )
 from app.models.expense import Expense
 from app.models.order import Order, OrderItem
+from app.models.qr import QrEvent
 from app.models.settings import StoreSettings
 from app.models.user import User
 
@@ -26,5 +27,6 @@ __all__ = [
     "Expense",
     "Broadcast",
     "CartReminder",
+    "QrEvent",
     "StoreSettings",
 ]

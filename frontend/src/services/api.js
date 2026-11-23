@@ -217,3 +217,103 @@ export async function syncCart(items, total) {
     return null;
   }
 }
+
+// ---------------- Farrux Shop QR attribution ----------------
+
+const QR_ATTR_KEY = "farrux_qr_attribution";
+const QR_VISITOR_KEY = "farrux_qr_visitor_id";
+const QR_OPEN_SENT_KEY = "farrux_qr_open_sent";
+
+function randomId() {
+  try {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID().replace(/-/g, "");
+  } catch {
+    // ignore
+  }
+  return Array.from({ length: 32 }, () =>
+    Math.floor(Math.random() * 16).toString(16)
+  ).join("");
+}
+
+export function getQrVisitorId() {
+  try {
+    let id = window.localStorage.getItem(QR_VISITOR_KEY);
+    if (id && /^[A-Za-z0-9_-]{8,64}$/.test(id)) return id;
+    id = randomId();
+    window.localStorage.setItem(QR_VISITOR_KEY, id);
+    return id;
+  } catch {
+    return randomId();
+  }
+}
+
+export function getQrAttribution() {
+  try {
+    const raw = window.localStorage.getItem(QR_ATTR_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data?.token || !data?.visitor_id) return null;
+    const ageDays = (Date.now() - Number(data.captured_at || 0)) / 86400000;
+    if (ageDays > 30) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export function captureQrAttribution(startParam) {
+  const raw = String(startParam || "").trim();
+  const match = raw.match(/^qr_([A-Za-z0-9_-]{1,48})$/i);
+  if (!match) return null;
+
+  const token = match[1];
+  const visitor_id = getQrVisitorId();
+  const data = { token, visitor_id, captured_at: Date.now() };
+
+  try {
+    window.localStorage.setItem(QR_ATTR_KEY, JSON.stringify(data));
+  } catch {
+    // ignore
+  }
+
+  return data;
+}
+
+export async function sendQrMiniAppOpen(startParam) {
+  const attr = captureQrAttribution(startParam) || getQrAttribution();
+  if (!attr) return false;
+
+  const sessionKey = `${attr.token}:${attr.visitor_id}`;
+  try {
+    if (window.sessionStorage.getItem(QR_OPEN_SENT_KEY) === sessionKey) {
+      return false;
+    }
+  } catch {
+    // ignore
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/qr/event`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event_type: "miniapp_open",
+        token: attr.token,
+        visitor_id: attr.visitor_id
+      })
+    });
+
+    if (response.ok) {
+      try {
+        window.sessionStorage.setItem(QR_OPEN_SENT_KEY, sessionKey);
+      } catch {
+        // ignore
+      }
+      return true;
+    }
+  } catch {
+    // ignore
+  }
+
+  return false;
+}

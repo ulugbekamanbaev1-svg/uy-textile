@@ -28,6 +28,11 @@ class OrderCreate(BaseModel):
     telegram_id: int | None = None
     telegram_username: str | None = Field(default=None, max_length=100)
 
+    # QR-атрибуция: токен из постоянного QR и случайный visitor_id Mini App.
+    # backend принимает источник только если найдено недавнее событие miniapp_open.
+    qr_label: str | None = Field(default=None, max_length=64)
+    qr_visitor_id: str | None = Field(default=None, max_length=64)
+
     items: list[OrderItemIn] = Field(min_length=1, max_length=50)
 
 
@@ -67,6 +72,7 @@ class OrderOut(BaseModel):
     total: int
     telegram_id: int | None = None
     telegram_username: str | None = None
+    qr_label: str | None = None
     created_at: datetime
     items: list[OrderItemOut] = []
 

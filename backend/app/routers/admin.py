@@ -70,6 +70,8 @@ from app.schemas.catalog import AdminSummary, CategoryIn, CategoryOut
 from app.schemas.order import OrderOut, OrderStatusUpdate
 from app.services.broadcasts import run_broadcast
 from app.services.notify import notify_customer_about_status
+from app.services.qr import qr_token
+from app.services.qr_events import log_qr_event
 from app.services.store_settings import get_store_settings
 from app.services.telegram_auth import require_admin
 
@@ -843,6 +845,22 @@ async def update_order_status(
     if previous_status != order.status and order.telegram_id:
         background_tasks.add_task(notify_customer_about_status, order)
 
+    if (
+        previous_status != "done"
+        and order.status == "done"
+        and order.qr_label
+    ):
+        try:
+            await log_qr_event(
+                db,
+                "order_completed",
+                order.qr_label,
+                order_id=order.id,
+                meta="status",
+            )
+        except Exception:
+            await db.rollback()
+
     return order_to_out(order)
 
 
@@ -889,6 +907,7 @@ async def export_orders(
                 "created_at",
                 "latitude",
                 "longitude",
+                "qr_label",
             ]
         )
 
@@ -906,6 +925,7 @@ async def export_orders(
                     order.created_at.isoformat() if order.created_at else "",
                     order.latitude if order.latitude is not None else "",
                     order.longitude if order.longitude is not None else "",
+                    order.qr_label or "",
                 ]
             )
 

@@ -11,3 +11,8 @@ psycopg[binary]
 boto3
 openpyxl
 reportlab
+qrcode[pil]
+Pillow
+pytest
+pytest-asyncio
+httpx

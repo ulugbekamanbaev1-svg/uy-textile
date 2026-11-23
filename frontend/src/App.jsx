@@ -21,6 +21,7 @@ import {
   fetchCategories,
   fetchProducts,
   fetchStoreSettings,
+  sendQrMiniAppOpen,
   telegramLogin
 } from "./services/api";
 
@@ -120,6 +121,11 @@ export default function App() {
       tg?.initDataUnsafe?.start_param ||
       new URLSearchParams(window.location.search).get("startapp") ||
       "";
+    if (startParam.startsWith("qr_")) {
+      sendQrMiniAppOpen(startParam);
+    } else {
+      sendQrMiniAppOpen("");
+    }
     if (startParam === "cart") {
       navigate("cart");
     } else if (startParam.startsWith("product_")) {

@@ -10,7 +10,7 @@ from sqlalchemy import text
 from app import models  # noqa: F401
 from app.config import settings
 from app.database import Base, engine
-from app.routers import admin, auth, cart, catalog, orders, store
+from app.routers import admin, auth, cart, catalog, orders, qr, store
 from app.seed import seed_data
 from app.services.cart_reminders import cart_reminder_loop
 
@@ -29,6 +29,8 @@ async def lifespan(app: FastAPI):
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS banner_active BOOLEAN NOT NULL DEFAULT FALSE, ADD COLUMN IF NOT EXISTS banner_text_ru VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_text_uz VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_text_uzc VARCHAR(200) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS banner_category VARCHAR(80) NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS logo_url VARCHAR(255) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS store_latitude DOUBLE PRECISION, ADD COLUMN IF NOT EXISTS store_longitude DOUBLE PRECISION"))
         await connection.execute(text("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS meters NUMERIC(10, 2), ADD COLUMN IF NOT EXISTS pricing_type VARCHAR(20) NOT NULL DEFAULT 'piece', ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) NOT NULL DEFAULT ''"))
+        await connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS qr_label VARCHAR(64)"))
+        await connection.execute(text("CREATE INDEX IF NOT EXISTS ix_orders_qr_label ON orders (qr_label)"))
         await connection.execute(text("""
             UPDATE order_items AS oi
             SET image_url = COALESCE(NULLIF(p.image_url, ''), (
@@ -100,9 +102,11 @@ app.include_router(catalog.router)
 app.include_router(cart.router)
 app.include_router(orders.router)
 app.include_router(store.router)
+app.include_router(qr.public_router)
 
 # Защищенный маршрут: пароль админки (Basic) ИЛИ Telegram initData владельца
 app.include_router(admin.router)
+app.include_router(qr.admin_router)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

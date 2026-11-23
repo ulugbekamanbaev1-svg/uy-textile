@@ -41,6 +41,12 @@ class Order(Base):
         String(100), nullable=True
     )
 
+    # Источник заказа. "qr_label" — покупатель пришёл по фирменной QR-этикетке.
+    # NULL — обычный заказ без QR-атрибуции.
+    qr_label: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, index=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )

@@ -32,6 +32,34 @@ class Settings(BaseSettings):
     # Если пусто, используется первый origin из CORS_ORIGINS, начинающийся с https://
     PUBLIC_API_URL: str = ""
 
+    # ---------- Farrux Shop QR Premium ----------
+    # Постоянный токен QR-кода. Менять его нельзя: уже напечатанные этикетки
+    # перестанут работать. Он попадает в ссылку /qr?t=<token>.
+    QR_TOKEN: str = "farrux"
+
+    # Публичный HTTPS-адрес backend, на котором живёт /qr.
+    # Если пусто, используется PUBLIC_API_URL, затем первый https-origin из CORS_ORIGINS.
+    QR_PUBLIC_BASE_URL: str = ""
+
+    # Полный URL, куда перенаправляет /qr. Если задан, используется вместо
+    # автоматической ссылки https://t.me/<bot>?startapp=qr_<token>.
+    # Позволяет сменить конечный адрес Telegram без перепечатывания QR.
+    QR_TELEGRAM_URL: str = ""
+
+    # Username Telegram-бота без @. Если пусто, backend один раз запросит
+    # getMe у Telegram Bot API (BOT_TOKEN уже есть в настройках).
+    TELEGRAM_BOT_USERNAME: str = ""
+
+    # Сколько дней хранить QR-атрибуцию заказа после открытия Mini App.
+    QR_ATTRIBUTION_DAYS: int = 30
+
+    # Размеры этикеток по умолчанию (мм). Можно переопределить в запросе.
+    QR_HANGTAG_WIDTH_MM: float = 50
+    QR_HANGTAG_HEIGHT_MM: float = 80
+    QR_STICKER_WIDTH_MM: float = 50
+    QR_STICKER_HEIGHT_MM: float = 50
+    QR_LABEL_MARGIN_MM: float = 3
+
     # Открывать админку без Telegram в dev-режиме (в production всегда False).
     ADMIN_DEV_BYPASS: bool = True
 

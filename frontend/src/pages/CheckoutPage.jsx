@@ -9,7 +9,7 @@ import {
 
 import LocationPicker from "../components/LocationPicker";
 
-import { createOrder } from "../services/api";
+import { createOrder, getQrAttribution } from "../services/api";
 import { formatPrice, localized } from "../utils/format";
 import { formatQuantity, itemLineTotal } from "../utils/pricing";
 
@@ -126,6 +126,7 @@ export default function CheckoutPage({
     setSubmitError("");
 
     try {
+      const qrAttr = getQrAttribution();
       const order = await createOrder({
         customer_name: name.trim(),
         phone: phone.trim(),
@@ -135,6 +136,8 @@ export default function CheckoutPage({
         longitude: coords?.longitude ?? null,
         telegram_id: telegramUser?.id ?? null,
         telegram_username: telegramUser?.username ?? null,
+        qr_label: qrAttr?.token ?? null,
+        qr_visitor_id: qrAttr?.visitor_id ?? null,
         items: items.map((item) => ({
           slug: item.slug,
           variant_id: item.variantId ?? null,
