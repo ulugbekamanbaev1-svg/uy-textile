@@ -241,6 +241,35 @@ async def notify_customer_about_status(order: Order) -> bool:
             )
             return False
 
+        # Отправляем фото заказанных товаров вместе со статусом
+        photo_url = None
+        for item in order.items:
+            candidate = _public_image_url(getattr(item, "image_url", "") or "")
+            if candidate:
+                photo_url = candidate
+                break
+
+        if photo_url:
+            try:
+                photo_resp = await client.post(
+                    f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPhoto",
+                    json={
+                        "chat_id": order.telegram_id,
+                        "photo": photo_url,
+                        "caption": text[:1020],
+                        "parse_mode": "HTML",
+                        "disable_web_page_preview": True,
+                    },
+                )
+                if photo_resp.status_code != 200:
+                    logger.warning(
+                        "Customer Telegram photo notification failed: %s %s",
+                        photo_resp.status_code,
+                        photo_resp.text[:300],
+                    )
+            except Exception as photo_error:
+                logger.warning("Customer Telegram photo notification error: %s", photo_error)
+
         return True
     except Exception as error:
         logger.warning("Customer Telegram notification error: %s", error)

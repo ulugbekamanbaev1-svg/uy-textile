@@ -47,15 +47,17 @@ def order_to_out(order: Order) -> OrderOut:
 async def track_orders(
     phone: str | None = Query(default=None, max_length=40),
     number: str | None = Query(default=None, max_length=20),
+    username: str | None = Query(default=None, max_length=100),
     db: AsyncSession = Depends(get_db),
 ):
     phone_digits = re.sub(r"\D", "", phone or "")
     number_clean = (number or "").strip().upper()
+    username_clean = (username or "").strip().lstrip("@")
 
-    if len(phone_digits) < 7 and not number_clean:
+    if len(phone_digits) < 7 and not number_clean and not username_clean:
         raise HTTPException(
             status_code=422,
-            detail="Укажите номер телефона или номер заказа",
+            detail="Укажите номер телефона, ник или номер заказа",
         )
 
     stmt = (
@@ -66,12 +68,17 @@ async def track_orders(
     )
 
     if number_clean:
-        # UY-00012 -> id 12
+        # UY-00012 / @john-00012 -> id 12
         match = re.search(r"(\d+)$", number_clean)
         if not match:
             raise HTTPException(status_code=422, detail="Некорректный номер заказа")
         order_id = int(match.group(1))
         stmt = stmt.where(Order.id == order_id)
+    elif username_clean:
+        # Поиск заказа по нику Telegram-аккаунта: @john / john
+        stmt = stmt.where(
+            func.lower(Order.telegram_username) == username_clean.lower()
+        )
     elif phone_digits:
         tail = phone_digits[-9:]
         stmt = stmt.where(

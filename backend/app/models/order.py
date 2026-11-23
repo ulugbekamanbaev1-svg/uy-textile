@@ -58,6 +58,10 @@ class Order(Base):
 
     @property
     def number(self) -> str:
+        username = (self.telegram_username or "").strip().lstrip("@")
+        if username:
+            # Заказ привязываем к нику Telegram-аккаунта клиента, например @john-00016
+            return f"@{username}-{self.id:05d}"
         return f"UY-{self.id:05d}"
 
 

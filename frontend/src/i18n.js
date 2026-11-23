@@ -147,8 +147,9 @@ export const translations = {
     requiredField: "Обязательное поле",
 
     trackOrdersTitle: "Мои заказы",
-    trackOrdersHint: "Введите номер телефона, чтобы проверить статус заказа.",
+    trackOrdersHint: "Введите номер телефона или ник, чтобы проверить статус заказа.",
     trackOrdersPlaceholder: "+998 90 000 00 00",
+    trackOrdersNickPlaceholder: "@ник",
     trackOrdersButton: "Проверить",
     trackOrdersEmpty: "Заказы не найдены",
     trackOrdersError: "Не удалось проверить заказы",
@@ -163,6 +164,7 @@ export const translations = {
     orderStepActive: "Активно",
     orderStepWaiting: "Ожидание",
     orderDeliveredSuccess: "Ваш заказ успешно доставлен! Спасибо за покупку!",
+    orderItemsTitle: "Состав заказа",
 
     contactsTitle: "Контакты магазина",
     contactPhone: "Телефон",
@@ -322,8 +324,9 @@ export const translations = {
     requiredField: "Majburiy maydon",
 
     trackOrdersTitle: "Buyurtmalarim",
-    trackOrdersHint: "Buyurtma holatini tekshirish uchun telefon raqamini kiriting.",
+    trackOrdersHint: "Buyurtma holatini tekshirish uchun telefon raqamini yoki nickni kiriting.",
     trackOrdersPlaceholder: "+998 90 000 00 00",
+    trackOrdersNickPlaceholder: "@nick",
     trackOrdersButton: "Tekshirish",
     trackOrdersEmpty: "Buyurtmalar topilmadi",
     trackOrdersError: "Buyurtmalarni tekshirib bo'lmadi",
@@ -338,6 +341,7 @@ export const translations = {
     orderStepActive: "Faol",
     orderStepWaiting: "Kutilmoqda",
     orderDeliveredSuccess: "Sizning buyurtmangiz muvaffaqiyatli yetkazildi! Xayl qilishingiz uchun rahmat!",
+    orderItemsTitle: "Buyurtma tarkibi",
 
     contactsTitle: "Do'kon kontaktlari",
     contactPhone: "Telefon",
@@ -497,8 +501,9 @@ export const translations = {
     requiredField: "Мажбурий майдон",
 
     trackOrdersTitle: "Буюртмаларим",
-    trackOrdersHint: "Буюртма ҳолатини текшириш учун телефон рақамини киритинг.",
+    trackOrdersHint: "Буюртма ҳолатини текшириш учун телефон рақамини ё ёзи киритинг.",
     trackOrdersPlaceholder: "+998 90 000 00 00",
+    trackOrdersNickPlaceholder: "@нок",
     trackOrdersButton: "Текшириш",
     trackOrdersEmpty: "Буюртмалар топилмади",
     trackOrdersError: "Буюртмаларни текшириб бўлмади",
@@ -514,6 +519,7 @@ export const translations = {
     orderStepWaiting: "Кутилмоқда",
     orderDeliveredSuccess: "Сизнинг буюртма ҳамаслиқ этказилди! Ҳамӯш қилиши үчүн раҳмат!",
 
+    orderItemsTitle: "Буюртмани таркиби",
     contactsTitle: "Дўкон контактлари",
     contactPhone: "Телефон",
     contactAddress: "Манзил",

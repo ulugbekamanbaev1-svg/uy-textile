@@ -141,10 +141,11 @@ export async function createOrder(payload) {
   return data;
 }
 
-export async function trackOrders({ phone, number } = {}) {
+export async function trackOrders({ phone, number, username } = {}) {
   const params = new URLSearchParams();
   if (phone) params.set("phone", phone);
   if (number) params.set("number", number);
+  if (username) params.set("username", username);
   const query = params.toString();
 
   const response = await fetch(
@@ -198,7 +199,8 @@ export async function syncCart(items, total) {
       return {
         name: item.name_ru || item.name_uz || item.name_uzc || item.slug || "Товар",
         qty_label: qtyLabel,
-        line_total: Math.round(Number(item.lineTotal ?? item.total ?? 0) || 0)
+        line_total: Math.round(Number(item.lineTotal ?? item.total ?? 0) || 0),
+        image_url: item.image_url || ""
       };
     })
   };

@@ -7,7 +7,8 @@ import {
   XCircle
 } from "lucide-react";
 
-import { formatPrice } from "../utils/format";
+import { assetUrl } from "../services/api";
+import { formatPrice, localized } from "../utils/format";
 
 const STEPS = [
   { key: "new", index: 0, icon: ClipboardList },
@@ -112,6 +113,48 @@ export default function OrderStatusTracker({ status, order, t, lang }) {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {order?.items?.length > 0 && (
+          <div className="order-items">
+            <span className="order-items-title">
+              {t("orderItemsTitle")}
+            </span>
+            <div className="order-items-list">
+              {order.items.map((item, index) => {
+                const itemName = localized(item, "name", lang) || item.name_ru || item.product_slug || "";
+
+                return (
+                  <div className="order-item" key={item.id || `${item.product_slug}-${index}`}>
+                    {item.image_url ? (
+                      <img
+                        className="order-item-photo"
+                        src={assetUrl(item.image_url)}
+                        alt={itemName}
+                      />
+                    ) : (
+                      <div className="order-item-photo order-item-photo-empty">
+                        {item.pricing_type === "meter"
+                          ? t("meterUnit")
+                          : item.pricing_type === "area"
+                            ? t("meterUnit")
+                            : t("pieceUnit")}
+                      </div>
+                    )}
+
+                    <div className="order-item-info">
+                      <span className="order-item-name">{itemName}</span>
+                      <span className="order-item-meta">
+                        {item.pricing_type === "meter"
+                          ? `${item.meters ?? 0} ${t("meterUnit")} × ${item.quantity}`
+                          : `${t("itemsCount", { count: item.quantity })} · ${formatPrice(item.line_total || item.unit_price * item.quantity, lang)}`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

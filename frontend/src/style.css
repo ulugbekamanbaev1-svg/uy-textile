@@ -985,6 +985,15 @@ main { animation: fadeUp .45s var(--ease); }
 .order-step.cancelled { opacity: .85; }
 .order-tracker-success { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #eaf6ee; color: #2f6b45; font-size: 13px; font-weight: 700; }
 .order-tracker-cancelled { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 12px; border-radius: 12px; background: #fdecec; color: #9a3b35; font-size: 13px; font-weight: 700; }
+.order-items { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.order-items-title { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+.order-items-list { display: flex; flex-direction: column; gap: 8px; }
+.order-item { display: flex; align-items: center; gap: 10px; }
+.order-item-photo { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 1px solid var(--line); background: #f6f1e7; flex: 0 0 auto; }
+.order-item-photo-empty { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 11px; font-weight: 700; }
+.order-item-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.order-item-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.order-item-meta { font-size: 11.5px; color: var(--muted); font-weight: 600; }
 
 /* States */
 .empty-state { text-align: center; padding: 30px 16px; color: var(--muted); }

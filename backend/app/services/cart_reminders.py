@@ -26,6 +26,21 @@ def _cart_button_url() -> str | None:
     return f"{base}{sep}startapp=cart"
 
 
+def _reminder_image_url(url: str | None) -> str | None:
+    if not url:
+        return None
+
+    value = url.strip()
+    if value.startswith("http://") or value.startswith("https://"):
+        return value
+
+    base = (settings.WEBAPP_URL or settings.FRONTEND_URL or "").strip().rstrip("/")
+    if value.startswith("/") and base:
+        return f"{base}{value}"
+
+    return None
+
+
 def _format_cart_message(items: list[dict], total: int) -> str:
     lines = ["🛒 <b>Вы забыли оформить заказ</b>", ""]
     for item in items[:10]:
@@ -73,7 +88,14 @@ async def sync_cart_reminder(
             else:
                 qty_label = str(item.get("qty") or item.get("quantity") or 1)
         line_total = int(item.get("line_total") or item.get("total") or item.get("price") or 0)
-        normalized.append({"name": str(name)[:120], "qty_label": str(qty_label)[:40], "line_total": line_total})
+        normalized.append(
+            {
+                "name": str(name)[:120],
+                "qty_label": str(qty_label)[:40],
+                "line_total": line_total,
+                "image_url": str(item.get("image_url") or item.get("image") or item.get("photo") or "")[:255],
+            }
+        )
         item_count += 1
 
     if item_count == 0:
@@ -172,11 +194,22 @@ async def send_due_cart_reminders() -> int:
                 if keyboard:
                     payload["reply_markup"] = keyboard
 
+                image_url = _reminder_image_url(items[0].get("image_url")) if items else None
+
                 try:
-                    resp = await client.post(
-                        f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage",
-                        json=payload,
-                    )
+                    if image_url:
+                        photo_payload = dict(payload)
+                        photo_payload["photo"] = image_url
+                        photo_payload["caption"] = text[:1020]
+                        resp = await client.post(
+                            f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPhoto",
+                            json=photo_payload,
+                        )
+                    else:
+                        resp = await client.post(
+                            f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage",
+                            json=payload,
+                        )
                     ok = resp.status_code == 200 and resp.json().get("ok")
                 except Exception as exc:
                     logger.warning("Cart reminder send error: %s", exc)

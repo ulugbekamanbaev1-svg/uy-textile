@@ -46,6 +46,7 @@ export default function ProfilePage({
 }) {
   const [store, setStore] = useState(null);
   const [trackPhone, setTrackPhone] = useState("");
+  const [trackNick, setTrackNick] = useState("");
   const [trackedOrders, setTrackedOrders] = useState([]);
   const [trackState, setTrackState] = useState("idle");
 
@@ -133,8 +134,9 @@ const openInBrowser = () => {
 
   const handleTrack = async () => {
     const phone = trackPhone.trim();
+    const nick = trackNick.trim();
 
-    if (phone.replace(/\D/g, "").length < 7) {
+    if (phone.replace(/\D/g, "").length < 7 && !nick.replace(/^@/, "").length) {
       setTrackState("error");
       return;
     }
@@ -142,7 +144,10 @@ const openInBrowser = () => {
     setTrackState("loading");
 
     try {
-      const orders = await trackOrders({ phone });
+      const orders = await trackOrders({
+        phone: phone || undefined,
+        username: nick ? nick.replace(/^@/, "") : undefined
+      });
 
       setTrackedOrders(Array.isArray(orders) ? orders : []);
       setTrackState("done");
@@ -329,6 +334,13 @@ const openInBrowser = () => {
             value={trackPhone}
             placeholder={t("trackOrdersPlaceholder")}
             onChange={(event) => setTrackPhone(event.target.value)}
+          />
+
+          <input
+            type="text"
+            value={trackNick}
+            placeholder={t("trackOrdersNickPlaceholder")}
+            onChange={(event) => setTrackNick(event.target.value)}
           />
 
           <button
