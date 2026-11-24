@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  BadgeDollarSign,
   ChevronRight,
   Clock,
   CreditCard,
@@ -42,7 +43,8 @@ export default function ProfilePage({
   favoritesCount,
   onCart,
   onFavorites,
-  onOrders
+  onOrders,
+  onCurrency
 }) {
   const [store, setStore] = useState(null);
 
@@ -231,6 +233,21 @@ export default function ProfilePage({
           <span className="lux-quick-text">
             <strong>{t("navOrders")}</strong>
             <small>{t("profileQuickOrdersHint")}</small>
+          </span>
+          <ChevronRight size={18} className="lux-quick-arrow" />
+        </button>
+
+        <button
+          type="button"
+          className="lux-quick-row"
+          onClick={onCurrency}
+        >
+          <span className="lux-quick-icon">
+            <BadgeDollarSign size={18} />
+          </span>
+          <span className="lux-quick-text">
+            <strong>{t("currencyTitle")}</strong>
+            <small>{t("currencyProfileHint")}</small>
           </span>
           <ChevronRight size={18} className="lux-quick-arrow" />
         </button>

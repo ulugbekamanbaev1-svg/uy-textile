@@ -401,3 +401,30 @@ export async function downloadReferralFile(kind = "png") {
 export function fetchMyVip() {
   return tgGet("/api/vip/me");
 }
+
+
+export function fetchCurrencyRates(currency = "USD", sourceType = "bank", sort = "name") {
+  const params = new URLSearchParams({ currency, source_type: sourceType, sort });
+  return request(`/api/currency/rates?${params.toString()}`);
+}
+
+export function fetchCurrencyBest(currency = "USD", sourceType = "bank") {
+  const params = new URLSearchParams({ currency, source_type: sourceType });
+  return request(`/api/currency/best?${params.toString()}`);
+}
+
+export function fetchCurrencySources() {
+  return request("/api/currency/sources");
+}
+
+export function convertCurrency({ amount, from, to, operation = "buy", bank = "best", sourceType = "bank" }) {
+  const params = new URLSearchParams({
+    amount: String(amount),
+    from,
+    to,
+    operation,
+    bank: bank || "best",
+    source_type: sourceType,
+  });
+  return request(`/api/currency/convert?${params.toString()}`);
+}

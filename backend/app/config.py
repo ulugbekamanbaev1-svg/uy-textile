@@ -66,6 +66,14 @@ class Settings(BaseSettings):
     MAX_UPLOAD_MB: int = 5
     CART_REMINDER_DELAY_MINUTES: int = 60
 
+    # --- Farrux Currency ---
+    CURRENCY_ENABLED: bool = True
+    CURRENCY_PROVIDER: str = "wasyt"
+    CURRENCY_API_BASE_URL: str = "https://api.wasyt.uz"
+    CURRENCY_REFRESH_MINUTES: int = 15
+    CURRENCY_REQUEST_TIMEOUT: int = 15
+    CURRENCY_MANUAL_REFRESH_SECONDS: int = 60
+
     CORS_ORIGINS: str = (
         "http://localhost:5173,http://localhost:5174,"
         "http://127.0.0.1:5173,http://127.0.0.1:5174"

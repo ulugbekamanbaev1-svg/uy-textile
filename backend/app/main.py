@@ -10,9 +10,10 @@ from sqlalchemy import text
 from app import models  # noqa: F401
 from app.config import settings
 from app.database import Base, engine
-from app.routers import admin, admin_calendar, admin_referral, admin_vip, auth, cart, catalog, orders, qr, referral, store, vip
+from app.routers import admin, admin_calendar, admin_currency, admin_referral, admin_vip, auth, cart, catalog, currency, orders, qr, referral, store, vip
 from app.seed import seed_data
 from app.services.cart_reminders import cart_reminder_loop
+from app.services.currency_refresh import currency_refresh_loop
 
 # ВАЖНО: __file__ с двумя подчеркиваниями!
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -62,17 +63,20 @@ async def lifespan(app: FastAPI):
     await seed_data()
     stop_event = asyncio.Event()
     reminder_task = asyncio.create_task(cart_reminder_loop(stop_event))
+    currency_task = asyncio.create_task(currency_refresh_loop(stop_event))
     try:
         yield
     finally:
         stop_event.set()
-        reminder_task.cancel()
-        try:
-            await reminder_task
-        except asyncio.CancelledError:
-            pass
-        except Exception:
-            pass
+        for task in (reminder_task, currency_task):
+            task.cancel()
+        for task in (reminder_task, currency_task):
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+            except Exception:
+                pass
         await engine.dispose()
 
 app = FastAPI(
@@ -120,6 +124,7 @@ app.include_router(store.router)
 app.include_router(qr.public_router)
 app.include_router(referral.router)
 app.include_router(vip.router)
+app.include_router(currency.router)
 
 # Защищенный маршрут: пароль админки (Basic) ИЛИ Telegram initData владельца
 app.include_router(admin.router)
@@ -127,6 +132,7 @@ app.include_router(qr.admin_router)
 app.include_router(admin_referral.router)
 app.include_router(admin_vip.router)
 app.include_router(admin_calendar.router)
+app.include_router(admin_currency.router)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

@@ -30,7 +30,8 @@ import {
   QrCode,
   Gift,
   Crown,
-  CalendarDays
+  CalendarDays,
+  Coins
 } from "lucide-react";
 
 import LoginScreen from "./components/LoginScreen";
@@ -44,6 +45,7 @@ import QrPanel from "./components/QrPanel";
 import ReferralPanel from "./components/ReferralPanel";
 import VipPanel from "./components/VipPanel";
 import CalendarPanel from "./components/CalendarPanel";
+import CurrencyPanel from "./components/CurrencyPanel";
 import { LANGUAGES, detectLanguage, translations } from "./i18n";
 import { adminDownload, adminFetch } from "./services/adminApi";
 import { assetUrl, formatPrice, localized, priceLabel } from "./utils/format";
@@ -67,6 +69,7 @@ const MENU = [
   [MapPin, "menuMap", "map"],
   [Megaphone, "menuBroadcast", "broadcast"],
   [QrCode, "menuQrAnalytics", "qr"],
+  [Coins, "menuCurrency", "currency"],
   [Gift, "menuReferral", "referral"],
   [Crown, "menuVip", "vip"],
   [CalendarDays, "menuCalendar", "calendar"],
@@ -82,6 +85,7 @@ const SECTION_META = {
   map: ["mapTitle", "mapSubtitle"],
   broadcast: ["broadcastMenuTitle", "broadcastMenuSubtitle"],
   qr: ["qrAnalyticsTitle", "qrAnalyticsSubtitle"],
+  currency: ["currencyAdminTitle", "currencyAdminSubtitle"],
   referral: ["referralTitle", "referralSubtitle"],
   vip: ["vipTitle", "vipSubtitle"],
   calendar: ["calendarTitle", "calendarSubtitle"],
@@ -1193,6 +1197,7 @@ export default function App() {
             )}
 
             {section === "qr" && <QrPanel t={t} lang={lang} />}
+            {section === "currency" && <CurrencyPanel t={t} />}
 
             {section === "referral" && <ReferralPanel t={t} lang={lang} />}
             {section === "vip" && <VipPanel t={t} lang={lang} />}

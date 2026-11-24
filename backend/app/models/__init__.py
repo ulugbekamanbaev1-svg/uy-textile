@@ -8,6 +8,7 @@ from app.models.catalog import (
     ProductPriceTier,
     ProductVariant,
 )
+from app.models.currency import CurrencyModuleState, CurrencyRateCache
 from app.models.expense import Expense
 from app.models.order import Order, OrderItem
 from app.models.qr import QrEvent
@@ -29,6 +30,8 @@ __all__ = [
     "Expense",
     "Broadcast",
     "CartReminder",
+    "CurrencyRateCache",
+    "CurrencyModuleState",
     "QrEvent",
     "ReferralReward",
     "VipStatusHistory",

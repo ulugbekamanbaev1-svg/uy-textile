@@ -16,6 +16,7 @@ import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
 import ProfilePage from "./pages/ProfilePage";
 import OrdersPage from "./pages/OrdersPage";
+import CurrencyPage from "./pages/CurrencyPage";
 import {
   attachReferral,
   checkServer,
@@ -207,13 +208,20 @@ export default function App() {
       return undefined;
     }
 
-    if (route.page === "product") {
+    const showBack = route.page === "product" || route.page === "currency";
+    if (showBack) {
       backButton.show();
     } else {
       backButton.hide();
     }
 
-    const handleBack = () => navigate("catalog", { category: route.category });
+    const handleBack = () => {
+      if (route.page === "currency") {
+        navigate("profile");
+        return;
+      }
+      navigate("catalog", { category: route.category });
+    };
 
     backButton.onClick(handleBack);
     return () => backButton.offClick(handleBack);
@@ -327,8 +335,11 @@ export default function App() {
         onCart={() => navigate("cart")}
         onFavorites={() => navigate("favorites")}
         onOrders={() => navigate("orders")}
+        onCurrency={() => navigate("currency")}
       />
     );
+  } else if (route.page === "currency") {
+    content = <CurrencyPage t={t} lang={lang} />;
   } else {
     content = (
       <HomePage
@@ -348,6 +359,8 @@ export default function App() {
   const navPage =
     route.page === "product"
       ? "catalog"
+      : route.page === "currency"
+        ? "profile"
       : ["cart", "checkout"].includes(route.page)
         ? ""
         : route.page;
