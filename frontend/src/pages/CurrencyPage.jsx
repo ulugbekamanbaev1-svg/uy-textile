@@ -85,7 +85,7 @@ export default function CurrencyPage({ t, lang }) {
 
   const banks = useMemo(() => {
     const list = Array.isArray(data?.banks) ? [...data.banks] : [];
-    const q = query.trim().toLower();
+    const q = query.trim().toLowerCase();
     let filtered = q ? list.filter((b) => (b.name || "").toLowerCase().includes(q)) : list;
     if (sort === "buy_desc") {
       filtered.sort((a, b) => (b.buy == null ? -1 : a.buy == null ? 1 : b.buy - a.buy) || (a.name || "").localeCompare(b.name || ""));
