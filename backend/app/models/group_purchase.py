@@ -5,6 +5,7 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     Numeric,
@@ -87,7 +88,7 @@ class GroupPurchase(Base):
         back_populates="group", cascade="all, delete-orphan", order_by="GroupPurchasePayment.id"
     )
     events: Mapped[list["GroupPurchaseEvent"]] = relationship(
-        back_populates="group", cascade="all, delete-orphan", order_by="GroupPurchaseEvent.id.desc()"
+        back_populates="group", cascade="all, delete-orphan", order_by="GroupPurchaseEvent.id"
     )
 
 
@@ -118,8 +119,8 @@ class GroupPurchaseParticipant(Base):
     delivery_district: Mapped[str] = mapped_column(String(120), default="")
     phone: Mapped[str] = mapped_column(String(40), default="")
     comment: Mapped[str] = mapped_column(Text, default="")
-    latitude: Mapped[float | None] = mapped_column(nullable=True)
-    longitude: Mapped[float | None] = mapped_column(nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
