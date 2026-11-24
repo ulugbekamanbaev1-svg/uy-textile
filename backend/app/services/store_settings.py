@@ -15,7 +15,7 @@ async def get_store_settings(db: AsyncSession) -> StoreSettings:
         await db.commit()
         await db.refresh(settings)
     elif settings.store_name == "Uy Textile":
-        settings.store_name = "Farrux shop (Hozoosp)"
+        settings.store_name = "Farrux shop (Hozorosp)"
         await db.commit()
         await db.refresh(settings)
 

@@ -86,7 +86,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Farrux shop (Hozoosp) online store API",
+    description="Farrux shop (Hozorosp) online store API",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -146,8 +146,8 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 @app.get("/")
 async def root():
     return {
-        "name": "Farrux shop (Hozoosp)",
-        "message": "Welcome to Farrux shop (Hozoosp) API",
+        "name": "Farrux shop (Hozorosp)",
+        "message": "Welcome to Farrux shop (Hozorosp) API",
         "status": "running",
     }
 
@@ -159,7 +159,7 @@ async def health():
         return {
             "status": "healthy",
             "database": "connected",
-            "application": "Farrux shop (Hozoosp)",
+            "application": "Farrux shop (Hozorosp)",
         }
     except Exception:
         return {
@@ -170,7 +170,7 @@ async def health():
 @app.get("/api")
 async def api_info():
     return {
-        "project": "Farrux shop (Hozoosp)",
+        "project": "Farrux shop (Hozorosp)",
         "version": "1.0.0",
         "environment": settings.APP_ENV,
     }

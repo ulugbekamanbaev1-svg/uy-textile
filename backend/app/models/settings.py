@@ -14,7 +14,7 @@ class StoreSettings(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
 
     store_name: Mapped[str] = mapped_column(
-        String(120), default="Farrux shop (Hozoosp)"
+        String(120), default="Farrux shop (Hozorosp)"
     )
     phone: Mapped[str] = mapped_column(String(40), default="")
     address: Mapped[str] = mapped_column(String(255), default="")

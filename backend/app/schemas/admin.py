@@ -244,7 +244,7 @@ class AnalyticsOut(BaseModel):
 
 
 class StoreSettingsIn(BaseModel):
-    store_name: str = Field(default="Farrux shop (Hozoosp)", max_length=120)
+    store_name: str = Field(default="Farrux shop (Hozorosp)", max_length=120)
     phone: str = Field(default="", max_length=40)
     address: str = Field(default="", max_length=255)
     working_hours: str = Field(default="", max_length=120)

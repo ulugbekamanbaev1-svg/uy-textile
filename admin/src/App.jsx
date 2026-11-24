@@ -98,7 +98,7 @@ const SECTION_META = {
 };
 
 const EMPTY_SETTINGS = {
-  store_name: "Farrux shop (Hozoosp)",
+  store_name: "Farrux shop (Hozorosp)",
   phone: "",
   address: "",
   working_hours: "",
@@ -668,7 +668,7 @@ export default function App() {
         <div className="sidebar-footer">
           <div className="sidebar-status">
             <span className="online-dot" />
-            <span className="nav-label">Farrux shop (Hozoosp) v1.0</span>
+            <span className="nav-label">Farrux shop (Hozorosp) v1.0</span>
           </div>
           <button
             type="button"

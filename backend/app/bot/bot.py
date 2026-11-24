@@ -30,11 +30,11 @@ from app.services.referral import attach_referral, ensure_user_referral_code, no
 MESSAGES = {
     "ru": {
         "start_admin": (
-            "Здравствуйте! Вы вошли как администратор Farrux shop (Hozoosp).\n\n"
+            "Здравствуйте! Вы вошли как администратор Farrux shop (Hozorosp).\n\n"
             "Здесь будут уведомления о заказах, клиентах и доставке."
         ),
         "start_user": (
-            "Добро пожаловать в Farrux shop (Hozoosp)!\n\n"
+            "Добро пожаловать в Farrux shop (Hozorosp)!\n\n"
             "Наш магазин домашнего текстиля скоро откроется."
         ),
         "your_id": "Ваш Telegram ID: {user_id}",
@@ -45,7 +45,7 @@ MESSAGES = {
             "/uz — o'zbekcha (lotin)\n"
             "/uzc — ўзбекча (кирилл)"
         ),
-        "open_app": "Откройте магазин Farrux shop (Hozoosp):",
+        "open_app": "Откройте магазин Farrux shop (Hozorosp):",
         "app_button": "Открыть магазин",
         "app_unavailable": (
             "Магазин пока недоступен как Mini App: нужен публичный "
@@ -55,12 +55,12 @@ MESSAGES = {
 
     "uz": {
         "start_admin": (
-            "Assalomu alaykum! Siz Farrux shop (Hozoosp) administratori sifatida kirdingiz.\n\n"
+            "Assalomu alaykum! Siz Farrux shop (Hozorosp) administratori sifatida kirdingiz.\n\n"
             "Bu yerda buyurtmalar, mijozlar va yetkazib berish bo'yicha "
             "bildirishnomalar bo'ladi."
         ),
         "start_user": (
-            "Farrux shop (Hozoosp)'ga xush kelibsiz!\n\n"
+            "Farrux shop (Hozorosp)'ga xush kelibsiz!\n\n"
             "Uy tekstili do'konimiz tez orada ochiladi."
         ),
         "your_id": "Sizning Telegram ID: {user_id}",
@@ -71,7 +71,7 @@ MESSAGES = {
             "/uz — o'zbekcha (lotin)\n"
             "/uzc — o'zbekcha (kirill)"
         ),
-        "open_app": "Farrux shop (Hozoosp) do'konini oching:",
+        "open_app": "Farrux shop (Hozorosp) do'konini oching:",
         "app_button": "Do'konni ochish",
         "app_unavailable": (
             "Do'kon hozircha Mini App sifatida mavjud emas: vitrina uchun "
@@ -81,12 +81,12 @@ MESSAGES = {
 
     "uzc": {
         "start_admin": (
-            "Ассалому алайкум! Сиз Farrux shop (Hozoosp) администратори сифатида кирдингиз.\n\n"
+            "Ассалому алайкум! Сиз Farrux shop (Hozorosp) администратори сифатида кирдингиз.\n\n"
             "Бу ерда буюртмалар, мижозлар ва етказиб бериш бўйича "
             "билдиришномалар бўлади."
         ),
         "start_user": (
-            "Farrux shop (Hozoosp)'га хуш келибсиз!\n\n"
+            "Farrux shop (Hozorosp)'га хуш келибсиз!\n\n"
             "Уй текстили дўконимиз тез орада очилади."
         ),
         "your_id": "Сизнинг Telegram ID: {user_id}",
@@ -97,7 +97,7 @@ MESSAGES = {
             "/uz — ўзбекча (лотин)\n"
             "/uzc — ўзбекча (кирилл)"
         ),
-        "open_app": "Farrux shop (Hozoosp) дўконини очинг:",
+        "open_app": "Farrux shop (Hozorosp) дўконини очинг:",
         "app_button": "Дўконни очиш",
         "app_unavailable": (
             "Дўкон ҳозирча Mini App сифатида мавжуд эмас: витрина учун "
@@ -233,7 +233,7 @@ async def post_init(application):
 
     await application.bot.set_chat_menu_button(
         menu_button=MenuButtonWebApp(
-            text="Farrux shop (Hozoosp)",
+            text="Farrux shop (Hozorosp)",
             web_app=WebAppInfo(url=webapp_url()),
         )
     )
@@ -486,7 +486,7 @@ async def main():
     await application.updater.start_polling()
 
     print(
-        "Farrux shop (Hozoosp) Telegram Bot is running...",
+        "Farrux shop (Hozorosp) Telegram Bot is running...",
         flush=True,
     )
 

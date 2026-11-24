@@ -86,7 +86,7 @@ export default function LoginScreen({ onLogin }) {
       >
         <h2 style={{ marginBottom: "8px", fontSize: "24px" }}>Вход в админку</h2>
         <p style={{ marginTop: 0, marginBottom: "20px", color: "#777", fontSize: "13px" }}>
-          Farrux shop (Hozoosp)
+          Farrux shop (Hozorosp)
         </p>
 
         {error && (

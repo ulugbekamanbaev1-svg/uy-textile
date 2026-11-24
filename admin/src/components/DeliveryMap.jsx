@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapPin, Navigation } from "lucide-react";
@@ -15,6 +15,8 @@ const STATUS_KEYS = {
   done: "statusDone",
   cancelled: "statusCancelled"
 };
+
+const FILTER_STATUSES = ["new", "confirmed", "delivering", "done"];
 
 function escapeHtml(value) {
   return String(value ?? "").replace(
@@ -34,12 +36,26 @@ export default function DeliveryMap({ orders, t, lang }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
+  const fittedSignatureRef = useRef("");
+  const [statusFilter, setStatusFilter] = useState({
+    new: true,
+    confirmed: true,
+    delivering: true,
+    done: true,
+  });
 
-  const located = orders.filter(
-    (order) => order.latitude !== null && order.longitude !== null
+  const filteredOrders = useMemo(
+    () => orders.filter((o) => statusFilter[o.status]),
+    [orders, statusFilter]
   );
-  const withoutCoords = orders.filter(
-    (order) => order.latitude === null || order.longitude === null
+
+  const located = useMemo(
+    () => filteredOrders.filter((order) => order.latitude !== null && order.longitude !== null),
+    [filteredOrders]
+  );
+  const withoutCoords = useMemo(
+    () => filteredOrders.filter((order) => order.latitude === null || order.longitude === null),
+    [filteredOrders]
   );
 
   useEffect(() => {
@@ -51,7 +67,6 @@ export default function DeliveryMap({ orders, t, lang }) {
       center: DELIVERY_CENTER,
       zoom: 10,
       scrollWheelZoom: true,
-      // без стандартного контрола — свой префикс без флага
       attributionControl: false
     });
 
@@ -65,7 +80,6 @@ export default function DeliveryMap({ orders, t, lang }) {
     }).addTo(map);
 
     mapRef.current = map;
-
     const frame = requestAnimationFrame(() => map.invalidateSize());
 
     return () => {
@@ -77,10 +91,7 @@ export default function DeliveryMap({ orders, t, lang }) {
 
   useEffect(() => {
     const map = mapRef.current;
-
-    if (!map) {
-      return;
-    }
+    if (!map) return;
 
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
@@ -101,40 +112,53 @@ export default function DeliveryMap({ orders, t, lang }) {
       markersRef.current.push(marker);
     });
 
-    if (located.length === 1) {
-      map.setView(
-        [located[0].latitude, located[0].longitude],
-        14,
-        { animate: false }
-      );
-    } else if (located.length > 1) {
-      map.fitBounds(
-        L.latLngBounds(
-          located.map((order) => [order.latitude, order.longitude])
-        ),
-        { padding: [40, 40] }
-      );
+    const signature = located.map((o) => `${o.id}:${o.latitude}:${o.longitude}`).sort().join("|");
+    if (signature !== fittedSignatureRef.current) {
+      fittedSignatureRef.current = signature;
+      if (located.length === 1) {
+        map.setView([located[0].latitude, located[0].longitude], 14, { animate: false });
+      } else if (located.length > 1) {
+        map.fitBounds(
+          L.latLngBounds(located.map((order) => [order.latitude, order.longitude])),
+          { padding: [40, 40] }
+        );
+      }
     }
-  }, [orders, lang]);
+  }, [located, lang, t]);
 
   const focusOrder = (order) => {
     const map = mapRef.current;
-
-    if (!map) {
-      return;
-    }
-
+    if (!map) return;
     map.flyTo([order.latitude, order.longitude], 15, { duration: 0.6 });
-    window.setTimeout(() => map.openPopup(
+    window.setTimeout(() => {
       L.popup()
         .setLatLng([order.latitude, order.longitude])
         .setContent(buildPopup(order, t, lang))
-    ), 650);
+        .openOn(map);
+    }, 650);
+  };
+
+  const toggleStatus = (status) => {
+    setStatusFilter((prev) => ({ ...prev, [status]: !prev[status] }));
   };
 
   return (
     <div className="map-layout">
       <section className="map-panel">
+        <div className="map-filter-bar" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+          {FILTER_STATUSES.map((status) => (
+            <button
+              key={status}
+              type="button"
+              className={`admin-filter-btn${statusFilter[status] ? " active" : ""}`}
+              onClick={() => toggleStatus(status)}
+              style={{ opacity: statusFilter[status] ? 1 : 0.55 }}
+            >
+              {t(STATUS_KEYS[status])}
+            </button>
+          ))}
+        </div>
+
         <div ref={containerRef} className="delivery-map" />
 
         <div className="map-legend">

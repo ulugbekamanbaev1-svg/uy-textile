@@ -2096,6 +2096,10 @@ a, button, input, textarea, select, .stat-card, .order-card, .map-order {
     top: 0;
     left: 0;
     height: 100vh;
+    max-height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     z-index: 1000;
     transition: transform 0.3s ease-in-out;
     width: 260px !important; 

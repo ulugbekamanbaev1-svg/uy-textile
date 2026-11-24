@@ -54,10 +54,10 @@ def build_report_data(analytics: dict, period: str, lang: str = "ru") -> dict:
     start = today - timedelta(days=days - 1)
     return {
         "title": {
-            "ru": "Отчёт магазина Farrux shop (Hozoosp)",
-            "uz": "Farrux shop (Hozoosp) do'kon hisoboti",
-            "uzc": "Farrux shop (Hozoosp) дўкон ҳисоби",
-        }.get(lang, "Отчёт магазина Farrux shop (Hozoosp)"),
+            "ru": "Отчёт магазина Farrux shop (Hozorosp)",
+            "uz": "Farrux shop (Hozorosp) do'kon hisoboti",
+            "uzc": "Farrux shop (Hozorosp) дўкон ҳисоби",
+        }.get(lang, "Отчёт магазина Farrux shop (Hozorosp)"),
         "period": period_label(period, lang),
         "range": f"{start.isoformat()} — {today.isoformat()}",
         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -301,7 +301,7 @@ def export_orders_xlsx(orders: list, lang: str = "ru") -> bytes:
 
     ws.merge_cells("A1:F1")
     cell = ws["A1"]
-    cell.value = "Заказы Farrux shop (Hozoosp)"
+    cell.value = "Заказы Farrux shop (Hozorosp)"
     cell.font = Font(size=16, bold=True, color="FFFFFF")
     cell.fill = fill
     cell.alignment = Alignment(horizontal="center")
@@ -357,7 +357,7 @@ def export_orders_pdf(orders: list, lang: str = "ru") -> bytes:
     title_style = ParagraphStyle("T", parent=styles["Title"], fontName=font_name_bold, fontSize=16, leading=20, textColor=colors.HexColor("#2E3A2F"))
     normal = ParagraphStyle("N", parent=styles["Normal"], fontName=font_name, fontSize=9, leading=12)
 
-    story = [Paragraph("Заказы Farrux shop (Hozoosp)", title_style), Spacer(1, 4 * mm)]
+    story = [Paragraph("Заказы Farrux shop (Hozorosp)", title_style), Spacer(1, 4 * mm)]
     headers = ORDER_HEADERS.get(lang, ORDER_HEADERS["ru"])
     rows = [headers]
     for row in orders_to_rows(orders, lang)[1:]:

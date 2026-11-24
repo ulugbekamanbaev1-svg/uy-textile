@@ -16,7 +16,7 @@ export default function TopBar({
   onShowLocation
 }) {
   const logoUrl = storeSettings?.logo_url ? assetUrl(storeSettings.logo_url) : "";
-  const storeName = storeSettings?.store_name || "Farrux shop (Hozoosp)";
+  const storeName = storeSettings?.store_name || "Farrux shop (Hozorosp)";
   const nextThemeLabel = theme === "dark" ? t("themeLight") : t("themeDark");
 
   return (
