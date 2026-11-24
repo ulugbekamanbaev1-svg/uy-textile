@@ -46,7 +46,6 @@ export default function ProfilePage({
   onFavorites,
   onOrders,
   onCurrency,
-  onGroupPurchase
 }) {
   const [store, setStore] = useState(null);
 
@@ -254,37 +253,7 @@ export default function ProfilePage({
           <ChevronRight size={18} className="lux-quick-arrow" />
         </button>
 
-        <button
-          type="button"
-          className="lux-quick-row"
-          onClick={onGroupPurchase}
-        >
-          <span className="lux-quick-icon">
-            <Users size={18} />
-          </span>
-          <span className="lux-quick-text">
-            <strong>{t("gpTitle")}</strong>
-            <small>{t("gpProfileHint")}</small>
-          </span>
-          <ChevronRight size={18} className="lux-quick-arrow" />
-        </button>
 
-        {hasContacts && (
-          <button
-            type="button"
-            className="lux-quick-row"
-            onClick={() => scrollToSection("profile-contacts")}
-          >
-            <span className="lux-quick-icon">
-              <MapPin size={18} />
-            </span>
-            <span className="lux-quick-text">
-              <strong>{t("contactsTitle")}</strong>
-              <small>{t("profileQuickContactsHint")}</small>
-            </span>
-            <ChevronRight size={18} className="lux-quick-arrow" />
-          </button>
-        )}
 
         <button
           type="button"
@@ -301,127 +270,6 @@ export default function ProfilePage({
           <ChevronRight size={18} className="lux-quick-arrow" />
         </button>
       </section>
-
-      {hasContacts && (
-        <section id="profile-contacts" className="lux-card lux-contacts">
-          <div className="lux-section-head">
-            <span className="lux-icon">
-              <MapPin size={18} />
-            </span>
-            <div>
-              <h3>{t("contactsTitle")}</h3>
-              <p>{t("contactsSubtitle")}</p>
-            </div>
-          </div>
-
-          <div className="lux-contact-list">
-            {store.phone && (
-              <a className="lux-contact-row" href={`tel:${store.phone}`}>
-                <span className="lux-contact-icon">
-                  <Phone size={15} />
-                </span>
-                <span className="lux-contact-body">
-                  <span className="lux-contact-label">{t("contactPhone")}</span>
-                  <span className="lux-contact-value">{store.phone}</span>
-                </span>
-                <ChevronRight size={15} className="lux-contact-arrow" />
-              </a>
-            )}
-
-            {store.address && (
-              <div className="lux-contact-row">
-                <span className="lux-contact-icon">
-                  <MapPin size={15} />
-                </span>
-                <span className="lux-contact-body">
-                  <span className="lux-contact-label">{t("contactAddress")}</span>
-                  <span className="lux-contact-value">{store.address}</span>
-                </span>
-              </div>
-            )}
-
-            {store.working_hours && (
-              <div className="lux-contact-row">
-                <span className="lux-contact-icon">
-                  <Clock size={15} />
-                </span>
-                <span className="lux-contact-body">
-                  <span className="lux-contact-label">{t("contactHours")}</span>
-                  <span className="lux-contact-value">{store.working_hours}</span>
-                </span>
-              </div>
-            )}
-
-            {store.telegram && (
-              <a
-                className="lux-contact-row"
-                href={`https://t.me/${socialHandle(store.telegram)}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  openExternalLink(
-                    `https://t.me/${socialHandle(store.telegram)}`
-                  );
-                }}
-              >
-                <span className="lux-contact-icon">
-                  <Send size={15} />
-                </span>
-                <span className="lux-contact-body">
-                  <span className="lux-contact-label">{t("contactTelegram")}</span>
-                  <span className="lux-contact-value">{store.telegram}</span>
-                </span>
-                <ChevronRight size={15} className="lux-contact-arrow" />
-              </a>
-            )}
-
-            {store.instagram && (
-              <a
-                className="lux-contact-row"
-                href={`https://instagram.com/${socialHandle(store.instagram)}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  openExternalLink(
-                    `https://instagram.com/${socialHandle(store.instagram)}`
-                  );
-                }}
-              >
-                <span className="lux-contact-icon">
-                  <Instagram size={15} />
-                </span>
-                <span className="lux-contact-body">
-                  <span className="lux-contact-label">{t("contactInstagram")}</span>
-                  <span className="lux-contact-value">{store.instagram}</span>
-                </span>
-                <ChevronRight size={15} className="lux-contact-arrow" />
-              </a>
-            )}
-          </div>
-
-          {store.delivery_info && (
-            <div className="lux-note">
-              <span className="lux-contact-icon">
-                <Truck size={15} />
-              </span>
-              <div>
-                <span className="lux-contact-label">{t("contactDelivery")}</span>
-                <p>{store.delivery_info}</p>
-              </div>
-            </div>
-          )}
-
-          {store.payment_info && (
-            <div className="lux-note">
-              <span className="lux-contact-icon">
-                <CreditCard size={15} />
-              </span>
-              <div>
-                <span className="lux-contact-label">{t("contactPayment")}</span>
-                <p>{store.payment_info}</p>
-              </div>
-            </div>
-          )}
-        </section>
-      )}
 
       <section className="lux-card lux-server">
         <div className="lux-section-head">

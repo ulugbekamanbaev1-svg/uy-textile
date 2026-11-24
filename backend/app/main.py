@@ -14,7 +14,6 @@ from app.routers import admin, admin_calendar, admin_currency, admin_group_purch
 from app.seed import seed_data
 from app.services.cart_reminders import cart_reminder_loop
 from app.services.currency_refresh import currency_refresh_loop
-from app.services.group_purchase_expiry import group_purchase_expiry_loop
 
 # ВАЖНО: __file__ с двумя подчеркиваниями!
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -34,7 +33,6 @@ async def lifespan(app: FastAPI):
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS referral_enabled BOOLEAN NOT NULL DEFAULT TRUE, ADD COLUMN IF NOT EXISTS referral_reward_amount INTEGER NOT NULL DEFAULT 50000"))
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS delivery_districts TEXT NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_district VARCHAR(120) NOT NULL DEFAULT ''"))
-        await connection.execute(text("ALTER TABLE group_purchase_participants ADD COLUMN IF NOT EXISTS delivery_district VARCHAR(120) NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS vip_criterion VARCHAR(20) NOT NULL DEFAULT 'amount', ADD COLUMN IF NOT EXISTS vip_silver_threshold INTEGER NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS vip_gold_threshold INTEGER NOT NULL DEFAULT 1000000, ADD COLUMN IF NOT EXISTS vip_platinum_threshold INTEGER NOT NULL DEFAULT 3000000, ADD COLUMN IF NOT EXISTS vip_diamond_threshold INTEGER NOT NULL DEFAULT 7000000"))
 
         await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(32)"))
@@ -68,7 +66,6 @@ async def lifespan(app: FastAPI):
     stop_event = asyncio.Event()
     reminder_task = asyncio.create_task(cart_reminder_loop(stop_event))
     currency_task = asyncio.create_task(currency_refresh_loop(stop_event))
-    gp_expiry_task = asyncio.create_task(group_purchase_expiry_loop(stop_event))
     try:
         yield
     finally:

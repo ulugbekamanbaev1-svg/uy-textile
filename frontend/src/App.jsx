@@ -17,7 +17,6 @@ import ProductPage from "./pages/ProductPage";
 import ProfilePage from "./pages/ProfilePage";
 import OrdersPage from "./pages/OrdersPage";
 import CurrencyPage from "./pages/CurrencyPage";
-import GroupPurchasePage from "./pages/GroupPurchasePage";
 import {
   attachReferral,
   checkServer,
@@ -190,9 +189,8 @@ export default function App() {
     }
     if (startParam === "cart") {
       navigate("cart");
-    } else if (startParam.startsWith("gp_")) {
-      navigate("group-purchase", { token: startParam.slice(3) });
-    } else if (startParam.startsWith("product_")) {
+    } else
+    if (startParam.startsWith("product_")) {
       navigate("product", { slug: startParam.slice("product_".length) });
     } else if (startParam.startsWith("buy_")) {
       navigate("product", { slug: startParam.slice("buy_".length) });
@@ -211,7 +209,7 @@ export default function App() {
       return undefined;
     }
 
-    const showBack = route.page === "product" || route.page === "currency" || route.page === "group-purchase";
+    const showBack = route.page === "product" || route.page === "currency";
     if (showBack) {
       backButton.show();
     } else {
@@ -219,7 +217,7 @@ export default function App() {
     }
 
     const handleBack = () => {
-      if (route.page === "currency" || route.page === "group-purchase") {
+      if (route.page === "currency") {
         navigate("profile");
         return;
       }
@@ -259,7 +257,6 @@ export default function App() {
         onAddToCart={cart.add}
         favorite={favorites.isFavorite(route.slug)}
         onToggleFavorite={favorites.toggle}
-        onCreateGroup={(slug) => navigate("group-purchase", { token: `create_${slug}` })}
       />
     );
   } else if (route.page === "catalog") {
@@ -341,13 +338,10 @@ export default function App() {
         onFavorites={() => navigate("favorites")}
         onOrders={() => navigate("orders")}
         onCurrency={() => navigate("currency")}
-        onGroupPurchase={() => navigate("group-purchase")}
       />
     );
   } else if (route.page === "currency") {
     content = <CurrencyPage t={t} lang={lang} />;
-  } else if (route.page === "group-purchase") {
-    content = <GroupPurchasePage t={t} lang={lang} inviteToken={route.token} onOpenProduct={openProduct} />;
   } else {
     content = (
       <HomePage
@@ -367,7 +361,7 @@ export default function App() {
   const navPage =
     route.page === "product"
       ? "catalog"
-      : route.page === "currency" || route.page === "group-purchase"
+      : route.page === "currency"
         ? "profile"
       : ["cart", "checkout"].includes(route.page)
         ? ""

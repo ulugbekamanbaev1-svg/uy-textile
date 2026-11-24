@@ -7,12 +7,10 @@ from app.services.currency_rates import (
     SUPPORTED_CURRENCIES,
     SUPPORTED_SOURCE_TYPES,
     build_rates_response,
-    convert_amount,
     ensure_cache_fresh,
     get_cache,
     get_or_create_state,
 )
-from app.services.rate_limit import client_key, currency_convert_limiter
 
 router = APIRouter(prefix="/api/currency", tags=["Currency"])
 
@@ -124,32 +122,3 @@ async def currency_sources(db: AsyncSession = Depends(get_db)):
         "last_error": state.last_error or "",
         "sources": sources,
     }
-
-
-@router.get("/convert")
-async def currency_convert(
-    request: Request,
-    amount: float = Query(..., gt=0, le=10_000_000_000),
-    from_currency: str = Query(..., alias="from"),
-    to_currency: str = Query(..., alias="to"),
-    operation: str = Query("buy"),
-    bank: str | None = Query(None),
-    source_type: str = Query("bank"),
-    db: AsyncSession = Depends(get_db),
-):
-    host = request.client.host if request.client else "unknown"
-    if not currency_convert_limiter.allow(client_key(host, "currency_convert")):
-        raise HTTPException(status_code=429, detail="Too many requests")
-    state = await get_or_create_state(db)
-    if not state.enabled:
-        raise HTTPException(status_code=503, detail="Currency module is disabled")
-    st = _validate_source_type(source_type)
-    await ensure_cache_fresh(db)
-    try:
-        result = await convert_amount(
-            db, amount=amount, from_currency=from_currency, to_currency=to_currency,
-            operation=operation, bank_slug=bank, source_type=st,
-        )
-        return result
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc

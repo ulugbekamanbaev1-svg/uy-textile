@@ -46,7 +46,6 @@ import ReferralPanel from "./components/ReferralPanel";
 import VipPanel from "./components/VipPanel";
 import CalendarPanel from "./components/CalendarPanel";
 import CurrencyPanel from "./components/CurrencyPanel";
-import GroupPurchasePanel from "./components/GroupPurchasePanel";
 import { LANGUAGES, detectLanguage, translations } from "./i18n";
 import { adminDownload, adminFetch } from "./services/adminApi";
 import { assetUrl, formatPrice, localized, priceLabel } from "./utils/format";
@@ -74,7 +73,6 @@ const MENU = [
   [Gift, "menuReferral", "referral"],
   [Crown, "menuVip", "vip"],
   [CalendarDays, "menuCalendar", "calendar"],
-  [Users, "menuGroupPurchase", "group-purchase"],
   [TrendingUp, "menuAnalytics", "analytics"],
   [Settings, "menuSettings", "settings"]
 ];
@@ -91,7 +89,6 @@ const SECTION_META = {
   referral: ["referralTitle", "referralSubtitle"],
   vip: ["vipTitle", "vipSubtitle"],
   calendar: ["calendarTitle", "calendarSubtitle"],
-  "group-purchase": ["gpAdminTitle", "gpAdminSubtitle"],
   analytics: ["analyticsTitle", "analyticsSubtitle"],
   settings: ["settingsTitle", "settingsSubtitle"],
   categories: ["categoriesTitle", "categoriesSubtitle"]
@@ -1205,7 +1202,6 @@ export default function App() {
             {section === "referral" && <ReferralPanel t={t} lang={lang} />}
             {section === "vip" && <VipPanel t={t} lang={lang} />}
             {section === "calendar" && <CalendarPanel t={t} lang={lang} onOpenOrders={() => setSection("orders")} />}
-            {section === "group-purchase" && <GroupPurchasePanel t={t} />}
 
             {section === "analytics" && (
               <>
@@ -1280,7 +1276,6 @@ export default function App() {
               "referral",
               "vip",
               "calendar",
-              "group-purchase",
               "analytics",
               "settings",
               "categories"

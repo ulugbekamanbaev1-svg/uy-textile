@@ -9,12 +9,6 @@ from app.models.catalog import (
     ProductVariant,
 )
 from app.models.currency import CurrencyModuleState, CurrencyRateCache
-from app.models.group_purchase import (
-    GroupPurchase,
-    GroupPurchaseEvent,
-    GroupPurchaseParticipant,
-    GroupPurchasePayment,
-)
 from app.models.expense import Expense
 from app.models.order import Order, OrderItem
 from app.models.qr import QrEvent
@@ -38,10 +32,6 @@ __all__ = [
     "CartReminder",
     "CurrencyRateCache",
     "CurrencyModuleState",
-    "GroupPurchase",
-    "GroupPurchaseParticipant",
-    "GroupPurchasePayment",
-    "GroupPurchaseEvent",
     "QrEvent",
     "ReferralReward",
     "VipStatusHistory",

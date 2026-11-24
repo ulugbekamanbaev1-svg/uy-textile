@@ -31,7 +31,6 @@ export default function ProductPage({
   lang,
   onBack,
   onAddToCart,
-  onCreateGroup,
   favorite,
   onToggleFavorite
 }) {
@@ -560,16 +559,6 @@ export default function ProductPage({
               ? t("addedToCart")
               : t("addToCart")}
         </button>
-        {isMeter && product.in_stock !== false && onCreateGroup && (
-          <button
-            className="ghost-button"
-            type="button"
-            style={{ width: "100%", marginTop: 10 }}
-            onClick={() => onCreateGroup(product.slug)}
-          >
-            {t("gpCreate")}
-          </button>
-        )}
       </section>
     </main>
   );

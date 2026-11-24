@@ -15,7 +15,7 @@ from app.models.currency import CurrencyModuleState, CurrencyRateCache
 logger = logging.getLogger(__name__)
 
 TZ_TASHKENT = timezone(timedelta(hours=5))
-SUPPORTED_CURRENCIES = ["USD", "EUR", "RUB"]
+SUPPORTED_CURRENCIES = ["USD", "EUR", "RUB", "KZT", "CNY", "GBP", "TRY", "CHF"]
 SUPPORTED_SOURCE_TYPES = ["bank"]
 BASE_CURRENCY = "UZS"
 PROVIDER_NAME = "Wasyt (bank.uz)"

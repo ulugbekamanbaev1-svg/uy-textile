@@ -416,25 +416,3 @@ export function fetchCurrencyBest(currency = "USD", sourceType = "bank") {
 export function fetchCurrencySources() {
   return request("/api/currency/sources");
 }
-
-export function convertCurrency({ amount, from, to, operation = "buy", bank = "best", sourceType = "bank" }) {
-  const params = new URLSearchParams({
-    amount: String(amount),
-    from,
-    to,
-    operation,
-    bank: bank || "best",
-    source_type: sourceType,
-  });
-  return request(`/api/currency/convert?${params.toString()}`);
-}
-
-
-// Group purchases (Birgalikda)
-export function fetchMyGroupPurchases() { return tgGet('/api/group-purchases/my'); }
-export function fetchGroupByInvite(token) { return tgGet(`/api/group-purchases/invite/${encodeURIComponent(token)}`); }
-export function fetchGroupDetail(id) { return tgGet(`/api/group-purchases/${id}`); }
-export function createGroupPurchase(payload) { return tgPost('/api/group-purchases', payload); }
-export function joinGroupPurchase(payload) { return tgPost('/api/group-purchases/join', payload); }
-export function leaveGroupPurchase(id) { return tgPost(`/api/group-purchases/${id}/leave`, {}); }
-export function requestGroupPayment(id, payload) { return tgPost(`/api/group-purchases/${id}/payment-request`, payload || {}); }
