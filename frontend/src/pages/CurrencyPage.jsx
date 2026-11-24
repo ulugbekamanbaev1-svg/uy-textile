@@ -31,7 +31,7 @@ function fmtRate(value) {
 function fmtAmount(value, maxFractionDigits = 2) {
   const num = Number(value);
   if (!Number.isFinite(num)) return "—";
-  return num.toLocaleString("ru-RU", { maximumFractionDigits });
+  return num.toLocaleString("ru-RU", { maximumFractionDigits: maxFractionDigits });
 }
 
 function fmtTime(iso, lang) {
