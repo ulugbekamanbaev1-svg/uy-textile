@@ -48,7 +48,7 @@ class Settings(BaseSettings):
 
     # Username Telegram-бота без @. Если пусто, backend один раз запросит
     # getMe у Telegram Bot API (BOT_TOKEN уже есть в настройках).
-    TELEGRAM_BOT_USERNAME: str = ""
+    TELEGRAM_BOT_USERNAME: str = "uytextile_hozorospbot"
 
     # Сколько дней хранить QR-атрибуцию заказа после открытия Mini App.
     QR_ATTRIBUTION_DAYS: int = 30

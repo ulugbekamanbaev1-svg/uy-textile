@@ -4,13 +4,11 @@ import {
   Clock,
   CreditCard,
   Download,
-  Heart,
   Instagram,
   MapPin,
   PackageSearch,
   Phone,
   Send,
-  ShoppingBag,
   Smartphone,
   Truck,
   Wifi,
@@ -18,9 +16,7 @@ import {
   X
 } from "lucide-react";
 
-import { LANGUAGES } from "../i18n";
 import { fetchStoreSettings } from "../services/api";
-import { formatPrice } from "../utils/format";
 import { openExternalLink } from "../utils/telegram";
 import ReferralSection from "../components/ReferralSection";
 import VipCard from "../components/VipCard";
@@ -143,7 +139,7 @@ const openInBrowser = () => {
   return (
     <main>
       <div className="page-heading">
-        <span className="eyebrow">UY TEXTILE</span>
+        <span className="eyebrow">FARRUX SHOP</span>
         <h2>{t("profileTitle")}</h2>
       </div>
 
@@ -175,41 +171,23 @@ const openInBrowser = () => {
         </div>
       </section>
 
-      {/* Установка Farrux Shop */}
-      <section className="profile-section pwa-install-card">
-        <div className="pwa-install-info">
-          <div className="pwa-install-icon">
-            <Smartphone size={25} />
-          </div>
+      <VipCard t={t} lang={lang} />
 
-          <div>
-            <h3>Farrux Shop — приложение</h3>
+      <ReferralSection t={t} lang={lang} />
 
-            <p className="option-hint">
-              Установите магазин на главный экран телефона
-              и открывайте его в любое время.
-            </p>
-          </div>
+      <section className="profile-section">
+        <div
+          className="profile-link"
+          onClick={onOrders}
+          role="button"
+          tabIndex={0}
+        >
+          <PackageSearch size={18} />
+          <span>{t("navOrders")}</span>
+          <strong>{t("trackOrdersButton")}</strong>
         </div>
-
-        {isInstalled ? (
-          <div className="pwa-installed">
-            <Smartphone size={18} />
-            Приложение уже установлено
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="primary-button pwa-install-button"
-            onClick={handleInstallApp}
-          >
-            <Download size={18} />
-            Установить приложение
-          </button>
-        )}
       </section>
 
-      {/* Контакты магазина */}
       {hasContacts && (
         <section className="profile-section">
           <h3>{t("contactsTitle")}</h3>
@@ -296,74 +274,6 @@ const openInBrowser = () => {
         </section>
       )}
 
-      {/* Мои заказы */}
-      <section className="profile-section">
-        <div
-          className="profile-link"
-          onClick={onOrders}
-          role="button"
-          tabIndex={0}
-        >
-          <PackageSearch size={18} />
-          <span>{t("navOrders")}</span>
-          <strong>{t("trackOrdersButton")}</strong>
-        </div>
-      </section>
-
-      <ReferralSection t={t} lang={lang} />
-      <VipCard t={t} lang={lang} />
-
-      {/* Язык */}
-      <section className="profile-section">
-        <h3>{t("language")}</h3>
-        <p className="option-hint">{t("languageHint")}</p>
-
-        <div className="language-list">
-          {Object.entries(LANGUAGES).map(([code, item]) => (
-            <button
-              key={code}
-              type="button"
-              className={lang === code ? "active" : ""}
-              onClick={() => setLang(code)}
-            >
-              <span>{item.name}</span>
-              <span className="language-code">{item.short}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Корзина и избранное */}
-      <section className="profile-section">
-        <div
-          className="profile-link"
-          onClick={onCart}
-          role="button"
-          tabIndex={0}
-        >
-          <ShoppingBag size={18} />
-          <span>{t("cartTitle")}</span>
-          <strong>{t("itemsCount", { count: cartCount })}</strong>
-        </div>
-
-        <div className="profile-link-row">
-          <span>{t("subtotal")}</span>
-          <strong>{formatPrice(cartTotal, lang)}</strong>
-        </div>
-
-        <div
-          className="profile-link"
-          onClick={onFavorites}
-          role="button"
-          tabIndex={0}
-        >
-          <Heart size={18} />
-          <span>{t("favoritesTitle")}</span>
-          <strong>{favoritesCount}</strong>
-        </div>
-      </section>
-
-      {/* Статус сервера */}
       <section className="profile-section">
         <h3>{t("serverStatus")}</h3>
 
@@ -384,7 +294,37 @@ const openInBrowser = () => {
         </div>
       </section>
 
-      {/* Инструкция установки */}
+      <section className="profile-section pwa-install-card">
+        <div className="pwa-install-info">
+          <div className="pwa-install-icon">
+            <Smartphone size={25} />
+          </div>
+
+          <div>
+            <h3>Farrux Shop — ilova</h3>
+            <p className="option-hint">
+              Do'konni telefoningiz bosh ekraniga o'rnating va istalgan vaqtda oching.
+            </p>
+          </div>
+        </div>
+
+        {isInstalled ? (
+          <div className="pwa-installed">
+            <Smartphone size={18} />
+            Ilova allaqachon o'rnatilgan
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="primary-button pwa-install-button"
+            onClick={handleInstallApp}
+          >
+            <Download size={18} />
+            Ilovani o'rnatish
+          </button>
+        )}
+      </section>
+
       {showInstallHelp && (
         <div
           className="pwa-help-overlay"
@@ -403,18 +343,17 @@ const openInBrowser = () => {
             </button>
 
             <Smartphone size={32} />
-
-            <h3>Установка Farrux Shop</h3>
+            <h3>Farrux Shop ilovasini o'rnatish</h3>
 
             <p>
-              <strong>Android:</strong> откройте магазин в Google Chrome,
-              нажмите меню ⋮ и выберите «Установить приложение»
-              или «Добавить на главный экран».
+              <strong>Android:</strong> do'konni Google Chrome'da oching,
+              ⋮ menyusini bosing va "Ilovani o'rnatish" yoki
+              "Bosh ekranga qo'shish"ni tanlang.
             </p>
 
             <p>
-              <strong>iPhone:</strong> откройте магазин в Safari,
-              нажмите «Поделиться», затем «На экран Домой».
+              <strong>iPhone:</strong> do'konni Safari'da oching,
+              "Ulashish" tugmasini bosing, so'ng "Bosh ekranga qo'shish"ni tanlang.
             </p>
 
             <button
@@ -422,7 +361,7 @@ const openInBrowser = () => {
               className="primary-button"
               onClick={openInBrowser}
             >
-              Открыть магазин в браузере
+              Do'konni brauzerda ochish
             </button>
 
             <button
@@ -430,7 +369,7 @@ const openInBrowser = () => {
               className="pwa-help-secondary"
               onClick={() => setShowInstallHelp(false)}
             >
-              Закрыть
+              Yopish
             </button>
           </div>
         </div>
