@@ -45,7 +45,7 @@ export default function CheckoutPage({
     return (
       <main>
         <div className="success-card">
-          <CheckCircle2 size={46} color="#4c7a45" />
+          <CheckCircle2 size={46} className="success-icon" />
           <h2>{t("successTitle")}</h2>
           <p className="success-number">{created.number}</p>
           <p>
@@ -225,7 +225,7 @@ export default function CheckoutPage({
               <h3>{t("locationLabel")}</h3>
               <p>{t("locationHint")}</p>
             </div>
-            <MapPin size={19} color="#65715c" />
+            <MapPin size={19} className="form-card-icon" />
           </div>
 
           <LocationPicker

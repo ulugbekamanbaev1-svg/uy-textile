@@ -1,4 +1,4 @@
-import { Heart, ShoppingBag } from "lucide-react";
+import { Heart, Moon, ShoppingBag, Sun } from "lucide-react";
 
 import { LANGUAGES } from "../i18n";
 import { assetUrl } from "../services/api";
@@ -7,6 +7,8 @@ export default function TopBar({
   t,
   lang,
   setLang,
+  theme,
+  onToggleTheme,
   cartCount,
   onCart,
   onHome,
@@ -15,6 +17,7 @@ export default function TopBar({
 }) {
   const logoUrl = storeSettings?.logo_url ? assetUrl(storeSettings.logo_url) : "";
   const storeName = storeSettings?.store_name || "Farrux shop (Hozoosp)";
+  const nextThemeLabel = theme === "dark" ? t("themeLight") : t("themeDark");
 
   return (
     <header className="header top-bar">
@@ -34,6 +37,16 @@ export default function TopBar({
       </button>
 
       <div className="header-actions">
+        <button
+          className="icon-button theme-toggle"
+          type="button"
+          aria-label={nextThemeLabel}
+          title={nextThemeLabel}
+          onClick={onToggleTheme}
+        >
+          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
         <div className="language-switch" role="group" aria-label={t("language")}>
           {Object.entries(LANGUAGES).map(([code, item]) => (
             <button

@@ -28,9 +28,38 @@ import {
 
 const INITIAL_ROUTE = { page: "home", slug: null, category: "" };
 
+const THEME_KEY = "uy_theme";
+
+function detectTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") {
+      return saved;
+    }
+  } catch {
+    // localStorage may be unavailable
+  }
+
+  const scheme = window.Telegram?.WebApp?.colorScheme;
+  if (scheme === "light" || scheme === "dark") {
+    return scheme;
+  }
+
+  try {
+    if (window.matchMedia?.("(prefers-color-scheme: light)").matches) {
+      return "light";
+    }
+  } catch {
+    // matchMedia may be unavailable
+  }
+
+  return "dark";
+}
+
 export default function App() {
   const [route, setRoute] = useState(INITIAL_ROUTE);
   const [lang, setLang] = useState(detectLanguage);
+  const [theme, setTheme] = useState(detectTheme);
   const [server, setServer] = useState("checking");
   const [telegramUser, setTelegramUser] = useState(null);
   const [authState, setAuthState] = useState("idle");
@@ -72,6 +101,32 @@ export default function App() {
     document.documentElement.lang = lang === "uzc" ? "uz-Cyrl" : lang;
   }, [lang]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const background = theme === "dark" ? "#0b0c0e" : "#f3ecdf";
+
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", background);
+
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      // localStorage may be unavailable
+    }
+
+    const tg = window.Telegram?.WebApp;
+    try {
+      tg?.setHeaderColor?.(background);
+      tg?.setBackgroundColor?.(background);
+    } catch {
+      // ignore Telegram theming errors
+    }
+  }, [theme]);
+
   const loadCatalog = useCallback(() => {
     setCatalogState("loading");
 
@@ -90,12 +145,6 @@ export default function App() {
     if (tg) {
       tg.ready();
       tg.expand();
-      try {
-        tg.setHeaderColor?.("#f4efe6");
-        tg.setBackgroundColor?.("#f4efe6");
-      } catch {
-        // ignore
-      }
 
       const user = tg.initDataUnsafe?.user;
       if (user) {
@@ -309,6 +358,10 @@ export default function App() {
         t={t}
         lang={lang}
         setLang={setLang}
+        theme={theme}
+        onToggleTheme={() =>
+          setTheme((current) => (current === "dark" ? "light" : "dark"))
+        }
         cartCount={cart.count}
         onCart={() => navigate("cart")}
         onHome={() => navigate("home")}

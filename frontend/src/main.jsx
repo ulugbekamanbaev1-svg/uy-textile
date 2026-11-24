@@ -1,7 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
 import "./style.css";
+import "./styles/lux.css";
+import App from "./App";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

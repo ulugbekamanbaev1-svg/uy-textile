@@ -1,134 +1,1379 @@
 /* ============================================================
-   Farrux Shop — Luxury Glass profile theme
-   Scoped to the profile page through `body.profile-lux`.
-   Other pages keep the existing light storefront look.
+   Farrux Shop — Luxury Glass design system (global)
+   The Profile page is the visual reference for the whole store.
+   Loaded after style.css: it re-skins every shared component
+   without changing layout or business markup.
+
+   Themes: html[data-theme="light"] (Pearl Glass)
+           html[data-theme="dark"]  (Black Glass)
+   Geometry is identical in both themes.
    ============================================================ */
 
-body.profile-lux {
+/* ------------------------------------------------------------
+   1. Tokens — light (Pearl Glass)
+   ------------------------------------------------------------ */
+:root {
+  --lux-gold: #8a6528;
+  --lux-gold-bright: #b8893f;
+  --lux-gold-deep: #6d4d1c;
+  --lux-gold-line: rgba(160, 118, 52, 0.26);
+  --lux-gold-line-strong: rgba(160, 118, 52, 0.42);
+  --lux-gold-glow: rgba(198, 154, 82, 0.26);
+  --lux-gold-gradient: linear-gradient(135deg, #efd9a6 0%, #d3ab5f 46%, #b08642 100%);
+  --lux-gold-text: #1a1409;
+
+  --lux-bg: #f3ecdf;
+  --lux-bg-top: #fbf7ef;
+  --lux-bg-bottom: #e9dfcd;
+  --lux-body-bg:
+    radial-gradient(1000px 520px at -10% -12%, rgba(214, 178, 106, 0.22), transparent 62%),
+    radial-gradient(820px 460px at 110% 0%, rgba(120, 130, 145, 0.12), transparent 58%),
+    radial-gradient(700px 520px at 50% 110%, rgba(214, 178, 106, 0.14), transparent 62%),
+    linear-gradient(180deg, var(--lux-bg-top) 0%, var(--lux-bg) 52%, var(--lux-bg-bottom) 100%);
+  --lux-grain: rgba(90, 64, 26, 0.05);
+  --lux-grain-opacity: 0.34;
+
+  --lux-text: #26221c;
+  --lux-text-strong: #191612;
+  --lux-text-soft: #4f4940;
+  --lux-muted: #8a8073;
+
+  --lux-sheen: rgba(255, 255, 255, 0.55);
+  --lux-sheen-gold: rgba(214, 178, 106, 0.12);
+  --lux-surface-1: rgba(255, 253, 248, 0.82);
+  --lux-surface-2: rgba(255, 251, 244, 0.55);
+  --lux-surface-3: rgba(255, 255, 255, 0.24);
+  --lux-card-bg:
+    radial-gradient(120% 90% at 0% 0%, var(--lux-sheen-gold), transparent 58%),
+    linear-gradient(158deg, var(--lux-surface-1), var(--lux-surface-2) 46%, var(--lux-surface-3));
+  --lux-card-border: rgba(160, 118, 52, 0.22);
+  --lux-card-shadow:
+    0 18px 40px rgba(86, 66, 36, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --lux-card-blur: 10px;
+  --lux-glow: 0 0 32px rgba(198, 154, 82, 0.24);
+
+  --lux-line: rgba(122, 94, 50, 0.16);
+  --lux-line-strong: rgba(160, 118, 52, 0.34);
+  --lux-well: rgba(94, 72, 38, 0.055);
+  --lux-well-border: rgba(160, 118, 52, 0.16);
+  --lux-hover: rgba(160, 118, 52, 0.08);
+
+  --lux-input-bg: rgba(255, 253, 248, 0.74);
+  --lux-input-border: rgba(160, 118, 52, 0.26);
+  --lux-overlay: rgba(32, 26, 17, 0.44);
+
+  --lux-header-bg:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(255, 251, 244, 0.62) 56%, rgba(255, 255, 255, 0.4));
+  --lux-nav-bg:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 250, 241, 0.68) 56%, rgba(255, 255, 255, 0.46));
+  --lux-modal-bg:
+    radial-gradient(120% 80% at 0% 0%, rgba(214, 178, 106, 0.18), transparent 58%),
+    linear-gradient(165deg, #fffdf8 0%, #f3ece0 100%);
+  --lux-media-bg: linear-gradient(145deg, #efe7d8, #e2d5bf);
+
+  --lux-btn-shadow:
+    0 12px 24px rgba(160, 118, 52, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --lux-danger: #a94a3e;
+  --lux-success: #2f6b3f;
+
+  --lux-tint-weak: rgba(94, 72, 38, 0.04);
+  --lux-tint: rgba(94, 72, 38, 0.06);
+  --lux-tint-strong: rgba(94, 72, 38, 0.1);
+  --lux-avatar-bg: radial-gradient(circle at 32% 22%, #3a3125 0%, #1f1a13 58%, #120f0b 100%);
+
+  --lux-status-new-bg: rgba(78, 115, 183, 0.14);
+  --lux-status-new-text: #33599c;
+  --lux-status-confirmed-bg: rgba(178, 134, 52, 0.18);
+  --lux-status-confirmed-text: #7a5a1d;
+  --lux-status-delivering-bg: rgba(74, 128, 104, 0.14);
+  --lux-status-delivering-text: #2f6b52;
+  --lux-status-done-bg: rgba(60, 128, 82, 0.16);
+  --lux-status-done-text: #256b3d;
+  --lux-status-cancelled-bg: rgba(169, 74, 62, 0.14);
+  --lux-status-cancelled-text: #8f3a2f;
+
+  /* Legacy aliases — existing rules follow the theme automatically. */
+  --bg: var(--lux-bg);
+  --bg-soft: #fbf8f2;
+  --surface: rgba(255, 253, 248, 0.7);
+  --surface-solid: #fffdf9;
+  --surface-elevated: #fffdf9;
+  --line: var(--lux-line);
+  --line-strong: var(--lux-line-strong);
+  --text: var(--lux-text);
+  --text-soft: var(--lux-text-soft);
+  --muted: var(--lux-muted);
+  --accent: var(--lux-gold);
+  --accent-2: var(--lux-gold-bright);
+  --gold: var(--lux-gold);
+  --gold-soft: #e7d3ad;
+  --success: var(--lux-success);
+  --danger: var(--lux-danger);
+  --shadow-sm: 0 8px 20px rgba(86, 66, 36, 0.08);
+  --shadow-md: 0 16px 36px rgba(86, 66, 36, 0.12);
+  --shadow-lg: 0 28px 64px rgba(86, 66, 36, 0.18);
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 26px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  color-scheme: light;
+}
+
+/* ------------------------------------------------------------
+   2. Tokens — dark (Black Glass)
+   ------------------------------------------------------------ */
+html[data-theme="dark"] {
   --lux-gold: #d6b26a;
   --lux-gold-bright: #f3d894;
   --lux-gold-deep: #a87f3c;
-  --lux-text: #f3ede2;
-  --lux-text-strong: #fbf3e4;
-  --lux-muted: rgba(232, 216, 190, 0.62);
-  --lux-line: rgba(214, 178, 106, 0.16);
-  --lux-line-strong: rgba(214, 178, 106, 0.32);
-  --lux-ink: #0b0c0e;
-  --lux-ink-soft: #15161a;
+  --lux-gold-line: rgba(214, 178, 106, 0.16);
+  --lux-gold-line-strong: rgba(214, 178, 106, 0.32);
+  --lux-gold-glow: rgba(214, 178, 106, 0.45);
+  --lux-gold-gradient: linear-gradient(135deg, #f0d79c 0%, #d6b26a 46%, #b8893f 100%);
+  --lux-gold-text: #171207;
 
-  color: var(--lux-text);
-  background:
+  --lux-bg: #0b0c0e;
+  --lux-bg-top: #14151a;
+  --lux-bg-bottom: #090a0c;
+  --lux-body-bg:
     radial-gradient(900px 520px at 8% -12%, rgba(214, 178, 106, 0.16), transparent 62%),
     radial-gradient(720px 460px at 104% 6%, rgba(126, 142, 162, 0.12), transparent 58%),
     radial-gradient(760px 540px at 50% 108%, rgba(168, 127, 60, 0.1), transparent 62%),
     linear-gradient(180deg, #0b0c0e 0%, #121317 52%, #090a0c 100%);
-  overflow-x: hidden;
+  --lux-grain: rgba(214, 178, 106, 0.09);
+  --lux-grain-opacity: 0.5;
+
+  --lux-text: #f3ede2;
+  --lux-text-strong: #fbf3e4;
+  --lux-text-soft: #d7c9b3;
+  --lux-muted: rgba(232, 216, 190, 0.64);
+
+  --lux-sheen: rgba(255, 255, 255, 0.07);
+  --lux-sheen-gold: rgba(214, 178, 106, 0.075);
+  --lux-surface-1: rgba(255, 255, 255, 0.072);
+  --lux-surface-2: rgba(255, 255, 255, 0.02);
+  --lux-surface-3: rgba(0, 0, 0, 0.2);
+  --lux-card-bg:
+    radial-gradient(120% 90% at 0% 0%, var(--lux-sheen-gold), transparent 58%),
+    linear-gradient(158deg, var(--lux-surface-1), var(--lux-surface-2) 46%, var(--lux-surface-3));
+  --lux-card-border: rgba(214, 178, 106, 0.18);
+  --lux-card-shadow:
+    0 20px 44px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --lux-card-blur: 12px;
+  --lux-glow: 0 0 34px rgba(214, 178, 106, 0.2);
+
+  --lux-line: rgba(214, 178, 106, 0.16);
+  --lux-line-strong: rgba(214, 178, 106, 0.34);
+  --lux-well: rgba(0, 0, 0, 0.2);
+  --lux-well-border: rgba(255, 255, 255, 0.06);
+  --lux-hover: rgba(214, 178, 106, 0.09);
+
+  --lux-input-bg: rgba(255, 255, 255, 0.05);
+  --lux-input-border: rgba(214, 178, 106, 0.22);
+  --lux-overlay: rgba(4, 4, 5, 0.7);
+
+  --lux-header-bg:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015) 55%, rgba(0, 0, 0, 0.22));
+  --lux-nav-bg:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018) 55%, rgba(0, 0, 0, 0.24));
+  --lux-modal-bg:
+    radial-gradient(120% 80% at 0% 0%, rgba(214, 178, 106, 0.12), transparent 58%),
+    linear-gradient(160deg, #17181c 0%, #0c0d10 100%);
+  --lux-media-bg: linear-gradient(145deg, #1b1c20, #111216);
+
+  --lux-btn-shadow:
+    0 12px 26px rgba(214, 178, 106, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36);
+  --lux-danger: #f0796c;
+  --lux-success: #7fd39b;
+
+  --lux-tint-weak: rgba(255, 255, 255, 0.025);
+  --lux-tint: rgba(255, 255, 255, 0.04);
+  --lux-tint-strong: rgba(255, 255, 255, 0.07);
+  --lux-avatar-bg: radial-gradient(circle at 32% 22%, #2a251d 0%, #14120e 58%, #0a0908 100%);
+
+  --lux-status-new-bg: rgba(120, 160, 230, 0.16);
+  --lux-status-new-text: #9cc2ff;
+  --lux-status-confirmed-bg: rgba(214, 178, 106, 0.16);
+  --lux-status-confirmed-text: #e8c27a;
+  --lux-status-delivering-bg: rgba(110, 190, 158, 0.14);
+  --lux-status-delivering-text: #8fd6b4;
+  --lux-status-done-bg: rgba(110, 210, 150, 0.14);
+  --lux-status-done-text: #9fe6bb;
+  --lux-status-cancelled-bg: rgba(240, 121, 108, 0.14);
+  --lux-status-cancelled-text: #f0a79a;
+
+  --bg: var(--lux-bg);
+  --bg-soft: #121317;
+  --surface: rgba(255, 255, 255, 0.055);
+  --surface-solid: #17181c;
+  --surface-elevated: #1c1e23;
+  --line: var(--lux-line);
+  --line-strong: var(--lux-line-strong);
+  --text: var(--lux-text);
+  --text-soft: var(--lux-text-soft);
+  --muted: var(--lux-muted);
+  --accent: var(--lux-gold-bright);
+  --accent-2: var(--lux-gold);
+  --gold: var(--lux-gold);
+  --gold-soft: rgba(214, 178, 106, 0.3);
+  --success: var(--lux-success);
+  --danger: var(--lux-danger);
+  --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 16px 36px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 28px 64px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
 }
 
-body.profile-lux::before {
-  background-image: radial-gradient(rgba(214, 178, 106, 0.09) 0.5px, transparent 0.5px);
+/* ------------------------------------------------------------
+   3. Base
+   ------------------------------------------------------------ */
+html {
+  background: var(--lux-bg);
+}
+
+body {
+  color: var(--lux-text);
+  background: var(--lux-body-bg);
+  background-attachment: fixed;
+}
+
+body::before {
+  background-image: radial-gradient(var(--lux-grain) 0.5px, transparent 0.5px);
   background-size: 3px 3px;
-  opacity: 0.5;
+  opacity: var(--lux-grain-opacity);
 }
 
-.profile-lux .app {
-  padding-bottom: calc(122px + env(safe-area-inset-bottom));
+::selection {
+  background: rgba(214, 178, 106, 0.28);
+  color: inherit;
 }
 
-/* ---------- Shared header (scoped) ---------- */
-.profile-lux .top-bar {
-  border: 1px solid var(--lux-line);
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015) 55%, rgba(0, 0, 0, 0.18));
+.app {
+  padding-bottom: calc(124px + env(safe-area-inset-bottom));
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--lux-gold);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   4. Typography
+   ------------------------------------------------------------ */
+.eyebrow {
+  color: var(--lux-gold);
+  letter-spacing: 3px;
+  text-shadow: 0 0 18px var(--lux-gold-glow);
+}
+
+.page-heading h2,
+.section-heading h2,
+.product-title,
+.hero h2,
+.welcome h3,
+.profile-card h3,
+.success-card h2,
+.empty-title {
+  color: var(--lux-text-strong);
+  text-shadow: 0 10px 28px var(--lux-tint-strong);
+}
+
+.page-heading p,
+.section-heading p,
+.catalog-subtitle,
+.admin-note,
+.location-hint {
+  color: var(--lux-muted);
+}
+
+.link-button {
+  color: var(--lux-gold);
+  letter-spacing: 0.2px;
+}
+
+.link-button:hover {
+  color: var(--lux-gold-bright);
+}
+
+.link-button.danger {
+  color: var(--lux-danger);
+}
+
+/* ------------------------------------------------------------
+   5. Shared glass card recipe
+   ------------------------------------------------------------ */
+.lux-card,
+.product-card,
+.cart-item,
+.cart-summary,
+.checkout-summary,
+.profile-section,
+.form-card,
+.success-card,
+.option-block,
+.buy-block,
+.order-tracker-card,
+.promo-banner,
+.search-field {
+  border: 1px solid var(--lux-card-border);
+  background: var(--lux-card-bg);
+  box-shadow: var(--lux-card-shadow);
+  color: var(--lux-text);
+}
+
+.lux-card {
+  backdrop-filter: blur(var(--lux-card-blur)) saturate(130%);
+  -webkit-backdrop-filter: blur(var(--lux-card-blur)) saturate(130%);
+}
+
+.product-card:hover,
+.cart-item:hover {
+  box-shadow: var(--lux-card-shadow), var(--lux-glow);
+}
+
+/* ------------------------------------------------------------
+   6. Header
+   ------------------------------------------------------------ */
+.top-bar {
+  border: 1px solid var(--lux-card-border);
+  border-radius: 20px;
+  background: var(--lux-header-bg);
   box-shadow:
-    0 16px 36px rgba(0, 0, 0, 0.46),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 16px 36px var(--lux-tint-strong),
+    inset 0 1px 0 var(--lux-sheen);
   backdrop-filter: blur(18px) saturate(135%);
   -webkit-backdrop-filter: blur(18px) saturate(135%);
 }
 
-.profile-lux .brand-title {
+.brand-icon {
+  color: var(--lux-gold-bright);
+  background: var(--lux-avatar-bg);
+  border: 1px solid var(--lux-gold-line-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.28),
+    0 0 18px var(--lux-gold-glow);
+}
+
+.brand-title {
   color: var(--lux-text-strong);
 }
 
-.profile-lux .brand-subtitle {
+.brand-subtitle {
   color: var(--lux-muted);
 }
 
-.profile-lux .brand-icon {
-  color: var(--lux-gold-bright);
-  background: linear-gradient(145deg, #1d1a15, #0c0b09);
-  border: 1px solid rgba(214, 178, 106, 0.36);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 8px 18px rgba(0, 0, 0, 0.45),
-    0 0 18px rgba(214, 178, 106, 0.12);
-}
-
-.profile-lux .icon-button {
+.icon-button,
+.ghost-icon-button,
+.theme-toggle {
   color: var(--lux-text);
-  border-color: var(--lux-line-strong);
-  background: rgba(255, 255, 255, 0.045);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--lux-gold-line-strong);
+  background: var(--lux-tint);
+  box-shadow: inset 0 1px 0 var(--lux-sheen);
 }
 
-.profile-lux .icon-button:hover {
+.icon-button:hover,
+.ghost-icon-button:hover,
+.theme-toggle:hover {
+  color: var(--lux-gold-bright);
+  border-color: var(--lux-gold-line-strong);
   box-shadow:
-    0 0 0 1px rgba(214, 178, 106, 0.18),
-    0 10px 22px rgba(0, 0, 0, 0.4);
+    0 0 0 1px var(--lux-gold-line),
+    0 10px 22px var(--lux-tint-strong),
+    0 0 18px var(--lux-gold-glow);
 }
 
-.profile-lux .language-switch {
-  border-color: var(--lux-line);
-  background: rgba(255, 255, 255, 0.045);
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  flex: 0 0 auto;
 }
 
-.profile-lux .language-switch button {
+.theme-toggle svg {
+  transition: transform 0.35s var(--ease);
+}
+
+.theme-toggle:active svg {
+  transform: rotate(-18deg) scale(0.92);
+}
+
+.cart-badge {
+  background: var(--lux-gold-gradient);
+  color: var(--lux-gold-text);
+  box-shadow: 0 0 14px var(--lux-gold-glow);
+}
+
+.language-switch {
+  border: 1px solid var(--lux-line);
+  background: var(--lux-tint);
+}
+
+.language-switch button {
   color: var(--lux-muted);
 }
 
-.profile-lux .language-switch button.active {
-  color: #171207;
-  background: linear-gradient(135deg, #f0d79c, #c19a52 55%, #a87f3c);
+.language-switch button:hover {
+  color: var(--lux-gold);
+}
+
+.language-switch button.active {
+  color: var(--lux-gold-text);
+  background: var(--lux-gold-gradient);
   box-shadow:
-    0 0 16px rgba(214, 178, 106, 0.42),
+    0 0 16px var(--lux-gold-glow),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
-.profile-lux .cart-badge {
-  color: #171207;
-  background: linear-gradient(135deg, #f3d894, #b8893f);
-  box-shadow: 0 0 14px rgba(214, 178, 106, 0.55);
+/* ------------------------------------------------------------
+   7. Buttons
+   ------------------------------------------------------------ */
+.primary-button,
+.add-button,
+.checkout-button {
+  color: var(--lux-gold-text);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: var(--lux-gold-gradient);
+  box-shadow: var(--lux-btn-shadow);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
-/* ---------- Shared bottom navigation (scoped) ---------- */
-.profile-lux .bottom-nav {
-  border: 1px solid var(--lux-line);
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 55%, rgba(0, 0, 0, 0.22));
+.primary-button::after,
+.add-button::after {
+  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.34) 50%, transparent 80%);
+}
+
+.primary-button:hover,
+.add-button:hover,
+.checkout-button:hover {
+  filter: brightness(1.04);
+  box-shadow: var(--lux-btn-shadow), var(--lux-glow);
+}
+
+.add-button.added {
+  color: #f2fff5;
+  border-color: rgba(120, 220, 150, 0.3);
+  background: linear-gradient(135deg, #2f6b3f, #1f4d2c);
   box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 12px 24px rgba(20, 60, 32, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  text-shadow: none;
+}
+
+.back-button {
+  color: var(--lux-text-soft);
+  border: 1px solid var(--lux-line);
+  background: var(--lux-tint);
+  box-shadow: inset 0 1px 0 var(--lux-sheen);
+}
+
+.back-button:hover {
+  color: var(--lux-gold);
+  border-color: var(--lux-gold-line-strong);
+}
+
+.remove-button {
+  color: var(--lux-danger);
+  border: 1px solid rgba(169, 74, 62, 0.24);
+  background: rgba(169, 74, 62, 0.08);
+}
+
+html[data-theme="dark"] .remove-button {
+  border-color: rgba(240, 121, 108, 0.24);
+  background: rgba(240, 121, 108, 0.1);
+}
+
+.favorite-button {
+  color: var(--lux-text-soft);
+  border: 1px solid var(--lux-gold-line);
+  background: var(--lux-surface-1);
+  box-shadow: 0 6px 16px var(--lux-tint-strong);
+}
+
+.favorite-button.active {
+  color: #c0564b;
+  border-color: rgba(192, 86, 75, 0.34);
+  background: rgba(255, 240, 238, 0.9);
+}
+
+html[data-theme="dark"] .favorite-button.active {
+  color: #ff9c90;
+  background: rgba(60, 24, 22, 0.75);
+}
+
+/* ------------------------------------------------------------
+   8. Hero / promo
+   ------------------------------------------------------------ */
+.hero {
+  border: 1px solid var(--lux-gold-line);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 24px 56px rgba(20, 16, 10, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.hero.hero-with-photo::after {
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(231, 211, 173, 0.28), transparent 45%),
+    radial-gradient(ellipse at 84% 82%, rgba(214, 178, 106, 0.16), transparent 46%),
+    linear-gradient(140deg, rgba(16, 14, 11, 0.76) 0%, rgba(32, 26, 18, 0.38) 50%, rgba(16, 14, 11, 0.7) 100%);
+}
+
+.hero .primary-button,
+.hero.hero-with-photo .primary-button {
+  color: #fdf6e8;
+  border: 1px solid rgba(243, 216, 148, 0.5);
+  background: rgba(18, 16, 12, 0.34);
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  text-shadow: none;
+}
+
+/* Hero sits on a dark photo in both themes, so its copy stays light. */
+.hero.hero-with-photo,
+.hero.hero-with-photo h2,
+.hero.hero-with-photo .product-title {
+  color: #fbf3e4;
+  text-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.hero.hero-with-photo p {
+  color: rgba(248, 243, 232, 0.9);
+}
+
+.hero.hero-with-photo .eyebrow {
+  color: rgba(231, 211, 173, 0.95);
+  text-shadow: 0 0 18px rgba(214, 178, 106, 0.45);
+}
+
+.promo-banner {
+  color: var(--lux-gold-bright);
+  border-radius: 16px;
+}
+
+.promo-banner:hover {
+  box-shadow: var(--lux-card-shadow), var(--lux-glow);
+}
+
+/* ------------------------------------------------------------
+   9. Catalog controls
+   ------------------------------------------------------------ */
+.search-field {
+  color: var(--lux-muted);
+  border-radius: 16px;
+}
+
+.search-field:focus-within {
+  border-color: var(--lux-gold-line-strong);
+  box-shadow: var(--lux-card-shadow), 0 0 0 3px rgba(214, 178, 106, 0.12);
+}
+
+.search-field input {
+  color: var(--lux-text);
+}
+
+.search-field input::placeholder,
+.form-field input::placeholder,
+.form-field textarea::placeholder,
+.meters-input-row input::placeholder {
+  color: var(--lux-muted);
+}
+
+.search-field button {
+  color: var(--lux-muted);
+}
+
+.chip,
+.meter-chip {
+  color: var(--lux-text-soft);
+  border: 1px solid var(--lux-line);
+  background: var(--lux-tint);
+}
+
+.chip:hover,
+.meter-chip:hover {
+  color: var(--lux-gold);
+  border-color: var(--lux-gold-line-strong);
+}
+
+.chip.active,
+.meter-chip.active {
+  color: var(--lux-gold-text);
+  border-color: transparent;
+  background: var(--lux-gold-gradient);
+  box-shadow:
+    0 6px 16px var(--lux-tint-strong),
+    0 0 18px var(--lux-gold-glow);
+}
+
+.sort-select {
+  color: var(--lux-text);
+  border: 1px solid var(--lux-line);
+  background: var(--lux-input-bg);
+}
+
+.result-count {
+  color: var(--lux-muted);
+}
+
+/* ------------------------------------------------------------
+   10. Product cards
+   ------------------------------------------------------------ */
+.product-card {
+  border-radius: 20px;
+}
+
+.product-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 var(--lux-sheen);
+}
+
+.product-image {
+  background: var(--lux-media-bg);
+}
+
+.product-image::after {
+  background:
+    linear-gradient(180deg, transparent 45%, rgba(16, 14, 10, 0.26) 100%),
+    radial-gradient(120% 80% at 0% 0%, rgba(214, 178, 106, 0.1), transparent 60%);
+}
+
+.product-category {
+  color: var(--lux-gold);
+  opacity: 0.85;
+}
+
+.product-card h3 {
+  color: var(--lux-text-strong);
+}
+
+.product-price {
+  color: var(--lux-gold);
+}
+
+.out-of-stock-badge {
+  color: #fdf6e8;
+  border: 1px solid rgba(243, 216, 148, 0.28);
+  background: rgba(18, 16, 12, 0.66);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ------------------------------------------------------------
+   11. Product detail
+   ------------------------------------------------------------ */
+.product-hero,
+.product-gallery {
+  background: var(--lux-media-bg);
+  border: 1px solid var(--lux-gold-line);
+  box-shadow: var(--lux-card-shadow);
+}
+
+.gallery-arrow {
+  color: var(--lux-text);
+  border: 1px solid var(--lux-gold-line);
+  background: var(--lux-surface-1);
+  box-shadow: var(--lux-card-shadow);
+}
+
+.gallery-counter {
+  color: #fdf6e8;
+  border: 1px solid rgba(243, 216, 148, 0.24);
+  background: rgba(16, 14, 10, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.gallery-thumb {
+  border: 1px solid var(--lux-line);
+  background: var(--lux-media-bg);
+}
+
+.gallery-thumb.active,
+.gallery-thumb:hover {
+  border-color: var(--lux-gold);
+  box-shadow:
+    0 0 0 1px var(--lux-gold-line),
+    0 6px 16px var(--lux-gold-glow);
+}
+
+.product-description {
+  color: var(--lux-text-soft);
+}
+
+.spec-row {
+  border-top: 1px solid var(--lux-line);
+  border-bottom: 1px solid var(--lux-line);
+}
+
+.spec-row span {
+  color: var(--lux-muted);
+}
+
+.spec-row strong {
+  color: var(--lux-text);
+}
+
+.option-block {
+  border-radius: 18px;
+}
+
+.option-block h3 {
+  color: var(--lux-text-strong);
+}
+
+.option-button {
+  color: var(--lux-text);
+  border: 1px solid var(--lux-line);
+  background: var(--lux-tint);
+}
+
+.option-button:hover {
+  border-color: var(--lux-gold-line-strong);
+}
+
+.option-button span {
+  color: var(--lux-text);
+}
+
+.option-button strong {
+  color: var(--lux-muted);
+}
+
+.option-button.active {
+  border-color: var(--lux-gold-line-strong);
+  background:
+    radial-gradient(120% 90% at 0% 0%, var(--lux-sheen-gold), transparent 62%),
+    var(--lux-surface-1);
+  box-shadow:
+    0 8px 20px var(--lux-tint-strong),
+    0 0 18px var(--lux-gold-glow);
+}
+
+.option-button.active strong {
+  color: var(--lux-gold);
+}
+
+.size-inputs label {
+  color: var(--lux-muted);
+}
+
+.size-inputs input,
+.meters-input-row input,
+.form-field input,
+.form-field textarea,
+.track-form input {
+  color: var(--lux-text);
+  border: 1px solid var(--lux-input-border);
+  background: var(--lux-input-bg);
+  box-shadow: inset 0 1px 0 var(--lux-sheen);
+}
+
+.size-inputs input:focus,
+.meters-input-row input:focus,
+.form-field input:focus,
+.form-field textarea:focus,
+.track-form input:focus {
+  border-color: var(--lux-gold);
+  box-shadow:
+    0 0 0 3px rgba(214, 178, 106, 0.14),
+    inset 0 1px 0 var(--lux-sheen);
+}
+
+.meters-input-row span {
+  color: var(--lux-muted);
+}
+
+.calc-box {
+  border: 1px solid var(--lux-well-border);
+  background: var(--lux-well);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.calc-box span {
+  color: var(--lux-muted);
+}
+
+.calc-box strong {
+  color: var(--lux-text);
+}
+
+.tier-row {
+  border: 1px solid var(--lux-line);
+  background: var(--lux-tint);
+  color: var(--lux-text-soft);
+}
+
+.tier-row.active {
+  border-color: var(--lux-gold-line-strong);
+  background:
+    radial-gradient(120% 90% at 0% 0%, var(--lux-sheen-gold), transparent 62%),
+    var(--lux-surface-1);
+}
+
+.tier-badge {
+  color: var(--lux-gold-text);
+  background: var(--lux-gold-gradient);
+  box-shadow: 0 0 14px var(--lux-gold-glow);
+}
+
+.color-dot {
+  border: 2px solid var(--lux-surface-1);
+  box-shadow: 0 0 0 1px var(--lux-line), var(--shadow-sm);
+  color: #fff;
+}
+
+.color-dot.active {
+  box-shadow: 0 0 0 2px var(--lux-gold), var(--shadow-sm);
+}
+
+.color-name {
+  color: var(--lux-muted);
+}
+
+.buy-block {
+  border-color: var(--lux-gold-line-strong);
+  border-radius: 20px;
+}
+
+.buy-label {
+  color: var(--lux-muted);
+}
+
+.buy-total strong {
+  color: var(--lux-gold);
+}
+
+.stepper {
+  border: 1px solid var(--lux-line);
+  background: var(--lux-tint);
+}
+
+.stepper button {
+  color: var(--lux-text);
+  background: var(--lux-input-bg);
+}
+
+.stepper button:hover:not(:disabled) {
+  color: var(--lux-gold);
+}
+
+/* ------------------------------------------------------------
+   12. Cart
+   ------------------------------------------------------------ */
+.cart-item {
+  border-radius: 18px;
+}
+
+.cart-thumb {
+  background: var(--lux-media-bg);
+  border: 1px solid var(--lux-line);
+}
+
+.cart-item-body h3 {
+  color: var(--lux-text-strong);
+}
+
+.cart-meta,
+.cart-unit {
+  color: var(--lux-muted);
+}
+
+.cart-item-footer strong {
+  color: var(--lux-gold);
+}
+
+.inline-color {
+  border: 1px solid var(--lux-line-strong);
+}
+
+.cart-summary {
+  border-radius: 20px;
+}
+
+.summary-row {
+  color: var(--lux-text-soft);
+}
+
+.summary-row strong {
+  color: var(--lux-gold);
+}
+
+.delivery-note,
+.soon-note {
+  color: var(--lux-muted);
+}
+
+/* ------------------------------------------------------------
+   13. Checkout
+   ------------------------------------------------------------ */
+.form-card {
+  border-radius: 20px;
+}
+
+.form-card-head h3 {
+  color: var(--lux-text-strong);
+}
+
+.form-card-head p {
+  color: var(--lux-muted);
+}
+
+.form-card-icon {
+  color: var(--lux-gold);
+  flex: 0 0 auto;
+}
+
+.success-icon {
+  color: var(--lux-success);
+  filter: drop-shadow(0 0 14px var(--lux-status-done-bg));
+}
+
+.form-field {
+  color: var(--lux-text-soft);
+}
+
+.form-field span {
+  color: var(--lux-muted);
+}
+
+.form-field em,
+.form-error {
+  color: var(--lux-danger);
+  font-style: normal;
+}
+
+.checkout-summary {
+  border-radius: 20px;
+}
+
+.checkout-line {
+  border-bottom: 1px dashed var(--lux-line);
+  color: var(--lux-text-soft);
+}
+
+.checkout-line strong {
+  color: var(--lux-gold);
+}
+
+.success-card {
+  border-radius: 24px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, var(--lux-sheen-gold), transparent 62%),
+    var(--lux-card-bg);
+  box-shadow: var(--lux-card-shadow), var(--lux-glow);
+}
+
+.success-card h2 {
+  color: var(--lux-text-strong);
+}
+
+.success-number {
+  color: var(--lux-gold);
+}
+
+.success-hint {
+  color: var(--lux-muted);
+}
+
+.track-form .primary-button {
+  width: auto;
+}
+
+/* ------------------------------------------------------------
+   14. Orders / tracker
+   ------------------------------------------------------------ */
+.profile-section {
+  border-radius: 20px;
+}
+
+.profile-section h3 {
+  color: var(--lux-text-strong);
+}
+
+.tracked-order {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.order-tracker-card {
+  border-radius: 18px;
+}
+
+.order-tracker-head {
+  border-bottom: 1px dashed var(--lux-line);
+}
+
+.order-tracker-icon {
+  color: var(--lux-gold-bright);
+  border: 1px solid var(--lux-gold-line);
+  background:
+    radial-gradient(120% 90% at 0% 0%, var(--lux-sheen-gold), transparent 62%),
+    var(--lux-tint);
+  box-shadow: inset 0 1px 0 var(--lux-sheen);
+}
+
+.order-tracker-label {
+  color: var(--lux-muted);
+}
+
+.order-tracker-number {
+  color: var(--lux-text-strong);
+}
+
+.order-step-line {
+  background: var(--lux-line);
+}
+
+.order-step.done .order-step-line {
+  background: var(--lux-success);
+  opacity: 0.7;
+}
+
+.order-step-icon {
+  border: 2px solid var(--lux-line);
+  background: var(--lux-input-bg);
+  color: var(--lux-muted);
+}
+
+.order-step.done .order-step-icon {
+  border-color: var(--lux-success);
+  background: var(--lux-status-done-bg);
+  color: var(--lux-status-done-text);
+}
+
+.order-step.active .order-step-icon {
+  border-color: var(--lux-gold);
+  background: rgba(214, 178, 106, 0.14);
+  color: var(--lux-gold);
+  box-shadow: 0 0 0 5px var(--lux-gold-line);
+  animation: orderPulse 1.8s ease-in-out infinite;
+}
+
+.order-step.cancelled .order-step-icon {
+  border-color: rgba(169, 74, 62, 0.4);
+  background: var(--lux-status-cancelled-bg);
+  color: var(--lux-status-cancelled-text);
+}
+
+@keyframes orderPulse {
+  0%, 100% { box-shadow: 0 0 0 4px var(--lux-gold-line); }
+  50% { box-shadow: 0 0 0 9px transparent; }
+}
+
+.order-step-label {
+  color: var(--lux-text);
+}
+
+.order-step.todo .order-step-label {
+  color: var(--lux-muted);
+}
+
+.order-step-state {
+  color: var(--lux-muted);
+}
+
+.order-step.done .order-step-state {
+  color: var(--lux-status-done-text);
+}
+
+.order-step.active .order-step-state {
+  color: var(--lux-gold);
+}
+
+.order-step.cancelled .order-step-label {
+  color: var(--lux-status-cancelled-text);
+}
+
+.status-pill.new {
+  background: var(--lux-status-new-bg);
+  color: var(--lux-status-new-text);
+  border: 1px solid transparent;
+}
+
+.status-pill.confirmed {
+  background: var(--lux-status-confirmed-bg);
+  color: var(--lux-status-confirmed-text);
+}
+
+.status-pill.delivering {
+  background: var(--lux-status-delivering-bg);
+  color: var(--lux-status-delivering-text);
+}
+
+.status-pill.done {
+  background: var(--lux-status-done-bg);
+  color: var(--lux-status-done-text);
+}
+
+.status-pill.cancelled {
+  background: var(--lux-status-cancelled-bg);
+  color: var(--lux-status-cancelled-text);
+}
+
+.order-tracker-success {
+  background: var(--lux-status-done-bg);
+  color: var(--lux-status-done-text);
+  border: 1px solid rgba(110, 210, 150, 0.18);
+}
+
+.order-tracker-success-icon {
+  color: var(--lux-status-done-text);
+  flex: 0 0 auto;
+}
+
+.order-tracker-cancelled {
+  background: var(--lux-status-cancelled-bg);
+  color: var(--lux-status-cancelled-text);
+  border: 1px solid rgba(240, 121, 108, 0.18);
+}
+
+.order-tracker-cancelled-icon {
+  color: var(--lux-status-cancelled-text);
+  flex: 0 0 auto;
+}
+
+.order-items {
+  border-top: 1px dashed var(--lux-line);
+}
+
+.order-items-title {
+  color: var(--lux-muted);
+}
+
+.order-item-photo {
+  border: 1px solid var(--lux-line);
+  background: var(--lux-media-bg);
+}
+
+.order-item-name {
+  color: var(--lux-text-strong);
+}
+
+.order-item-meta {
+  color: var(--lux-muted);
+}
+
+.tracked-order-meta {
+  color: var(--lux-muted);
+}
+
+.tracked-order-meta strong {
+  color: var(--lux-gold);
+}
+
+/* ------------------------------------------------------------
+   15. Empty / loading states
+   ------------------------------------------------------------ */
+.empty-state {
+  color: var(--lux-muted);
+}
+
+.empty-state svg {
+  color: var(--lux-gold);
+  filter: drop-shadow(0 0 12px var(--lux-gold-glow));
+}
+
+.empty-title {
+  color: var(--lux-text-strong);
+}
+
+.empty-hint {
+  color: var(--lux-muted);
+}
+
+.skeleton-image,
+.skeleton-line {
+  background: linear-gradient(
+    90deg,
+    var(--lux-tint) 0%,
+    var(--lux-surface-1) 45%,
+    var(--lux-tint) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ------------------------------------------------------------
+   16. Modals / location
+   ------------------------------------------------------------ */
+.modal-overlay {
+  background: var(--lux-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.location-modal,
+.store-info-modal {
+  border: 1px solid var(--lux-card-border);
+  border-radius: 24px;
+  background: var(--lux-modal-bg);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 var(--lux-sheen);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  color: var(--lux-text);
+}
+
+.location-modal-head h3 {
+  color: var(--lux-text-strong);
+}
+
+.contact-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 11px 0;
+  border-bottom: 1px dashed var(--lux-line);
+  color: var(--lux-text-soft);
+  font-size: 13px;
+}
+
+.contact-row:last-of-type {
+  border-bottom: 0;
+}
+
+.contact-row svg {
+  color: var(--lux-gold);
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.contact-row span {
+  color: var(--lux-muted);
+  flex: 1;
+}
+
+.contact-row strong {
+  color: var(--lux-text);
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.contact-note {
+  display: flex;
+  gap: 9px;
+  padding: 11px 0;
+  border-bottom: 1px dashed var(--lux-line);
+}
+
+.contact-note:last-child {
+  border-bottom: 0;
+}
+
+.contact-note svg {
+  color: var(--lux-gold);
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.contact-note span {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--lux-muted);
+}
+
+.contact-note p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--lux-text-soft);
+}
+
+.store-modal-map-wrap,
+.location-picker {
+  border: 1px solid var(--lux-gold-line);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 var(--lux-sheen);
+}
+
+.location-button,
+.location-chip {
+  color: var(--lux-text-soft);
+  border: 1px solid var(--lux-line);
+  background: var(--lux-tint);
+}
+
+.location-button:hover {
+  color: var(--lux-gold);
+  border-color: var(--lux-gold-line-strong);
+}
+
+.location-chip a {
+  color: var(--lux-gold);
+  font-weight: 600;
+}
+
+.location-pin-dot {
+  background: var(--lux-gold);
+  border: 3px solid var(--lux-bg-soft);
+  box-shadow: 0 0 12px var(--lux-gold-glow);
+}
+
+html[data-theme="dark"] .location-pin-dot {
+  border-color: #15161a;
+}
+
+.leaflet-container {
+  background: var(--lux-media-bg);
+}
+
+/* ------------------------------------------------------------
+   17. Bottom navigation
+   ------------------------------------------------------------ */
+.bottom-nav {
+  border: 1px solid var(--lux-card-border);
+  border-radius: 22px;
+  background: var(--lux-nav-bg);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 var(--lux-sheen);
   backdrop-filter: blur(20px) saturate(135%);
   -webkit-backdrop-filter: blur(20px) saturate(135%);
 }
 
-.profile-lux .bottom-nav button {
+.bottom-nav button {
   color: var(--lux-muted);
   position: relative;
 }
 
-.profile-lux .bottom-nav button.active {
+.bottom-nav button.active {
   color: var(--lux-gold-bright);
-  background: radial-gradient(120% 90% at 50% 0%, rgba(214, 178, 106, 0.2), transparent 72%);
-  text-shadow: 0 0 14px rgba(214, 178, 106, 0.45);
+  background: radial-gradient(120% 90% at 50% 0%, var(--lux-sheen-gold), transparent 72%);
+  text-shadow: 0 0 14px var(--lux-gold-glow);
 }
 
-.profile-lux .bottom-nav button.active svg {
-  filter: drop-shadow(0 0 8px rgba(214, 178, 106, 0.62));
+.bottom-nav button.active svg {
+  filter: drop-shadow(0 0 8px var(--lux-gold-glow));
 }
 
-.profile-lux .bottom-nav button.active::after {
+.bottom-nav button.active::after {
   content: "";
   position: absolute;
   bottom: 2px;
@@ -138,10 +1383,12 @@ body.profile-lux::before {
   border-radius: 999px;
   transform: translateX(-50%);
   background: linear-gradient(90deg, transparent, var(--lux-gold-bright), transparent);
-  box-shadow: 0 0 8px rgba(214, 178, 106, 0.7);
+  box-shadow: 0 0 8px var(--lux-gold-glow);
 }
 
-/* ---------- Glass card primitives ---------- */
+/* ------------------------------------------------------------
+   18. Luxury Glass primitives (used by Profile / VIP / Referral)
+   ------------------------------------------------------------ */
 .lux-card {
   position: relative;
   isolation: isolate;
@@ -149,15 +1396,6 @@ body.profile-lux::before {
   margin: 0 0 14px;
   padding: 17px;
   border-radius: 24px;
-  border: 1px solid var(--lux-line);
-  background:
-    radial-gradient(120% 90% at 0% 0%, rgba(214, 178, 106, 0.075), transparent 58%),
-    linear-gradient(158deg, rgba(255, 255, 255, 0.072), rgba(255, 255, 255, 0.02) 46%, rgba(0, 0, 0, 0.2));
-  box-shadow:
-    0 20px 44px rgba(0, 0, 0, 0.36),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(18px) saturate(130%);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
   overflow: hidden;
   animation: lux-rise 0.55s var(--ease) both;
 }
@@ -170,7 +1408,7 @@ body.profile-lux::before {
   right: 8%;
   height: 1px;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(243, 216, 148, 0.55), transparent);
+  background: linear-gradient(90deg, transparent, var(--lux-gold-line-strong), transparent);
   opacity: 0.75;
 }
 
@@ -217,11 +1455,13 @@ body.profile-lux::before {
   display: grid;
   place-items: center;
   color: var(--lux-gold-bright);
-  border: 1px solid rgba(214, 178, 106, 0.28);
-  background: linear-gradient(145deg, rgba(214, 178, 106, 0.18), rgba(214, 178, 106, 0.035));
+  border: 1px solid var(--lux-gold-line);
+  background:
+    radial-gradient(120% 90% at 0% 0%, var(--lux-sheen-gold), transparent 62%),
+    var(--lux-tint);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 8px 18px rgba(0, 0, 0, 0.28);
+    inset 0 1px 0 var(--lux-sheen),
+    0 8px 18px var(--lux-tint-strong);
 }
 
 .lux-loading,
@@ -236,46 +1476,67 @@ body.profile-lux::before {
   color: var(--lux-text-strong);
 }
 
-/* Smooth scrolling anchors from the quick sections */
 #profile-contacts,
 #profile-install {
   scroll-margin-top: 88px;
 }
 
-/* Focus states */
-.profile-lux button:focus-visible,
-.profile-lux a:focus-visible {
-  outline: 2px solid var(--lux-gold);
-  outline-offset: 2px;
-}
-
-/* ---------- Compact header on narrow phones ---------- */
-@media (max-width: 390px) {
-  .profile-lux .top-bar {
+/* ------------------------------------------------------------
+   19. Responsive header
+   ------------------------------------------------------------ */
+@media (max-width: 430px) {
+  .top-bar {
     gap: 8px;
     padding: 9px 10px;
+    border-radius: 18px;
   }
 
-  .profile-lux .brand {
+  .brand {
     gap: 9px;
   }
 
-  .profile-lux .brand-title {
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    font-size: 19px;
+  }
+
+  .brand-title {
     font-size: 12px;
     letter-spacing: 1.1px;
   }
 
-  .profile-lux .language-switch button {
-    padding: 5px 6px;
+  .header-actions {
+    gap: 6px;
   }
 
-  .profile-lux .icon-button {
-    width: 36px;
-    height: 36px;
+  .language-switch {
+    padding: 2px;
+  }
+
+  .language-switch button {
+    padding: 5px 5px;
+    font-size: 9.5px;
+  }
+
+  .icon-button,
+  .theme-toggle {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+  }
+
+  .cart-badge {
+    min-width: 16px;
+    height: 16px;
+    font-size: 9px;
   }
 }
 
-/* ---------- Motion ---------- */
+/* ------------------------------------------------------------
+   20. Motion
+   ------------------------------------------------------------ */
 @keyframes lux-rise {
   from {
     opacity: 0;
@@ -288,9 +1549,16 @@ body.profile-lux::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.profile-lux,
-  .lux-card {
+  .lux-card,
+  .order-step.active .order-step-icon {
     animation: none !important;
+  }
+
+  .theme-toggle svg,
+  .product-card,
+  .cart-item,
+  .chip,
+  .ref-btn {
     transition: none !important;
   }
 }

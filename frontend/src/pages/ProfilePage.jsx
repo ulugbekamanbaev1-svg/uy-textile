@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ChevronRight,
   Clock,
@@ -21,7 +21,6 @@ import { fetchStoreSettings } from "../services/api";
 import { openExternalLink } from "../utils/telegram";
 import ReferralSection from "../components/ReferralSection";
 import VipCard from "../components/VipCard";
-import "../styles/lux.css";
 import "./ProfilePage.css";
 
 function socialHandle(value) {
@@ -52,29 +51,6 @@ export default function ProfilePage({
   const [isInstalled, setIsInstalled] = useState(false);
   const [showInstallHelp, setShowInstallHelp] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
-
-  // Luxury Glass theme is scoped to the profile page only.
-  useLayoutEffect(() => {
-    document.body.classList.add("profile-lux");
-
-    const tg = window.Telegram?.WebApp;
-    try {
-      tg?.setHeaderColor?.("#0b0c0e");
-      tg?.setBackgroundColor?.("#0b0c0e");
-    } catch {
-      // ignore Telegram theming errors
-    }
-
-    return () => {
-      document.body.classList.remove("profile-lux");
-      try {
-        tg?.setHeaderColor?.("#f4efe6");
-        tg?.setBackgroundColor?.("#f4efe6");
-      } catch {
-        // ignore Telegram theming errors
-      }
-    };
-  }, []);
 
   useEffect(() => {
     fetchStoreSettings()

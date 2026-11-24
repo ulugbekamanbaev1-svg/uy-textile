@@ -66,7 +66,7 @@ export default function OrderStatusTracker({ status, order, t, lang }) {
 
         {cancelled ? (
           <div className="order-tracker-cancelled">
-            <XCircle size={26} color="#b3564a" />
+            <XCircle size={26} className="order-tracker-cancelled-icon" />
             <div>
               <strong>{t("statusCancelled")}</strong>
               <p className="option-hint">{t("orderCancelledHint")}</p>
@@ -160,7 +160,7 @@ export default function OrderStatusTracker({ status, order, t, lang }) {
 
         {status === "done" && (
           <div className="order-tracker-success">
-            <CheckCircle2 size={18} color="#2f6b45" />
+            <CheckCircle2 size={18} className="order-tracker-success-icon" />
             <span>{t("orderDeliveredSuccess")}</span>
           </div>
         )}
