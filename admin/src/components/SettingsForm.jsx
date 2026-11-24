@@ -156,6 +156,11 @@ export default function SettingsForm({
             t("settingsPaymentInfo"),
             t("contactPayment")
           )}
+          {textarea(
+            "delivery_districts",
+            t("settingsDeliveryDistricts"),
+            t("settingsDeliveryDistrictsHint")
+          )}
         </div>
       </section>
 

@@ -21,6 +21,7 @@ class StoreSettings(Base):
     working_hours: Mapped[str] = mapped_column(String(120), default="")
 
     delivery_info: Mapped[str] = mapped_column(Text, default="")
+    delivery_districts: Mapped[str] = mapped_column(Text, default="")
     payment_info: Mapped[str] = mapped_column(Text, default="")
 
     instagram: Mapped[str] = mapped_column(String(120), default="")

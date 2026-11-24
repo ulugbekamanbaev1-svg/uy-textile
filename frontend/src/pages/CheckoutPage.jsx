@@ -23,7 +23,8 @@ export default function CheckoutPage({
   telegramUser,
   onBack,
   onClearCart,
-  onContinue
+  onContinue,
+  storeSettings
 }) {
   const [name, setName] = useState(
     [telegramUser?.first_name, telegramUser?.last_name]
@@ -32,6 +33,7 @@ export default function CheckoutPage({
   );
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [deliveryDistrict, setDeliveryDistrict] = useState("");
   const [comment, setComment] = useState("");
   const [coords, setCoords] = useState(null);
   const [locationError, setLocationError] = useState(false);
@@ -104,12 +106,23 @@ export default function CheckoutPage({
     );
   };
 
+  const deliveryDistricts = (() => {
+    const raw = String(storeSettings?.delivery_districts || "").trim();
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((x) => String(x).trim()).filter(Boolean);
+    } catch {}
+    return raw.split(/\r?\n|,/).map((x) => x.trim()).filter(Boolean);
+  })();
+
   const validate = () => {
     const next = {};
 
     if (name.trim().length < 2) next.name = t("nameError");
     if (phone.replace(/\D/g, "").length < 7) next.phone = t("phoneError");
     if (address.trim().length < 3) next.address = t("addressError");
+    if (deliveryDistricts.length > 0 && !deliveryDistrict) next.deliveryDistrict = t("districtError");
 
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -131,6 +144,7 @@ export default function CheckoutPage({
         customer_name: name.trim(),
         phone: phone.trim(),
         address: address.trim(),
+        delivery_district: deliveryDistrict.trim(),
         comment: comment.trim(),
         latitude: coords?.latitude ?? null,
         longitude: coords?.longitude ?? null,
@@ -207,6 +221,17 @@ export default function CheckoutPage({
             />
             {errors.address && <em>{errors.address}</em>}
           </label>
+
+          {deliveryDistricts.length > 0 && (
+            <label className="form-field">
+              <span>{t("deliveryDistrict")}</span>
+              <select value={deliveryDistrict} onChange={(event) => setDeliveryDistrict(event.target.value)}>
+                <option value="">{t("selectDistrict")}</option>
+                {deliveryDistricts.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+              {errors.deliveryDistrict && <em>{errors.deliveryDistrict}</em>}
+            </label>
+          )}
 
           <label className="form-field">
             <span>{t("commentLabel")}</span>

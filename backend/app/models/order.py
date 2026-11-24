@@ -27,6 +27,7 @@ class Order(Base):
     customer_name: Mapped[str] = mapped_column(String(150), nullable=False)
     phone: Mapped[str] = mapped_column(String(40), nullable=False)
     address: Mapped[str] = mapped_column(Text, default="")
+    delivery_district: Mapped[str] = mapped_column(String(120), default="")
     comment: Mapped[str] = mapped_column(Text, default="")
 
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)

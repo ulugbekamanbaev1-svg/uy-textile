@@ -13,6 +13,7 @@ import {
   Smartphone,
   Sparkles,
   Truck,
+  Users,
   Wifi,
   WifiOff,
   X
@@ -44,7 +45,8 @@ export default function ProfilePage({
   onCart,
   onFavorites,
   onOrders,
-  onCurrency
+  onCurrency,
+  onGroupPurchase
 }) {
   const [store, setStore] = useState(null);
 
@@ -248,6 +250,21 @@ export default function ProfilePage({
           <span className="lux-quick-text">
             <strong>{t("currencyTitle")}</strong>
             <small>{t("currencyProfileHint")}</small>
+          </span>
+          <ChevronRight size={18} className="lux-quick-arrow" />
+        </button>
+
+        <button
+          type="button"
+          className="lux-quick-row"
+          onClick={onGroupPurchase}
+        >
+          <span className="lux-quick-icon">
+            <Users size={18} />
+          </span>
+          <span className="lux-quick-text">
+            <strong>{t("gpTitle")}</strong>
+            <small>{t("gpProfileHint")}</small>
           </span>
           <ChevronRight size={18} className="lux-quick-arrow" />
         </button>

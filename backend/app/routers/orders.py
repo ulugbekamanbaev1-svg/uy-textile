@@ -211,6 +211,7 @@ async def create_order(
         customer_name=payload.customer_name.strip(),
         phone=payload.phone.strip(),
         address=payload.address.strip(),
+        delivery_district=payload.delivery_district.strip(),
         comment=payload.comment.strip(),
         latitude=payload.latitude,
         longitude=payload.longitude,

@@ -20,6 +20,7 @@ class OrderCreate(BaseModel):
     customer_name: str = Field(min_length=2, max_length=150)
     phone: str = Field(min_length=7, max_length=40)
     address: str = Field(default="", max_length=500)
+    delivery_district: str = Field(default="", max_length=120)
     comment: str = Field(default="", max_length=1000)
 
     latitude: float | None = Field(default=None, ge=-90, le=90)
@@ -66,6 +67,7 @@ class OrderOut(BaseModel):
     customer_name: str
     phone: str
     address: str
+    delivery_district: str = ""
     comment: str
     latitude: float | None = None
     longitude: float | None = None

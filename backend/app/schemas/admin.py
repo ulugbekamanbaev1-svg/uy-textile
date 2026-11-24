@@ -249,6 +249,7 @@ class StoreSettingsIn(BaseModel):
     address: str = Field(default="", max_length=255)
     working_hours: str = Field(default="", max_length=120)
     delivery_info: str = Field(default="", max_length=2000)
+    delivery_districts: str = Field(default="", max_length=5000)
     payment_info: str = Field(default="", max_length=2000)
     instagram: str = Field(default="", max_length=120)
     telegram: str = Field(default="", max_length=120)
