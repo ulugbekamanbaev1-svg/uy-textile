@@ -148,6 +148,8 @@ class GroupPurchasePayment(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    group: Mapped["GroupPurchase"] = relationship(back_populates="payments")
+
 
 class GroupPurchaseEvent(Base):
     __tablename__ = "group_purchase_events"
@@ -161,3 +163,5 @@ class GroupPurchaseEvent(Base):
     new_value: Mapped[str] = mapped_column(Text, default="")
     reason: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    group: Mapped["GroupPurchase"] = relationship(back_populates="events")
