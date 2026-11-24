@@ -1276,9 +1276,11 @@ export default function App() {
               "map",
               "broadcast",
               "qr",
+              "currency",
               "referral",
               "vip",
               "calendar",
+              "group-purchase",
               "analytics",
               "settings",
               "categories"
