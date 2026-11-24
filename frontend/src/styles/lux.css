@@ -1,0 +1,296 @@
+/* ============================================================
+   Farrux Shop — Luxury Glass profile theme
+   Scoped to the profile page through `body.profile-lux`.
+   Other pages keep the existing light storefront look.
+   ============================================================ */
+
+body.profile-lux {
+  --lux-gold: #d6b26a;
+  --lux-gold-bright: #f3d894;
+  --lux-gold-deep: #a87f3c;
+  --lux-text: #f3ede2;
+  --lux-text-strong: #fbf3e4;
+  --lux-muted: rgba(232, 216, 190, 0.62);
+  --lux-line: rgba(214, 178, 106, 0.16);
+  --lux-line-strong: rgba(214, 178, 106, 0.32);
+  --lux-ink: #0b0c0e;
+  --lux-ink-soft: #15161a;
+
+  color: var(--lux-text);
+  background:
+    radial-gradient(900px 520px at 8% -12%, rgba(214, 178, 106, 0.16), transparent 62%),
+    radial-gradient(720px 460px at 104% 6%, rgba(126, 142, 162, 0.12), transparent 58%),
+    radial-gradient(760px 540px at 50% 108%, rgba(168, 127, 60, 0.1), transparent 62%),
+    linear-gradient(180deg, #0b0c0e 0%, #121317 52%, #090a0c 100%);
+  overflow-x: hidden;
+}
+
+body.profile-lux::before {
+  background-image: radial-gradient(rgba(214, 178, 106, 0.09) 0.5px, transparent 0.5px);
+  background-size: 3px 3px;
+  opacity: 0.5;
+}
+
+.profile-lux .app {
+  padding-bottom: calc(122px + env(safe-area-inset-bottom));
+}
+
+/* ---------- Shared header (scoped) ---------- */
+.profile-lux .top-bar {
+  border: 1px solid var(--lux-line);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015) 55%, rgba(0, 0, 0, 0.18));
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+
+.profile-lux .brand-title {
+  color: var(--lux-text-strong);
+}
+
+.profile-lux .brand-subtitle {
+  color: var(--lux-muted);
+}
+
+.profile-lux .brand-icon {
+  color: var(--lux-gold-bright);
+  background: linear-gradient(145deg, #1d1a15, #0c0b09);
+  border: 1px solid rgba(214, 178, 106, 0.36);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.45),
+    0 0 18px rgba(214, 178, 106, 0.12);
+}
+
+.profile-lux .icon-button {
+  color: var(--lux-text);
+  border-color: var(--lux-line-strong);
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.profile-lux .icon-button:hover {
+  box-shadow:
+    0 0 0 1px rgba(214, 178, 106, 0.18),
+    0 10px 22px rgba(0, 0, 0, 0.4);
+}
+
+.profile-lux .language-switch {
+  border-color: var(--lux-line);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.profile-lux .language-switch button {
+  color: var(--lux-muted);
+}
+
+.profile-lux .language-switch button.active {
+  color: #171207;
+  background: linear-gradient(135deg, #f0d79c, #c19a52 55%, #a87f3c);
+  box-shadow:
+    0 0 16px rgba(214, 178, 106, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.profile-lux .cart-badge {
+  color: #171207;
+  background: linear-gradient(135deg, #f3d894, #b8893f);
+  box-shadow: 0 0 14px rgba(214, 178, 106, 0.55);
+}
+
+/* ---------- Shared bottom navigation (scoped) ---------- */
+.profile-lux .bottom-nav {
+  border: 1px solid var(--lux-line);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 55%, rgba(0, 0, 0, 0.22));
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(135%);
+  -webkit-backdrop-filter: blur(20px) saturate(135%);
+}
+
+.profile-lux .bottom-nav button {
+  color: var(--lux-muted);
+  position: relative;
+}
+
+.profile-lux .bottom-nav button.active {
+  color: var(--lux-gold-bright);
+  background: radial-gradient(120% 90% at 50% 0%, rgba(214, 178, 106, 0.2), transparent 72%);
+  text-shadow: 0 0 14px rgba(214, 178, 106, 0.45);
+}
+
+.profile-lux .bottom-nav button.active svg {
+  filter: drop-shadow(0 0 8px rgba(214, 178, 106, 0.62));
+}
+
+.profile-lux .bottom-nav button.active::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 14px;
+  height: 2px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, var(--lux-gold-bright), transparent);
+  box-shadow: 0 0 8px rgba(214, 178, 106, 0.7);
+}
+
+/* ---------- Glass card primitives ---------- */
+.lux-card {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  margin: 0 0 14px;
+  padding: 17px;
+  border-radius: 24px;
+  border: 1px solid var(--lux-line);
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(214, 178, 106, 0.075), transparent 58%),
+    linear-gradient(158deg, rgba(255, 255, 255, 0.072), rgba(255, 255, 255, 0.02) 46%, rgba(0, 0, 0, 0.2));
+  box-shadow:
+    0 20px 44px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  overflow: hidden;
+  animation: lux-rise 0.55s var(--ease) both;
+}
+
+.lux-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(243, 216, 148, 0.55), transparent);
+  opacity: 0.75;
+}
+
+.lux-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.lux-section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  margin-bottom: 13px;
+}
+
+.lux-section-head > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.lux-section-head h3 {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: 0.2px;
+  color: var(--lux-text-strong);
+}
+
+.lux-section-head p {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--lux-muted);
+}
+
+.lux-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--lux-gold-bright);
+  border: 1px solid rgba(214, 178, 106, 0.28);
+  background: linear-gradient(145deg, rgba(214, 178, 106, 0.18), rgba(214, 178, 106, 0.035));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+.lux-loading,
+.lux-empty {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--lux-muted);
+}
+
+.lux-card h4 {
+  color: var(--lux-text-strong);
+}
+
+/* Smooth scrolling anchors from the quick sections */
+#profile-contacts,
+#profile-install {
+  scroll-margin-top: 88px;
+}
+
+/* Focus states */
+.profile-lux button:focus-visible,
+.profile-lux a:focus-visible {
+  outline: 2px solid var(--lux-gold);
+  outline-offset: 2px;
+}
+
+/* ---------- Compact header on narrow phones ---------- */
+@media (max-width: 390px) {
+  .profile-lux .top-bar {
+    gap: 8px;
+    padding: 9px 10px;
+  }
+
+  .profile-lux .brand {
+    gap: 9px;
+  }
+
+  .profile-lux .brand-title {
+    font-size: 12px;
+    letter-spacing: 1.1px;
+  }
+
+  .profile-lux .language-switch button {
+    padding: 5px 6px;
+  }
+
+  .profile-lux .icon-button {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* ---------- Motion ---------- */
+@keyframes lux-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.profile-lux,
+  .lux-card {
+    animation: none !important;
+    transition: none !important;
+  }
+}

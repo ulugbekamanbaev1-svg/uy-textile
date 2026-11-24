@@ -1,85 +1,170 @@
 import { useEffect, useState } from "react";
-import { Copy, Download, Gift, QrCode } from "lucide-react";
+import { Copy, Download, FileText, Gift, QrCode } from "lucide-react";
+
 import { downloadReferralFile, fetchReferralMe } from "../services/api";
 import { formatPrice } from "../utils/format";
+import "./ReferralSection.css";
 
 export default function ReferralSection({ t, lang }) {
   const [data, setData] = useState(null);
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(false);
+  const [busy, setBusy] = useState("");
 
   useEffect(() => {
     let alive = true;
+
     fetchReferralMe()
-      .then((d) => { if (alive) setData(d); })
-      .catch((e) => { if (alive) setError(e.message || ""); });
-    return () => { alive = false; };
+      .then((d) => {
+        if (alive) setData(d);
+      })
+      .catch(() => {
+        if (alive) setError(true);
+      });
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const copyLink = async () => {
     if (!data?.link) return;
+
     try {
       await navigator.clipboard.writeText(data.link);
     } catch {
-      const ta = document.createElement("textarea");
-      ta.value = data.link; document.body.appendChild(ta); ta.select();
-      document.execCommand("copy"); ta.remove();
+      const textarea = document.createElement("textarea");
+      textarea.value = data.link;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
     }
+
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
 
+  const download = async (kind) => {
+    if (busy) return;
+
+    setBusy(kind);
+    try {
+      await downloadReferralFile(kind);
+    } catch {
+      // Keep the existing silent download behaviour.
+    } finally {
+      setBusy("");
+    }
+  };
+
   if (error) return null;
-  if (!data) return (
-    <section className="profile-section"><h3>{t("referralTitle")}</h3><p className="option-hint">{t("loading")}</p></section>
-  );
+
+  if (!data) {
+    return (
+      <section className="lux-card lux-referral">
+        <div className="lux-section-head">
+          <span className="lux-icon">
+            <Gift size={18} />
+          </span>
+          <div>
+            <h3>{t("referralTitle")}</h3>
+            <p>{t("referralSubtitle")}</p>
+          </div>
+        </div>
+        <p className="lux-loading">{t("loading")}</p>
+      </section>
+    );
+  }
 
   return (
-    <section className="profile-section">
-      <h3><Gift size={18} style={{verticalAlign:"middle", marginRight:8}} />{t("referralTitle")}</h3>
+    <section className="lux-card lux-referral">
+      <div className="lux-section-head">
+        <span className="lux-icon">
+          <Gift size={18} />
+        </span>
+        <div>
+          <h3>{t("referralTitle")}</h3>
+          <p>{t("referralSubtitle")}</p>
+        </div>
+      </div>
 
-      <div className="contact-list" style={{ marginTop: 12 }}>
-        <div className="contact-row" style={{alignItems:"flex-start"}}>
-          <QrCode size={16} />
+      <div className="ref-link-box">
+        <span className="ref-link-icon">
+          <QrCode size={17} />
+        </span>
+        <div className="ref-link-body">
           <span>{t("referralMyLink")}</span>
-          <strong style={{wordBreak:"break-all", fontSize:13}}>{data.link}</strong>
+          <strong>{data.link}</strong>
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-        <button type="button" className="primary-button" onClick={copyLink} style={{flex:1, minWidth:140}}>
-          <Copy size={16} /> {copied ? t("referralCopied") : t("referralCopy")}
+      <div className="ref-actions">
+        <button
+          type="button"
+          className="ref-btn ref-btn-primary"
+          onClick={copyLink}
+        >
+          <Copy size={16} />
+          {copied ? t("referralCopied") : t("referralCopy")}
         </button>
-        <button type="button" className="primary-button" onClick={() => downloadReferralFile("png").catch(()=>{})} style={{flex:1, minWidth:140}}>
-          <Download size={16} /> PNG
+
+        <button
+          type="button"
+          className="ref-btn"
+          onClick={() => download("png")}
+          disabled={busy === "png"}
+          aria-label={t("referralDownloadQr")}
+        >
+          <Download size={16} />
+          PNG
         </button>
-        <button type="button" className="primary-button" onClick={() => downloadReferralFile("pdf").catch(()=>{})} style={{flex:1, minWidth:140}}>
-          <Download size={16} /> PDF
+
+        <button
+          type="button"
+          className="ref-btn"
+          onClick={() => download("pdf")}
+          disabled={busy === "pdf"}
+          aria-label={t("referralDownloadCard")}
+        >
+          <FileText size={16} />
+          PDF
         </button>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10, marginTop:16 }}>
-        <div className="profile-link-row" style={{flexDirection:"column", alignItems:"flex-start", gap:4}}>
-          <span>{t("referralInvited")}</span><strong>{data.invited_count}</strong>
+      <div className="ref-stats">
+        <div className="ref-stat">
+          <span>{t("referralInvited")}</span>
+          <strong>{data.invited_count}</strong>
         </div>
-        <div className="profile-link-row" style={{flexDirection:"column", alignItems:"flex-start", gap:4}}>
-          <span>{t("referralSuccessful")}</span><strong>{data.successful_count}</strong>
+
+        <div className="ref-stat">
+          <span>{t("referralSuccessful")}</span>
+          <strong>{data.successful_count}</strong>
         </div>
-        <div className="profile-link-row" style={{flexDirection:"column", alignItems:"flex-start", gap:4}}>
-          <span>{t("referralEarned")}</span><strong>{formatPrice(data.earned_total, lang)}</strong>
+
+        <div className="ref-stat">
+          <span>{t("referralEarned")}</span>
+          <strong>{formatPrice(data.earned_total, lang)}</strong>
         </div>
       </div>
 
-      <div style={{ marginTop: 16 }}>
-        <h4 style={{ marginBottom: 8 }}>{t("referralHistory")}</h4>
+      <div className="ref-history">
+        <h4>{t("referralHistory")}</h4>
+
         {(data.rewards || []).length === 0 ? (
-          <p className="option-hint">{t("referralNoRewards")}</p>
+          <p className="lux-empty">{t("referralNoRewards")}</p>
         ) : (
-          <div className="contact-list">
-            {data.rewards.map((r) => (
-              <div className="profile-link-row" key={r.id}>
-                <span>{r.created_at ? new Date(r.created_at).toLocaleDateString() : ""} · {r.status}</span>
-                <strong>{formatPrice(r.amount, lang)}</strong>
+          <div className="ref-history-list">
+            {data.rewards.map((reward) => (
+              <div className="ref-history-row" key={reward.id}>
+                <span>
+                  {reward.created_at
+                    ? new Date(reward.created_at).toLocaleDateString()
+                    : ""}
+                  {reward.status ? ` · ${reward.status}` : ""}
+                </span>
+                <strong>{formatPrice(reward.amount, lang)}</strong>
               </div>
             ))}
           </div>

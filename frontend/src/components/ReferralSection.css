@@ -1,0 +1,219 @@
+/* ============================================================
+   Farrux Shop — referral block (Luxury Glass)
+   ============================================================ */
+
+.ref-link-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(214, 178, 106, 0.16);
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(214, 178, 106, 0.07), transparent 62%),
+    rgba(0, 0, 0, 0.18);
+}
+
+.ref-link-icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--lux-gold-bright);
+  border: 1px solid rgba(214, 178, 106, 0.22);
+  background: rgba(214, 178, 106, 0.09);
+}
+
+.ref-link-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ref-link-body span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--lux-muted);
+}
+
+.ref-link-body strong {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #f4e7cf;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Actions ---------- */
+.ref-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ref-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 13px;
+  border: 1px solid rgba(214, 178, 106, 0.22);
+  background: rgba(255, 255, 255, 0.035);
+  color: #f0e3c8;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  transition:
+    background 0.22s var(--ease),
+    border-color 0.22s var(--ease),
+    transform 0.22s var(--ease);
+}
+
+.ref-btn:hover {
+  border-color: rgba(214, 178, 106, 0.42);
+  background: rgba(214, 178, 106, 0.1);
+}
+
+.ref-btn:active {
+  transform: scale(0.99);
+}
+
+.ref-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ref-btn svg {
+  flex: 0 0 auto;
+}
+
+.ref-btn-primary {
+  grid-column: 1 / -1;
+  color: #191307;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #f0d79c 0%, #d6b26a 46%, #b8893f 100%);
+  box-shadow:
+    0 10px 22px rgba(214, 178, 106, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+
+.ref-btn-primary:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: linear-gradient(135deg, #f4dda6 0%, #dcb972 46%, #bf8f44 100%);
+  filter: brightness(1.02);
+}
+
+/* ---------- Stats ---------- */
+.ref-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ref-stat {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ref-stat span {
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--lux-muted);
+}
+
+.ref-stat strong {
+  font-size: clamp(12px, 3.4vw, 14px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #f5e8ce;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- History ---------- */
+.ref-history {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(214, 178, 106, 0.12);
+}
+
+.ref-history h4 {
+  margin: 0 0 10px;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--lux-text-strong);
+}
+
+.ref-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ref-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ref-history-row span {
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--lux-muted);
+  overflow-wrap: anywhere;
+}
+
+.ref-history-row strong {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lux-gold-bright);
+  white-space: nowrap;
+}
+
+@media (min-width: 480px) {
+  .ref-actions {
+    grid-template-columns: 1.6fr 1fr 1fr;
+  }
+
+  .ref-btn-primary {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ref-btn {
+    transition: none !important;
+  }
+}

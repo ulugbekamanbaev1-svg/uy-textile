@@ -105,7 +105,14 @@ export default function App() {
       if (tg.initData) {
         telegramLogin(tg.initData)
           .then((data) => {
-            setTelegramUser(data.user);
+            // Keep the real Telegram profile fields (photo, last name, telegram id)
+            // while refreshing the fields returned by the backend.
+            setTelegramUser((previous) => ({
+              ...(data.user || {}),
+              ...(previous || {}),
+              first_name: data.user?.first_name || previous?.first_name,
+              username: data.user?.username || previous?.username
+            }));
             setAuthState("ok");
           })
           .catch(() => setAuthState("error"));

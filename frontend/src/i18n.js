@@ -100,8 +100,13 @@ export const translations = {
     profileTitle: "Профиль",
     profileGuest: "Гость",
     profileTelegram: "Telegram",
+    profileQuickTitle: "Быстрые разделы",
+    profileQuickOrdersHint: "Статус и история заказов",
+    profileQuickContactsHint: "Телефон, адрес и время работы",
+    profileQuickAppHint: "Установить на главный экран",
     languageHint: "Выберите язык интерфейса",
     serverStatus: "Состояние сервера",
+    serverStatusHint: "Проверка соединения с сервером",
     favoritesTitle: "Избранное",
     favoritesEmpty: "Пока ничего нет в избранном",
     favoritesHint: "Нажмите на сердечко в карточке товара.",
@@ -171,6 +176,7 @@ export const translations = {
 
 
     referralTitle: "Пригласите друзей",
+    referralSubtitle: "Приглашайте друзей и получайте бонусы",
     referralMyLink: "Моя ссылка приглашения",
     referralMyQr: "Мой QR-код",
     referralCopy: "Скопировать ссылку",
@@ -183,6 +189,8 @@ export const translations = {
     referralHistory: "История бонусов",
     referralNoRewards: "Пока бонусов нет",
     vipTitle: "Мой VIP-статус",
+    vipSubtitle: "Статус рассчитывается по завершённым заказам",
+    vipOrdersLeft: "{count} заказов",
     vipCurrent: "Текущий статус",
     vipCompletedOrders: "Завершённые заказы",
     vipCompletedAmount: "Сумма завершённых покупок",
@@ -193,6 +201,7 @@ export const translations = {
     vipNoHistory: "История пока пуста",
 
     contactsTitle: "Контакты магазина",
+    contactsSubtitle: "Адрес и контактные данные",
     contactPhone: "Телефон",
     contactAddress: "Адрес",
     contactHours: "Часы работы",
@@ -204,7 +213,16 @@ export const translations = {
     storeInfoSubtitle: "Информация и местоположение магазина",
     openInMaps: "Открыть на карте",
     storeLocationEmpty: "Информация о магазине пока не указана",
-    close: "Закрыть"
+    close: "Закрыть",
+
+    appInstallTitle: "Farrux Shop — приложение",
+    appInstallText: "Установите магазин на главный экран телефона и открывайте в любое время.",
+    appInstallButton: "Установить приложение",
+    appInstalled: "Приложение уже установлено",
+    appInstallHelpTitle: "Установка приложения Farrux Shop",
+    appInstallAndroid: "откройте магазин в Google Chrome, нажмите меню ⋮ и выберите «Установить приложение» или «Добавить на главный экран».",
+    appInstallIphone: "откройте магазин в Safari, нажмите «Поделиться», затем «На экран „Домой“».",
+    appOpenInBrowser: "Открыть магазин в браузере"
   },
 
   uz: {
@@ -303,8 +321,13 @@ export const translations = {
     profileTitle: "Profil",
     profileGuest: "Mehmon",
     profileTelegram: "Telegram",
+    profileQuickTitle: "Tezkor bo'limlar",
+    profileQuickOrdersHint: "Buyurtmalar holati va tarixi",
+    profileQuickContactsHint: "Telefon, manzil va ish vaqti",
+    profileQuickAppHint: "Bosh ekranga o'rnatish",
     languageHint: "Interfeys tilini tanlang",
     serverStatus: "Server holati",
+    serverStatusHint: "Server bilan aloqa holati",
     favoritesTitle: "Sevimlilar",
     favoritesEmpty: "Hozircha sevimlilarda hech narsa yo'q",
     favoritesHint: "Mahsulot kartasidagi yurakchani bosing.",
@@ -374,6 +397,7 @@ export const translations = {
 
 
     referralTitle: "Do'stlarni taklif qilish",
+    referralSubtitle: "Do'stlaringizni taklif qiling va bonuslarga ega bo'ling",
     referralMyLink: "Mening taklif havolam",
     referralMyQr: "QR kodim",
     referralCopy: "Havolani nusxalash",
@@ -386,6 +410,8 @@ export const translations = {
     referralHistory: "Bonuslar tarixi",
     referralNoRewards: "Hozircha bonuslar yo'q",
     vipTitle: "Mening VIP maqomim",
+    vipSubtitle: "Maqom yakunlangan buyurtmalar asosida hisoblanadi",
+    vipOrdersLeft: "{count} ta buyurtma",
     vipCurrent: "Joriy maqom",
     vipCompletedOrders: "Yakunlangan buyurtmalar",
     vipCompletedAmount: "Yakunlangan xaridlar summasi",
@@ -396,6 +422,7 @@ export const translations = {
     vipNoHistory: "Hozircha tarix yo'q",
 
     contactsTitle: "Do'kon kontaktlari",
+    contactsSubtitle: "Manzil va aloqa ma'lumotlari",
     contactPhone: "Telefon",
     contactAddress: "Manzil",
     contactHours: "Ish vaqti",
@@ -407,7 +434,16 @@ export const translations = {
     storeInfoSubtitle: "Do'kon haqida ma'lumot va joylashuv",
     openInMaps: "Xaritada ochish",
     storeLocationEmpty: "Do'kon haqida ma'lumot hali kiritilmagan",
-    close: "Yopish"
+    close: "Yopish",
+
+    appInstallTitle: "Farrux Shop — ilova",
+    appInstallText: "Do'konni telefoningiz bosh ekraniga o'rnating va istalgan vaqtda oching.",
+    appInstallButton: "Ilovani o'rnatish",
+    appInstalled: "Ilova allaqachon o'rnatilgan",
+    appInstallHelpTitle: "Farrux Shop ilovasini o'rnatish",
+    appInstallAndroid: "do'konni Google Chrome'da oching, ⋮ menyusini bosing va «Ilovani o'rnatish» yoki «Bosh ekranga qo'shish»ni tanlang.",
+    appInstallIphone: "do'konni Safari'da oching, «Ulashish» tugmasini bosing, so'ng «Bosh ekranga qo'shish»ni tanlang.",
+    appOpenInBrowser: "Do'konni brauzerda ochish"
   },
 
   uzc: {
@@ -506,8 +542,13 @@ export const translations = {
     profileTitle: "Профиль",
     profileGuest: "Меҳмон",
     profileTelegram: "Telegram",
+    profileQuickTitle: "Тезкор бўлимлар",
+    profileQuickOrdersHint: "Буюртмалар ҳолати ва тарихи",
+    profileQuickContactsHint: "Телефон, манзил ва иш вақти",
+    profileQuickAppHint: "Бош экранга ўрнатиш",
     languageHint: "Интерфейс тилини танланг",
     serverStatus: "Сервер ҳолати",
+    serverStatusHint: "Сервер билан алоқа ҳолати",
     favoritesTitle: "Севимлилар",
     favoritesEmpty: "Ҳозирча севимлиларда ҳеч нарса йўқ",
     favoritesHint: "Маҳсулот картасидаги юракчани босинг.",
@@ -577,6 +618,7 @@ export const translations = {
     orderItemsTitle: "Буюртмани таркиби",
 
     referralTitle: "Дўстларни таклиф қилиш",
+    referralSubtitle: "Дўстларингизни таклиф қилинг ва бонусларга эга бўлинг",
     referralMyLink: "Менинг таклиф ҳаволам",
     referralMyQr: "QR кодим",
     referralCopy: "Ҳаволани нусхалаш",
@@ -589,6 +631,8 @@ export const translations = {
     referralHistory: "Бонуслар тарихи",
     referralNoRewards: "Ҳозирча бонуслар йўқ",
     vipTitle: "Менинг VIP мақомим",
+    vipSubtitle: "Мақом якунланган буюртмалар асосида ҳисобланади",
+    vipOrdersLeft: "{count} та буюртма",
     vipCurrent: "Жорий мақом",
     vipCompletedOrders: "Якунланган буюртмалар",
     vipCompletedAmount: "Якунланган харидлар суммаси",
@@ -599,6 +643,7 @@ export const translations = {
     vipNoHistory: "Ҳозирча тарих йўқ",
 
     contactsTitle: "Дўкон контактлари",
+    contactsSubtitle: "Манзил ва алоқа маълумотлари",
     contactPhone: "Телефон",
     contactAddress: "Манзил",
     contactHours: "Иш вақти",
@@ -610,7 +655,16 @@ export const translations = {
     storeInfoSubtitle: "Дўкон ҳақида маълумот ва жойлашув",
     openInMaps: "Харитада очиш",
     storeLocationEmpty: "Дўкон ҳақида маълумот ҳали киритилмаган",
-    close: "Ёпиш"
+    close: "Ёпиш",
+
+    appInstallTitle: "Farrux Shop — илова",
+    appInstallText: "Дўконни телефонингиз бош экранига ўрнатинг ва исталган вақтда очинг.",
+    appInstallButton: "Иловани ўрнатиш",
+    appInstalled: "Илова аллақачон ўрнатилган",
+    appInstallHelpTitle: "Farrux Shop иловасини ўрнатиш",
+    appInstallAndroid: "дўконни Google Chrome'да очинг, ⋮ менюсини босинг ва «Иловани ўрнатиш» ёки «Бош экранга қўшиш»ни танланг.",
+    appInstallIphone: "дўконни Safari'да очинг, «Улашиш» тугмасини босинг, сўнг «Бош экранга қўшиш»ни танланг.",
+    appOpenInBrowser: "Дўконни браузерда очиш"
   }
 };
 
