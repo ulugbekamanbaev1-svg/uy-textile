@@ -10,7 +10,7 @@ from sqlalchemy import text
 from app import models  # noqa: F401
 from app.config import settings
 from app.database import Base, engine
-from app.routers import admin, admin_calendar, admin_currency, admin_group_purchase, admin_referral, admin_vip, auth, cart, catalog, currency, group_purchase, orders, qr, referral, store, vip
+from app.routers import admin, admin_calendar, admin_currency, admin_referral, admin_vip, auth, cart, catalog, currency, orders, qr, referral, store, vip
 from app.seed import seed_data
 from app.services.cart_reminders import cart_reminder_loop
 from app.services.currency_refresh import currency_refresh_loop
@@ -127,7 +127,6 @@ app.include_router(qr.public_router)
 app.include_router(referral.router)
 app.include_router(vip.router)
 app.include_router(currency.router)
-app.include_router(group_purchase.router)
 
 # Защищенный маршрут: пароль админки (Basic) ИЛИ Telegram initData владельца
 app.include_router(admin.router)
@@ -136,7 +135,6 @@ app.include_router(admin_referral.router)
 app.include_router(admin_vip.router)
 app.include_router(admin_calendar.router)
 app.include_router(admin_currency.router)
-app.include_router(admin_group_purchase.router)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
