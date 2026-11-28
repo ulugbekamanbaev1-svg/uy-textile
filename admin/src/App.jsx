@@ -32,7 +32,8 @@ import {
   Crown,
   CalendarDays,
   Coins,
-  Activity
+  Activity,
+  Bot
 } from "lucide-react";
 
 import LoginScreen from "./components/LoginScreen";
@@ -48,6 +49,7 @@ import VipPanel from "./components/VipPanel";
 import CalendarPanel from "./components/CalendarPanel";
 import CurrencyPanel from "./components/CurrencyPanel";
 import VisitorAnalyticsPanel from "./components/VisitorAnalyticsPanel";
+import TelegramUsersPanel from "./components/TelegramUsersPanel";
 import { LANGUAGES, detectLanguage, translations } from "./i18n";
 import { adminDownload, adminFetch } from "./services/adminApi";
 import { assetUrl, formatPrice, localized, priceLabel } from "./utils/format";
@@ -68,6 +70,7 @@ const MENU = [
   [Package, "menuProducts", "products"],
   [Tag, "menuCategories", "categories"],
   [Users, "menuClients", "clients"],
+  [Bot, "menuTelegramUsers", "telegramUsers"],
   [MapPin, "menuMap", "map"],
   [Megaphone, "menuBroadcast", "broadcast"],
   [QrCode, "menuQrAnalytics", "qr"],
@@ -85,6 +88,7 @@ const SECTION_META = {
   orders: ["ordersTitle", "ordersSubtitle"],
   products: ["productsTitle", "productsSubtitle"],
   clients: ["clientsTitle", "clientsSubtitle"],
+  telegramUsers: ["telegramUsersTitle", "telegramUsersSubtitle"],
   map: ["mapTitle", "mapSubtitle"],
   broadcast: ["broadcastMenuTitle", "broadcastMenuSubtitle"],
   qr: ["qrAnalyticsTitle", "qrAnalyticsSubtitle"],
@@ -1177,6 +1181,8 @@ export default function App() {
                 )}
               </>
             )}
+
+            {section === "telegramUsers" && <TelegramUsersPanel t={t} />}
 
             {section === "broadcast" && (
               <>

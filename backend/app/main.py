@@ -10,7 +10,7 @@ from sqlalchemy import text
 from app import models  # noqa: F401
 from app.config import settings
 from app.database import Base, engine
-from app.routers import admin, admin_analytics, admin_calendar, admin_currency, admin_referral, admin_vip, analytics, auth, cart, catalog, currency, orders, qr, referral, store, vip
+from app.routers import admin, admin_analytics, admin_calendar, admin_currency, admin_referral, admin_telegram_users, admin_vip, analytics, auth, cart, catalog, currency, orders, qr, referral, store, vip
 from app.seed import seed_data
 from app.services.analytics_cleanup import analytics_maintenance_loop
 from app.services.cart_reminders import cart_reminder_loop
@@ -42,9 +42,23 @@ async def lifespan(app: FastAPI):
         await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_at TIMESTAMPTZ"))
         await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS vip_level VARCHAR(20) NOT NULL DEFAULT 'silver'"))
         await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS vip_updated_at TIMESTAMPTZ"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bot_started_at TIMESTAMPTZ"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS first_mini_app_at TIMESTAMPTZ"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_mini_app_at TIMESTAMPTZ"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_bot_activity_at TIMESTAMPTZ"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS mini_app_visits_count INTEGER NOT NULL DEFAULT 0"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bot_starts_count INTEGER NOT NULL DEFAULT 0"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS sessions_count INTEGER NOT NULL DEFAULT 0"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS registration_source VARCHAR(32) NOT NULL DEFAULT 'unknown'"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_recovered BOOLEAN NOT NULL DEFAULT FALSE"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS recovered_at TIMESTAMPTZ"))
+        await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS recovery_note TEXT"))
         await connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_referral_code ON users (referral_code)"))
         await connection.execute(text("CREATE INDEX IF NOT EXISTS ix_users_referred_by_user_id ON users (referred_by_user_id)"))
         await connection.execute(text("CREATE INDEX IF NOT EXISTS ix_users_vip_level ON users (vip_level)"))
+        await connection.execute(text("CREATE INDEX IF NOT EXISTS ix_users_last_seen_at ON users (last_seen_at)"))
+        await connection.execute(text("CREATE INDEX IF NOT EXISTS ix_users_registration_source ON users (registration_source)"))
 
         await connection.execute(text("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS meters NUMERIC(10, 2), ADD COLUMN IF NOT EXISTS pricing_type VARCHAR(20) NOT NULL DEFAULT 'piece', ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS qr_label VARCHAR(64)"))
@@ -141,6 +155,7 @@ app.include_router(admin_vip.router)
 app.include_router(admin_calendar.router)
 app.include_router(admin_currency.router)
 app.include_router(admin_analytics.router)
+app.include_router(admin_telegram_users.router)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

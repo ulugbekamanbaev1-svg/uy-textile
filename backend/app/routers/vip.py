@@ -3,7 +3,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models import Order, User, VipStatusHistory
+from app.models import Order, User
+from app.services.telegram_users import upsert_telegram_user
 from app.services.telegram_auth import require_telegram_user
 from app.services.vip import VIP_LABELS, VIP_LEVELS, compute_user_metric, get_store_settings, normalize_criterion
 
@@ -27,15 +28,17 @@ async def my_vip(
     telegram_id = int(tg_user.get("id") or 0)
     user = await db.scalar(select(User).where(User.telegram_id == telegram_id))
     if user is None:
-        user = User(
+        user = await upsert_telegram_user(
+            db,
             telegram_id=telegram_id,
             first_name=tg_user.get("first_name", "") or "",
             last_name=tg_user.get("last_name", "") or "",
             username=tg_user.get("username"),
             language_code=tg_user.get("language_code"),
+            source="mini_app",
+            event="mini_app_auth",
+            commit=False,
         )
-        db.add(user)
-        await db.flush()
 
     store = await get_store_settings(db)
     criterion = normalize_criterion(getattr(store, "vip_criterion", "amount"))

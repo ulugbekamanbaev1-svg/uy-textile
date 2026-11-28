@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models import User
 from app.services.telegram_auth import verify_telegram_init_data
+from app.services.telegram_users import upsert_telegram_user
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -34,28 +33,16 @@ async def telegram_login(
             detail="Telegram user ID is missing",
         )
 
-    result = await db.execute(
-        select(User).where(User.telegram_id == telegram_id)
+    user = await upsert_telegram_user(
+        db,
+        telegram_id=int(telegram_id),
+        first_name=telegram_user.get("first_name", "") or "",
+        last_name=telegram_user.get("last_name", "") or "",
+        username=telegram_user.get("username"),
+        language_code=telegram_user.get("language_code"),
+        source="mini_app",
+        event="mini_app_auth",
     )
-    user = result.scalar_one_or_none()
-
-    if user is None:
-        user = User(
-            telegram_id=telegram_id,
-            first_name=telegram_user.get("first_name", ""),
-            last_name=telegram_user.get("last_name", ""),
-            username=telegram_user.get("username"),
-            language_code=telegram_user.get("language_code"),
-        )
-        db.add(user)
-    else:
-        user.first_name = telegram_user.get("first_name", "")
-        user.last_name = telegram_user.get("last_name", "")
-        user.username = telegram_user.get("username")
-        user.language_code = telegram_user.get("language_code")
-
-    await db.commit()
-    await db.refresh(user)
 
     return {
         "success": True,

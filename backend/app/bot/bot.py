@@ -15,12 +15,12 @@ from telegram.ext import (
 )
 
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 
 from app.config import settings
 from app.database import get_db
 from app.models import User
 from app.services.referral import attach_referral, ensure_user_referral_code, normalize_referral_code
+from app.services.telegram_users import upsert_telegram_user
 
 
 # ==========================================
@@ -163,57 +163,27 @@ def webapp_ready() -> bool:
 
 async def register_user(telegram_user):
     async for db in get_db():
-
         try:
-            result = await db.execute(
-                select(User).where(
-                    User.telegram_id == telegram_user.id
-                )
+            user = await upsert_telegram_user(
+                db,
+                telegram_id=int(telegram_user.id),
+                first_name=telegram_user.first_name or "",
+                last_name=telegram_user.last_name or "",
+                username=telegram_user.username,
+                language_code=telegram_user.language_code,
+                source="bot_start",
+                event="bot_start",
+                commit=True,
             )
-
-            user = result.scalar_one_or_none()
-
-            if user is None:
-
-                user = User(
-                    telegram_id=telegram_user.id,
-                    first_name=telegram_user.first_name or "",
-                    last_name=telegram_user.last_name or "",
-                    username=telegram_user.username,
-                    language_code=telegram_user.language_code,
-                )
-
-                db.add(user)
-
-                await db.commit()
-
-                print(
-                    f"NEW USER REGISTERED: {telegram_user.id}",
-                    flush=True,
-                )
-
-            else:
-
-                user.first_name = telegram_user.first_name or ""
-                user.last_name = telegram_user.last_name or ""
-                user.username = telegram_user.username
-                user.language_code = telegram_user.language_code
-
-                await db.commit()
-
-                print(
-                    f"EXISTING USER UPDATED: {telegram_user.id}",
-                    flush=True,
-                )
-
-        except IntegrityError:
-
-            await db.rollback()
-
             print(
-                f"USER ALREADY REGISTERED: {telegram_user.id}",
+                f"TELEGRAM USER UPSERTED: {user.telegram_id} source=bot_start",
                 flush=True,
             )
+        except Exception as error:
+            await db.rollback()
+            print(f"USER REGISTRATION ERROR: {error}", flush=True)
+            raise
+        break
 
 
 # ==========================================
@@ -268,8 +238,7 @@ async def _attach_referral_from_start(telegram_user, arg: str) -> None:
         except Exception as e:
             await db.rollback()
             print(f"REFERRAL ATTACH ERROR: {e}", flush=True)
-        finally:
-            break
+        break
 
 
 async def start(

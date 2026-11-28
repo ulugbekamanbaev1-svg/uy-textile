@@ -37,16 +37,18 @@ async def _current_user(db: AsyncSession, tg_user: dict) -> User:
     telegram_id = int(tg_user.get("id") or 0)
     user = await db.scalar(select(User).where(User.telegram_id == telegram_id))
     if user is None:
-        # Should exist after /api/auth/telegram, but create safely.
-        user = User(
+        # Should exist after /api/auth/telegram, but create safely from verified initData.
+        user = await upsert_telegram_user(
+            db,
             telegram_id=telegram_id,
             first_name=tg_user.get("first_name", "") or "",
             last_name=tg_user.get("last_name", "") or "",
             username=tg_user.get("username"),
             language_code=tg_user.get("language_code"),
+            source="mini_app",
+            event="mini_app_auth",
+            commit=False,
         )
-        db.add(user)
-        await db.flush()
     # keep profile fresh
     user.first_name = tg_user.get("first_name", "") or user.first_name
     user.last_name = tg_user.get("last_name", "") or user.last_name
