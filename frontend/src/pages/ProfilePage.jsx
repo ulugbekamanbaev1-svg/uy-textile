@@ -57,6 +57,7 @@ export default function ProfilePage({
   const [isInstalled, setIsInstalled] = useState(false);
   const [showInstallHelp, setShowInstallHelp] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(() =>
     visitorTracker.isEnabled()
   );
