@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   BadgeDollarSign,
+  BookOpen,
   ChevronRight,
   Clock,
   CreditCard,
@@ -258,6 +259,21 @@ export default function ProfilePage({
         <button
           type="button"
           className="lux-quick-row"
+          onClick={() => setShowTutorial(true)}
+        >
+          <span className="lux-quick-icon">
+            <BookOpen size={18} />
+          </span>
+          <span className="lux-quick-text">
+            <strong>{t("tutorialTitle")}</strong>
+            <small>{t("profileQuickTutorialHint")}</small>
+          </span>
+          <ChevronRight size={18} className="lux-quick-arrow" />
+        </button>
+
+        <button
+          type="button"
+          className="lux-quick-row"
           onClick={() => scrollToSection("profile-install")}
         >
           <span className="lux-quick-icon">
@@ -366,6 +382,27 @@ export default function ProfilePage({
             >
               {t("close")}
             </button>
+          </div>
+        </div>
+      )}
+    
+      {showTutorial && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.45)',zIndex:1200,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={() => setShowTutorial(false)}>
+          <div className="lux-card" style={{maxWidth:520,width:'100%',maxHeight:'80vh',overflowY:'auto',padding:20}} onClick={(e)=>e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,marginBottom:12}}>
+              <h3 style={{margin:0}}>{t("tutorialTitle")}</h3>
+              <button type="button" onClick={() => setShowTutorial(false)} style={{border:'none',background:'transparent',fontSize:22,cursor:'pointer',lineHeight:1}}>?</button>
+            </div>
+            <div style={{display:'grid',gap:14}}>
+              <div>
+                <strong>{t("tutorialStatusTitle")}</strong>
+                <p style={{margin:'6px 0 0',color:'var(--lux-text-2,#555)',lineHeight:1.5}}>{t("tutorialStatusText")}</p>
+              </div>
+              <div>
+                <strong>{t("tutorialReferralTitle")}</strong>
+                <p style={{margin:'6px 0 0',color:'var(--lux-text-2,#555)',lineHeight:1.5}}>{t("tutorialReferralText")}</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
