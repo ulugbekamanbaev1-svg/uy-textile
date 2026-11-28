@@ -416,3 +416,58 @@ export function fetchCurrencyBest(currency = "USD", sourceType = "bank") {
 export function fetchCurrencySources() {
   return request("/api/currency/sources");
 }
+
+// ---------------- Visitor Analytics (first-party) ----------------
+
+async function analyticsFetch(path, { method = "POST", body, initData = "", keepalive = false } = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (initData) headers["X-Telegram-Init-Data"] = initData;
+
+  const response = await fetch(`${API_URL}/api/analytics${path}`, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    keepalive
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data.detail || `Analytics request failed: ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+}
+
+export function analyticsConsent(payload) {
+  return analyticsFetch("/consent", { body: payload });
+}
+
+export function analyticsIdentify(visitorUuid, initData) {
+  return analyticsFetch("/identify", {
+    body: { visitor_uuid: visitorUuid },
+    initData
+  });
+}
+
+export function analyticsSessionStart(payload, keepalive = false) {
+  return analyticsFetch("/session/start", { body: payload, keepalive });
+}
+
+export function analyticsHeartbeat(payload) {
+  return analyticsFetch("/heartbeat", { body: payload, keepalive: true });
+}
+
+export function analyticsEvent(payload, keepalive = false) {
+  return analyticsFetch("/event", { body: payload, keepalive });
+}
+
+export function analyticsSessionEnd(payload) {
+  return analyticsFetch("/session/end", { body: payload, keepalive: true });
+}
+
+export function fetchAnalyticsStatus(visitorUuid) {
+  return analyticsFetch(`/status?visitor_uuid=${encodeURIComponent(visitorUuid)}`, {
+    method: "GET"
+  });
+}

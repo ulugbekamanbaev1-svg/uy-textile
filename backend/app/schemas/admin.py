@@ -286,6 +286,10 @@ class StoreSettingsIn(BaseModel):
     vip_platinum_threshold: int = Field(default=3_000_000, ge=0, le=1_000_000_000)
     vip_diamond_threshold: int = Field(default=7_000_000, ge=0, le=1_000_000_000)
 
+    # Visitor Analytics
+    analytics_enabled: bool = True
+    analytics_retention_days: int = Field(default=30, ge=1, le=365)
+
 
 class StoreSettingsOut(StoreSettingsIn):
     model_config = ConfigDict(from_attributes=True)

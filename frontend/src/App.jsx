@@ -26,6 +26,7 @@ import {
   sendQrMiniAppOpen,
   telegramLogin
 } from "./services/api";
+import visitorTracker from "./services/visitorTracker";
 
 const INITIAL_ROUTE = { page: "home", slug: null, category: "", token: null };
 
@@ -91,6 +92,15 @@ export default function App() {
     setRoute({ page, slug: options.slug ?? null, category: options.category ?? "", token: options.token ?? null });
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    visitorTracker.init({ page: "/", language: lang });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    visitorTracker.trackPage(route);
+  }, [route]);
 
   useEffect(() => {
     try {
@@ -164,6 +174,10 @@ export default function App() {
               username: data.user?.username || previous?.username
             }));
             setAuthState("ok");
+            visitorTracker.setAuth({
+              initData: tg.initData,
+              user: data.user || user
+            });
           })
           .catch(() => setAuthState("error"));
       }

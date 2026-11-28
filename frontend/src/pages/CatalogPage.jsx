@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 
 import ProductCard from "../components/ProductCard";
+import visitorTracker from "../services/visitorTracker";
 import { localized } from "../utils/format";
 
 export default function CatalogPage({
@@ -17,6 +18,12 @@ export default function CatalogPage({
 }) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("default");
+
+  useEffect(() => {
+    if (!activeCategory) return;
+    const category = categories.find((item) => item.slug === activeCategory);
+    if (category) visitorTracker.trackCategoryView(category);
+  }, [activeCategory, categories]);
 
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -50,6 +57,18 @@ export default function CatalogPage({
 
     return sorted;
   }, [products, activeCategory, search, sort]);
+
+  useEffect(() => {
+    const query = search.trim();
+    if (query.length < 2) return undefined;
+
+    const timer = setTimeout(() => {
+      visitorTracker.trackSearch(query, visible.length);
+    }, 900);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   return (
     <main>

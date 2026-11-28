@@ -59,6 +59,10 @@ class StoreSettings(Base):
     vip_platinum_threshold: Mapped[int] = mapped_column(Integer, default=3_000_000)
     vip_diamond_threshold: Mapped[int] = mapped_column(Integer, default=7_000_000)
 
+    # Visitor Analytics
+    analytics_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    analytics_retention_days: Mapped[int] = mapped_column(Integer, default=30)
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

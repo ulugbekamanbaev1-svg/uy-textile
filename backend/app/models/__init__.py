@@ -1,3 +1,9 @@
+from app.models.analytics import (
+    Visitor,
+    VisitorConsent,
+    VisitorEvent,
+    VisitorSession,
+)
 from app.models.broadcast import Broadcast
 from app.models.cart_reminder import CartReminder
 from app.models.catalog import (
@@ -36,4 +42,8 @@ __all__ = [
     "ReferralReward",
     "VipStatusHistory",
     "StoreSettings",
+    "Visitor",
+    "VisitorSession",
+    "VisitorEvent",
+    "VisitorConsent",
 ]

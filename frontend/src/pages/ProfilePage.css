@@ -479,6 +479,71 @@ a.lux-contact-row:active {
   to { opacity: 1; }
 }
 
+/* ---------- Privacy / analytics ---------- */
+.lux-privacy .lux-section-head p {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--lux-muted);
+}
+
+.privacy-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--lux-line);
+  background: var(--lux-tint);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lux-text);
+}
+
+.privacy-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--lux-line-strong);
+  border-radius: 999px;
+  background: var(--lux-tint-strong, rgba(255, 255, 255, 0.08));
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.privacy-switch.on {
+  border-color: var(--lux-gold);
+  background: var(--lux-gold);
+}
+
+.privacy-knob {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transform: translateY(-50%);
+  transition: left 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.privacy-switch.on .privacy-knob {
+  left: 23px;
+}
+
+.privacy-state {
+  display: block;
+  margin-top: 9px;
+  font-size: 11px;
+  color: var(--lux-muted);
+}
+
 /* ---------- Small screens ---------- */
 @media (max-width: 420px) {
   .profile-page .page-heading h2 {

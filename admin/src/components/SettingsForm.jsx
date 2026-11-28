@@ -328,6 +328,31 @@ export default function SettingsForm({
         </label>
       </section>
 
+      <section className="form-section">
+        <h3>{t("analyticsSettingsTitle")}</h3>
+        <p className="admin-note">{t("analyticsSettingsHint")}</p>
+
+        <label className="flag" style={{ marginBottom: 12 }}>
+          <input
+            type="checkbox"
+            checked={Boolean(form["analytics_enabled"])}
+            onChange={(event) => onChange("analytics_enabled", event.target.checked)}
+          />
+          {t("analyticsEnabledLabel")}
+        </label>
+
+        <label>
+          {t("analyticsRetentionLabel")}
+          <input
+            type="number"
+            min="1"
+            max="365"
+            value={form["analytics_retention_days"] ?? 30}
+            onChange={(event) => onChange("analytics_retention_days", event.target.value)}
+          />
+        </label>
+      </section>
+
       <footer className="settings-foot">
         {state === "saved" && (
           <span className="save-ok">{t("settingsSaved")}</span>

@@ -11,6 +11,7 @@ import {
   PackageSearch,
   Phone,
   Send,
+  ShieldCheck,
   Smartphone,
   Sparkles,
   Truck,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { fetchStoreSettings } from "../services/api";
+import visitorTracker from "../services/visitorTracker";
 import { openExternalLink } from "../utils/telegram";
 import ReferralSection from "../components/ReferralSection";
 import VipCard from "../components/VipCard";
@@ -55,6 +57,15 @@ export default function ProfilePage({
   const [isInstalled, setIsInstalled] = useState(false);
   const [showInstallHelp, setShowInstallHelp] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(() =>
+    visitorTracker.isEnabled()
+  );
+
+  const handleAnalyticsToggle = async () => {
+    const next = !analyticsEnabled;
+    setAnalyticsEnabled(next);
+    await visitorTracker.setConsent(next);
+  };
 
   useEffect(() => {
     fetchStoreSettings()
@@ -213,6 +224,36 @@ export default function ProfilePage({
       <VipCard t={t} lang={lang} />
 
       <ReferralSection t={t} lang={lang} />
+
+      <section className="lux-card lux-privacy">
+        <div className="lux-section-head">
+          <span className="lux-icon">
+            <ShieldCheck size={18} />
+          </span>
+          <div>
+            <h3>{t("privacyTitle")}</h3>
+            <p>{t("privacyAnalyticsHint")}</p>
+          </div>
+        </div>
+
+        <div className="privacy-row">
+          <span>{t("privacyAnalytics")}</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={analyticsEnabled}
+            aria-label={t("privacyAnalytics")}
+            className={`privacy-switch${analyticsEnabled ? " on" : ""}`}
+            onClick={handleAnalyticsToggle}
+          >
+            <span className="privacy-knob" />
+          </button>
+        </div>
+
+        <small className="privacy-state">
+          {analyticsEnabled ? t("privacyOn") : t("privacyOff")}
+        </small>
+      </section>
 
       <section className="lux-card lux-quick">
         <div className="lux-section-head">

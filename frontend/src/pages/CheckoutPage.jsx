@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -10,6 +10,7 @@ import {
 import LocationPicker from "../components/LocationPicker";
 
 import { createOrder, getQrAttribution } from "../services/api";
+import visitorTracker from "../services/visitorTracker";
 import { formatPrice, localized } from "../utils/format";
 import { formatQuantity, itemLineTotal } from "../utils/pricing";
 
@@ -42,6 +43,11 @@ export default function CheckoutPage({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [created, setCreated] = useState(null);
+
+  useEffect(() => {
+    visitorTracker.trackCheckoutStart(items, total);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (created) {
     return (
@@ -164,6 +170,10 @@ export default function CheckoutPage({
       });
 
       setCreated(order);
+      visitorTracker.trackOrderCreated(order, {
+        total,
+        items: items.length
+      });
       onClearCart();
       window.scrollTo(0, 0);
     } catch (error) {

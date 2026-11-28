@@ -31,7 +31,8 @@ import {
   Gift,
   Crown,
   CalendarDays,
-  Coins
+  Coins,
+  Activity
 } from "lucide-react";
 
 import LoginScreen from "./components/LoginScreen";
@@ -46,6 +47,7 @@ import ReferralPanel from "./components/ReferralPanel";
 import VipPanel from "./components/VipPanel";
 import CalendarPanel from "./components/CalendarPanel";
 import CurrencyPanel from "./components/CurrencyPanel";
+import VisitorAnalyticsPanel from "./components/VisitorAnalyticsPanel";
 import { LANGUAGES, detectLanguage, translations } from "./i18n";
 import { adminDownload, adminFetch } from "./services/adminApi";
 import { assetUrl, formatPrice, localized, priceLabel } from "./utils/format";
@@ -73,6 +75,7 @@ const MENU = [
   [Gift, "menuReferral", "referral"],
   [Crown, "menuVip", "vip"],
   [CalendarDays, "menuCalendar", "calendar"],
+  [Activity, "menuVisitorAnalytics", "visitors"],
   [TrendingUp, "menuAnalytics", "analytics"],
   [Settings, "menuSettings", "settings"]
 ];
@@ -89,6 +92,7 @@ const SECTION_META = {
   referral: ["referralTitle", "referralSubtitle"],
   vip: ["vipTitle", "vipSubtitle"],
   calendar: ["calendarTitle", "calendarSubtitle"],
+  visitors: ["visitorAnalyticsTitle", "visitorAnalyticsSubtitle"],
   analytics: ["analyticsTitle", "analyticsSubtitle"],
   settings: ["settingsTitle", "settingsSubtitle"],
   categories: ["categoriesTitle", "categoriesSubtitle"]
@@ -126,7 +130,9 @@ const EMPTY_SETTINGS = {
   vip_silver_threshold: 0,
   vip_gold_threshold: 1000000,
   vip_platinum_threshold: 3000000,
-  vip_diamond_threshold: 7000000
+  vip_diamond_threshold: 7000000,
+  analytics_enabled: true,
+  analytics_retention_days: 30
 };
 
 function toSettingsForm(settings) {
@@ -1202,6 +1208,7 @@ export default function App() {
             {section === "referral" && <ReferralPanel t={t} lang={lang} />}
             {section === "vip" && <VipPanel t={t} lang={lang} />}
             {section === "calendar" && <CalendarPanel t={t} lang={lang} onOpenOrders={() => setSection("orders")} />}
+            {section === "visitors" && <VisitorAnalyticsPanel t={t} lang={lang} />}
 
             {section === "analytics" && (
               <>

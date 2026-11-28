@@ -12,6 +12,7 @@ import {
 import QuantityStepper from "../components/QuantityStepper";
 import { FavoriteButton } from "../components/TopBar";
 import { assetUrl, fetchProduct } from "../services/api";
+import visitorTracker from "../services/visitorTracker";
 import { formatArea, formatPrice, localized, toNumber } from "../utils/format";
 import {
   formatQuantity,
@@ -55,6 +56,7 @@ export default function ProductPage({
         setColorId(data.colors.length ? data.colors[0].id : null);
         setImageIndex(0);
         setState("ready");
+        visitorTracker.trackProductView(data);
       })
       .catch(() => setState("error"));
   };

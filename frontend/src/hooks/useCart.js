@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { syncCart } from "../services/api";
+import visitorTracker from "../services/visitorTracker";
 import { itemLineTotal } from "../utils/pricing";
 
 const STORAGE_KEY = "uy_cart";
@@ -74,6 +75,8 @@ export function useCart() {
 
       return [...current, { ...item, qty }];
     });
+
+    visitorTracker.trackAddToCart(item, qty);
   }, []);
 
   const setQty = useCallback((key, qty) => {
@@ -99,8 +102,10 @@ export function useCart() {
   }, []);
 
   const remove = useCallback((key) => {
-    setItems((current) => current.filter((entry) => entry.key !== key));
-  }, []);
+    const entry = items.find((item) => item.key === key);
+    if (entry) visitorTracker.trackRemoveFromCart(entry);
+    setItems((current) => current.filter((item) => item.key !== key));
+  }, [items]);
 
   const clear = useCallback(() => setItems([]), []);
 

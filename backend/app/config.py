@@ -66,6 +66,22 @@ class Settings(BaseSettings):
     MAX_UPLOAD_MB: int = 5
     CART_REMINDER_DELAY_MINUTES: int = 60
 
+    # --- Visitor Analytics (first-party) ---
+    # Глобальный выключатель сбора. Отключается также в настройках магазина.
+    ANALYTICS_ENABLED: bool = True
+    # Сколько дней хранить аналитические данные (очистка раз в сутки).
+    ANALYTICS_RETENTION_DAYS: int = 30
+    # Посетитель считается онлайн, если активность была в этом окне.
+    ANALYTICS_ONLINE_SECONDS: int = 120
+    # Периодичность heartbeat на фронте (секунды).
+    ANALYTICS_HEARTBEAT_SECONDS: int = 30
+    # Сессия закрывается фоновым циклом после стольких минут без активности.
+    ANALYTICS_SESSION_IDLE_MINUTES: int = 30
+    # Версия текста согласия; меняется при изменении политики.
+    ANALYTICS_CONSENT_VERSION: str = "1"
+    # Максимальный размер event_data в байтах (после очистки).
+    ANALYTICS_MAX_EVENT_BYTES: int = 4096
+
     # --- Farrux Currency ---
     CURRENCY_ENABLED: bool = True
     CURRENCY_PROVIDER: str = "wasyt"

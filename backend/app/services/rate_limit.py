@@ -60,3 +60,10 @@ order_claim_limiter = SlidingWindowLimiter(limit=10, window_seconds=600)
 # Currency: ручное обновление и конвертер.
 currency_refresh_limiter = SlidingWindowLimiter(limit=3, window_seconds=60)
 currency_convert_limiter = SlidingWindowLimiter(limit=60, window_seconds=60)
+
+# Visitor Analytics: ключ — visitor_uuid/session_uuid, не IP.
+analytics_session_limiter = SlidingWindowLimiter(limit=10, window_seconds=60)
+analytics_heartbeat_limiter = SlidingWindowLimiter(limit=20, window_seconds=60)
+analytics_event_limiter = SlidingWindowLimiter(limit=120, window_seconds=60)
+analytics_consent_limiter = SlidingWindowLimiter(limit=20, window_seconds=60)
+analytics_identify_limiter = SlidingWindowLimiter(limit=10, window_seconds=60)

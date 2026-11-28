@@ -10,8 +10,9 @@ from sqlalchemy import text
 from app import models  # noqa: F401
 from app.config import settings
 from app.database import Base, engine
-from app.routers import admin, admin_calendar, admin_currency, admin_referral, admin_vip, auth, cart, catalog, currency, orders, qr, referral, store, vip
+from app.routers import admin, admin_analytics, admin_calendar, admin_currency, admin_referral, admin_vip, analytics, auth, cart, catalog, currency, orders, qr, referral, store, vip
 from app.seed import seed_data
+from app.services.analytics_cleanup import analytics_maintenance_loop
 from app.services.cart_reminders import cart_reminder_loop
 from app.services.currency_refresh import currency_refresh_loop
 
@@ -34,6 +35,7 @@ async def lifespan(app: FastAPI):
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS delivery_districts TEXT NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_district VARCHAR(120) NOT NULL DEFAULT ''"))
         await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS vip_criterion VARCHAR(20) NOT NULL DEFAULT 'amount', ADD COLUMN IF NOT EXISTS vip_silver_threshold INTEGER NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS vip_gold_threshold INTEGER NOT NULL DEFAULT 1000000, ADD COLUMN IF NOT EXISTS vip_platinum_threshold INTEGER NOT NULL DEFAULT 3000000, ADD COLUMN IF NOT EXISTS vip_diamond_threshold INTEGER NOT NULL DEFAULT 7000000"))
+        await connection.execute(text("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS analytics_enabled BOOLEAN NOT NULL DEFAULT TRUE, ADD COLUMN IF NOT EXISTS analytics_retention_days INTEGER NOT NULL DEFAULT 30"))
 
         await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(32)"))
         await connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by_user_id INTEGER"))
@@ -66,13 +68,15 @@ async def lifespan(app: FastAPI):
     stop_event = asyncio.Event()
     reminder_task = asyncio.create_task(cart_reminder_loop(stop_event))
     currency_task = asyncio.create_task(currency_refresh_loop(stop_event))
+    analytics_task = asyncio.create_task(analytics_maintenance_loop(stop_event))
+    tasks = (reminder_task, currency_task, analytics_task)
     try:
         yield
     finally:
         stop_event.set()
-        for task in (reminder_task, currency_task, gp_expiry_task):
+        for task in tasks:
             task.cancel()
-        for task in (reminder_task, currency_task, gp_expiry_task):
+        for task in tasks:
             try:
                 await task
             except asyncio.CancelledError:
@@ -127,6 +131,7 @@ app.include_router(qr.public_router)
 app.include_router(referral.router)
 app.include_router(vip.router)
 app.include_router(currency.router)
+app.include_router(analytics.router)
 
 # Защищенный маршрут: пароль админки (Basic) ИЛИ Telegram initData владельца
 app.include_router(admin.router)
@@ -135,6 +140,7 @@ app.include_router(admin_referral.router)
 app.include_router(admin_vip.router)
 app.include_router(admin_calendar.router)
 app.include_router(admin_currency.router)
+app.include_router(admin_analytics.router)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
